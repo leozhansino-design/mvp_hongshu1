@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { BirthForm, AnalysisLoader } from '@/components';
 import Header from '@/components/Header';
-import { generateFreeResult } from '@/services/api';
+import { generateFreeResult, generatePaidResult } from '@/services/api';
 import {
   getRemainingUsage,
   incrementUsage,
@@ -27,7 +27,7 @@ export default function HomePage() {
     setTotalGenerated(getTotalGeneratedCount());
   }, []);
 
-  const handleSubmit = useCallback(async (birthInfo: BirthInfo) => {
+  const handleSubmit = useCallback(async (birthInfo: BirthInfo, isPaid: boolean = false) => {
     // TODO: 测试完成后恢复次数限制
     // if (!canUseFreeTrial()) {
     //   setError('免费次数已用尽，请解锁完整版');
@@ -38,20 +38,34 @@ export default function HomePage() {
     setError(null);
 
     try {
-      const freeResult = await generateFreeResult(birthInfo);
+      const resultId = uuidv4();
+      let storedResult: StoredResult;
+
+      if (isPaid) {
+        // 精批详解 - 调用付费版API
+        const paidResult = await generatePaidResult(birthInfo);
+        storedResult = {
+          id: resultId,
+          birthInfo,
+          freeResult: paidResult, // 付费结果也存到freeResult字段用于显示
+          paidResult,
+          isPaid: true,
+          createdAt: Date.now(),
+        };
+      } else {
+        // 免费概览
+        const freeResult = await generateFreeResult(birthInfo);
+        storedResult = {
+          id: resultId,
+          birthInfo,
+          freeResult,
+          isPaid: false,
+          createdAt: Date.now(),
+        };
+      }
 
       incrementUsage();
       setRemainingUsage(getRemainingUsage());
-
-      const resultId = uuidv4();
-      const storedResult: StoredResult = {
-        id: resultId,
-        birthInfo,
-        freeResult,
-        isPaid: false,
-        createdAt: Date.now(),
-      };
-
       saveResult(storedResult);
 
       // 跳转后不再设置 loading 为 false，保持 loading 状态直到页面切换

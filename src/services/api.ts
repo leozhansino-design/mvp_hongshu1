@@ -67,7 +67,7 @@ export async function generateFreeResult(
         { role: 'user', content: userPrompt }
       ],
       temperature: 0.7,
-      max_tokens: 8000,
+      max_tokens: 30000,
     }),
   });
 
@@ -156,7 +156,7 @@ export async function generatePaidResult(
         { role: 'user', content: userPrompt }
       ],
       temperature: 0.7,
-      max_tokens: 16000,
+      max_tokens: 30000,
     }),
   });
 

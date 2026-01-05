@@ -5,7 +5,7 @@ import { Gender, BirthInfo, CalendarType, CHINA_CITIES } from '@/types';
 import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
 
 interface BirthFormProps {
-  onSubmit: (birthInfo: BirthInfo) => void;
+  onSubmit: (birthInfo: BirthInfo, isPaid?: boolean) => void;
   disabled?: boolean;
   remainingUsage: number;
 }
@@ -400,16 +400,56 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={!isValid || disabled}
-        className="btn-gold w-full py-4 text-lg font-serif"
-      >
-        开始测算
-      </button>
+      {/* 两个按钮选项 */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          disabled={!isValid || disabled}
+          onClick={() => {
+            if (!isValid || disabled) return;
+            const birthInfo: BirthInfo = {
+              name: name || undefined,
+              gender: gender!,
+              calendarType,
+              year: year as number,
+              month: month as number,
+              day: day as number,
+              hour: shiChen as number,
+              minute: 0,
+              birthPlace: birthPlace || undefined,
+            };
+            onSubmit(birthInfo, false);
+          }}
+          className="btn-outline py-3 text-base font-serif"
+        >
+          免费概览
+        </button>
+        <button
+          type="button"
+          disabled={!isValid || disabled}
+          onClick={() => {
+            if (!isValid || disabled) return;
+            const birthInfo: BirthInfo = {
+              name: name || undefined,
+              gender: gender!,
+              calendarType,
+              year: year as number,
+              month: month as number,
+              day: day as number,
+              hour: shiChen as number,
+              minute: 0,
+              birthPlace: birthPlace || undefined,
+            };
+            onSubmit(birthInfo, true);
+          }}
+          className="btn-gold py-3 text-base font-serif"
+        >
+          精批详解
+        </button>
+      </div>
 
       {/* TODO: 测试完成后恢复次数显示 */}
-      <p className="text-center text-sm text-text-secondary">
+      <p className="text-center text-sm text-text-secondary mt-3">
         测试模式 · <span className="text-yellow-400">无限次数</span>
       </p>
     </form>
