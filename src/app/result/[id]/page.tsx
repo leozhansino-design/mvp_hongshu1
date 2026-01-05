@@ -185,7 +185,6 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             <LifeCurveChart
               data={data.chartPoints}
               currentAge={currentAge}
-              isPaid={isPaid}
               birthYear={birthInfo.year}
             />
           </div>

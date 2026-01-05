@@ -6,78 +6,127 @@ import { ChartPoint, KLinePoint } from '@/types';
 interface ChartProps {
   data: ChartPoint[] | KLinePoint[];
   currentAge?: number;
-  isPaid?: boolean;
   birthYear: number;
 }
 
-interface TooltipData {
+interface InterpolatedPoint {
   age: number;
   year: number;
   score: number;
   daYun: string;
   ganZhi: string;
   reason: string;
-  isUp: boolean;
-  open?: number;
-  close?: number;
-  high?: number;
-  low?: number;
+  isKeyPoint: boolean; // 是否是原始关键点
 }
 
-export default function LifeCurveChart({ data, currentAge = 0, isPaid = false, birthYear }: ChartProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [tooltip, setTooltip] = useState<{ data: TooltipData; x: number; y: number } | null>(null);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+// 三次样条插值函数
+function cubicInterpolate(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, t: number): number {
+  const t2 = t * t;
+  const t3 = t2 * t;
 
-  // 处理数据
-  const chartData = useMemo(() => {
-    return data.map((point) => {
-      const year = birthYear + point.age - 1;
-      const baseData = {
+  const a = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
+  const b = y0 - 2.5 * y1 + 2 * y2 - 0.5 * y3;
+  const c = -0.5 * y0 + 0.5 * y2;
+  const d = y1;
+
+  return a * t3 + b * t2 + c * t + d;
+}
+
+export default function LifeCurveChart({ data, currentAge = 0, birthYear }: ChartProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
+  // 对原始数据进行插值，生成每年的数据点
+  const interpolatedData = useMemo((): InterpolatedPoint[] => {
+    if (data.length === 0) return [];
+
+    // 如果已经是100个点（付费版），直接使用
+    if (data.length >= 50) {
+      return data.map((point) => ({
         age: point.age,
-        year,
+        year: birthYear + point.age - 1,
+        score: point.score,
         daYun: point.daYun,
         ganZhi: point.ganZhi,
         reason: point.reason,
-      };
+        isKeyPoint: true,
+      }));
+    }
 
-      if ('open' in point) {
-        return {
-          ...baseData,
-          score: point.score,
-          open: point.open,
-          close: point.close,
-          high: point.high,
-          low: point.low,
-          isUp: point.close >= point.open,
-        };
+    // 免费版：10个点插值为每年的点
+    const result: InterpolatedPoint[] = [];
+    const sortedData = [...data].sort((a, b) => a.age - b.age);
+
+    // 为每一年生成数据点
+    for (let age = 1; age <= 90; age++) {
+      // 找到这个年龄所在的区间
+      let i = 0;
+      while (i < sortedData.length - 1 && sortedData[i + 1].age <= age) {
+        i++;
       }
-      return {
-        ...baseData,
-        score: point.score,
-        isUp: point.score >= 60,
-      };
-    });
+
+      const currentPoint = sortedData[i];
+      const nextPoint = sortedData[Math.min(i + 1, sortedData.length - 1)];
+      const prevPoint = sortedData[Math.max(i - 1, 0)];
+      const nextNextPoint = sortedData[Math.min(i + 2, sortedData.length - 1)];
+
+      // 检查是否是关键点
+      const keyPoint = sortedData.find(p => p.age === age);
+
+      if (keyPoint) {
+        // 如果是关键点，直接使用原始数据
+        result.push({
+          age,
+          year: birthYear + age - 1,
+          score: keyPoint.score,
+          daYun: keyPoint.daYun,
+          ganZhi: keyPoint.ganZhi,
+          reason: keyPoint.reason,
+          isKeyPoint: true,
+        });
+      } else {
+        // 插值计算
+        const x0 = prevPoint.age;
+        const y0 = prevPoint.score;
+        const x1 = currentPoint.age;
+        const y1 = currentPoint.score;
+        const x2 = nextPoint.age;
+        const y2 = nextPoint.score;
+        const x3 = nextNextPoint.age;
+        const y3 = nextNextPoint.score;
+
+        // 计算插值位置 t (0-1)
+        const t = x1 === x2 ? 0 : (age - x1) / (x2 - x1);
+
+        // 三次样条插值
+        const interpolatedScore = Math.round(cubicInterpolate(x0, y0, x1, y1, x2, y2, x3, y3, t));
+
+        // 限制分数范围
+        const score = Math.max(30, Math.min(95, interpolatedScore));
+
+        result.push({
+          age,
+          year: birthYear + age - 1,
+          score,
+          daYun: currentPoint.daYun,
+          ganZhi: `${age}岁`,
+          reason: `${currentPoint.daYun}运程中`,
+          isKeyPoint: false,
+        });
+      }
+    }
+
+    return result;
   }, [data, birthYear]);
 
-  // 计算图表范围
-  const { minScore, scoreRange } = useMemo(() => {
-    const scores = chartData.map(d => d.score);
-    const min = Math.min(...scores);
-    const max = Math.max(...scores);
-    return {
-      minScore: Math.max(0, min - 10),
-      scoreRange: max - min + 20,
-    };
-  }, [chartData]);
-
-  // 找到大运分割点
+  // 找到大运分组
   const daYunGroups = useMemo(() => {
     const groups: { daYun: string; startIndex: number; endIndex: number }[] = [];
     let currentDaYun = '';
     let startIndex = 0;
 
-    chartData.forEach((point, idx) => {
+    interpolatedData.forEach((point, idx) => {
       if (point.daYun !== currentDaYun) {
         if (currentDaYun) {
           groups.push({ daYun: currentDaYun, startIndex, endIndex: idx - 1 });
@@ -87,400 +136,371 @@ export default function LifeCurveChart({ data, currentAge = 0, isPaid = false, b
       }
     });
     if (currentDaYun) {
-      groups.push({ daYun: currentDaYun, startIndex, endIndex: chartData.length - 1 });
+      groups.push({ daYun: currentDaYun, startIndex, endIndex: interpolatedData.length - 1 });
     }
     return groups;
-  }, [chartData]);
+  }, [interpolatedData]);
 
-  // SVG 尺寸
-  const padding = useMemo(() => ({ top: 40, right: 30, bottom: 40, left: 50 }), []);
-  const height = 320;
-  const chartWidth = 100 - 8; // percentage minus padding
-  const chartHeight = height - padding.top - padding.bottom;
+  // 图表配置
+  const config = useMemo(() => {
+    const padding = { top: 50, right: 35, bottom: 50, left: 45 };
+    const width = 1100;
+    const height = 350;
+    return {
+      padding,
+      width,
+      height,
+      chartWidth: width - padding.left - padding.right,
+      chartHeight: height - padding.top - padding.bottom,
+    };
+  }, []);
 
-  // 计算点位置
+  // 计算X坐标
   const getX = useCallback((index: number) => {
-    return padding.left + (index / (chartData.length - 1)) * (chartWidth - padding.left - padding.right) * (100 / chartWidth);
-  }, [chartData.length, chartWidth, padding.left, padding.right]);
+    if (interpolatedData.length <= 1) return config.padding.left;
+    return config.padding.left + (index / (interpolatedData.length - 1)) * config.chartWidth;
+  }, [interpolatedData.length, config]);
 
+  // 计算Y坐标 (0-100范围)
   const getY = useCallback((score: number) => {
-    return padding.top + chartHeight - ((score - minScore) / scoreRange) * chartHeight;
-  }, [minScore, scoreRange, chartHeight, padding.top]);
+    return config.padding.top + config.chartHeight - (score / 100) * config.chartHeight;
+  }, [config]);
 
-  // 生成曲线路径
+  // 生成平滑曲线路径
   const curvePath = useMemo(() => {
-    if (chartData.length === 0) return '';
+    if (interpolatedData.length === 0) return '';
 
-    const points = chartData.map((d, i) => ({
+    const points = interpolatedData.map((d, i) => ({
       x: getX(i),
       y: getY(d.score),
     }));
 
-    // 使用三次贝塞尔曲线创建平滑曲线
-    let path = `M ${points[0].x} ${points[0].y}`;
-
-    for (let i = 0; i < points.length - 1; i++) {
-      const current = points[i];
-      const next = points[i + 1];
-      const tension = 0.3;
-
-      const cp1x = current.x + (next.x - (points[i - 1]?.x ?? current.x)) * tension;
-      const cp1y = current.y + (next.y - (points[i - 1]?.y ?? current.y)) * tension;
-      const cp2x = next.x - (points[i + 2]?.x ?? next.x) * tension + current.x * tension;
-      const cp2y = next.y - (points[i + 2]?.y ?? next.y) * tension + current.y * tension;
-
-      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${next.x} ${next.y}`;
+    if (points.length === 1) {
+      return `M ${points[0].x} ${points[0].y}`;
     }
 
+    // 使用简单的线段连接（因为数据已经是插值后的）
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      path += ` L ${points[i].x} ${points[i].y}`;
+    }
     return path;
-  }, [chartData, getX, getY]);
+  }, [interpolatedData, getX, getY]);
 
   // 填充区域路径
   const areaPath = useMemo(() => {
-    if (!curvePath) return '';
-    const lastX = getX(chartData.length - 1);
+    if (!curvePath || interpolatedData.length === 0) return '';
+    const lastX = getX(interpolatedData.length - 1);
     const firstX = getX(0);
-    const bottomY = padding.top + chartHeight;
-    return `${curvePath} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
-  }, [curvePath, chartData.length, getX, chartHeight, padding.top]);
+    const bottomY = config.padding.top + config.chartHeight;
+    return `${curvePath} L ${lastX},${bottomY} L ${firstX},${bottomY} Z`;
+  }, [curvePath, interpolatedData.length, getX, config]);
 
   // 鼠标移动处理
   const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const relativeX = x / rect.width;
+    const scaleX = config.width / rect.width;
+    const scaledX = x * scaleX;
 
-    const index = Math.round(relativeX * (chartData.length - 1));
-    if (index >= 0 && index < chartData.length) {
+    const relativeX = (scaledX - config.padding.left) / config.chartWidth;
+    const index = Math.round(relativeX * (interpolatedData.length - 1));
+
+    if (index >= 0 && index < interpolatedData.length) {
       setHoveredIndex(index);
-      const point = chartData[index];
-      setTooltip({
-        data: point as TooltipData,
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
+      setTooltipPos({ x, y: e.clientY - rect.top });
     }
-  }, [chartData]);
+  }, [interpolatedData.length, config]);
 
   const handleMouseLeave = useCallback(() => {
     setHoveredIndex(null);
-    setTooltip(null);
   }, []);
 
   // Y轴刻度
-  const yTicks = useMemo(() => {
-    const ticks = [];
-    for (let i = 0; i <= 4; i++) {
-      const value = Math.round(minScore + (scoreRange * i) / 4);
-      ticks.push(value);
-    }
-    return ticks;
-  }, [minScore, scoreRange]);
+  const yTicks = [0, 25, 50, 75, 100];
 
-  // X轴刻度 (每10年)
-  const xTicks = useMemo(() => {
-    return chartData.filter(d => d.age % 10 === 1 || d.age === 1);
-  }, [chartData]);
+  // X轴刻度 - 每10年显示
+  const xTickAges = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90];
+
+  const hoveredData = hoveredIndex !== null ? interpolatedData[hoveredIndex] : null;
 
   return (
     <div ref={containerRef} className="relative w-full">
-      {/* 标题栏 */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <span className="text-lg font-serif" style={{ color: '#6366F1' }}>人生流年大运曲线图</span>
-          <span className="text-xs text-gray-500">(评分仅和自身比较)</span>
+      {/* 标题和图例 */}
+      <div className="flex items-center justify-between mb-3 px-2">
+        <div className="flex items-center gap-2">
+          <span className="w-6 h-6 bg-indigo-600 text-white rounded flex items-center justify-center text-sm font-bold">K</span>
+          <h3 className="text-base font-medium text-gray-800">
+            人生流年大运曲线图
+            <span className="text-xs text-gray-400 ml-2 font-normal">(评分仅和自身比较)</span>
+          </h3>
         </div>
         <div className="flex items-center gap-4 text-xs">
-          <span className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#10B981' }} />
-            <span style={{ color: '#10B981' }}>吉运 (涨)</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+            <span className="text-green-600">吉运 (涨)</span>
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#EF4444' }} />
-            <span style={{ color: '#EF4444' }}>凶运 (跌)</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+            <span className="text-red-500">凶运 (跌)</span>
           </span>
         </div>
       </div>
 
       {/* 图表容器 */}
-      <div className="relative bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <svg
-          width="100%"
-          height={height}
-          viewBox={`0 0 100 ${height}`}
-          preserveAspectRatio="none"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          className="cursor-crosshair"
-        >
-          <defs>
-            {/* 渐变填充 */}
-            <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#818CF8" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#818CF8" stopOpacity="0.02" />
-            </linearGradient>
-            {/* 线条渐变 */}
-            <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#6366F1" />
-              <stop offset="50%" stopColor="#8B5CF6" />
-              <stop offset="100%" stopColor="#6366F1" />
-            </linearGradient>
-          </defs>
+      <div className="relative bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <svg
+            viewBox={`0 0 ${config.width} ${config.height}`}
+            className="min-w-[900px] w-full"
+            style={{ height: '350px' }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
+            <defs>
+              {/* 渐变填充 */}
+              <linearGradient id="curveAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#818CF8" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#818CF8" stopOpacity="0.02" />
+              </linearGradient>
+            </defs>
 
-          {/* 背景网格 */}
-          {yTicks.map((tick, i) => (
-            <line
-              key={`grid-${i}`}
-              x1={padding.left}
-              y1={getY(tick)}
-              x2={100 - padding.right}
-              y2={getY(tick)}
-              stroke="#F3F4F6"
-              strokeWidth="0.5"
-            />
-          ))}
-
-          {/* Y轴刻度 */}
-          {yTicks.map((tick, i) => (
-            <text
-              key={`y-${i}`}
-              x={padding.left - 5}
-              y={getY(tick)}
-              textAnchor="end"
-              dominantBaseline="middle"
-              fill="#9CA3AF"
-              fontSize="3"
-            >
-              {tick}
-            </text>
-          ))}
-
-          {/* 大运分割线和标签 */}
-          {daYunGroups.map((group, i) => {
-            const startX = getX(group.startIndex);
-            return (
-              <g key={`dayun-${i}`}>
-                {i > 0 && (
-                  <line
-                    x1={startX}
-                    y1={padding.top - 15}
-                    x2={startX}
-                    y2={padding.top + chartHeight}
-                    stroke="#E5E7EB"
-                    strokeDasharray="2,2"
-                    strokeWidth="0.3"
-                  />
-                )}
+            {/* Y轴网格线 */}
+            {yTicks.map(tick => (
+              <g key={tick}>
+                <line
+                  x1={config.padding.left}
+                  y1={getY(tick)}
+                  x2={config.width - config.padding.right}
+                  y2={getY(tick)}
+                  stroke="#F3F4F6"
+                  strokeWidth="1"
+                />
                 <text
-                  x={getX(group.startIndex + (group.endIndex - group.startIndex) / 2)}
-                  y={padding.top - 8}
-                  textAnchor="middle"
-                  fill="#6366F1"
-                  fontSize="3"
-                  fontWeight="500"
+                  x={config.padding.left - 8}
+                  y={getY(tick)}
+                  textAnchor="end"
+                  dominantBaseline="middle"
+                  className="text-[11px]"
+                  fill="#9CA3AF"
                 >
-                  {group.daYun}
+                  {tick}
                 </text>
               </g>
-            );
-          })}
+            ))}
 
-          {/* 60分基准线 */}
-          <line
-            x1={padding.left}
-            y1={getY(60)}
-            x2={100 - padding.right}
-            y2={getY(60)}
-            stroke="#D1D5DB"
-            strokeDasharray="3,3"
-            strokeWidth="0.3"
-          />
+            {/* 大运分割线和标签 */}
+            {daYunGroups.map((group, idx) => {
+              const startX = getX(group.startIndex);
+              const endX = getX(group.endIndex);
+              const midX = (startX + endX) / 2;
 
-          {/* 填充区域 */}
-          <path
-            d={areaPath}
-            fill="url(#areaGradient)"
-          />
+              return (
+                <g key={idx}>
+                  {/* 大运分割线 */}
+                  {idx > 0 && (
+                    <line
+                      x1={startX}
+                      y1={config.padding.top - 15}
+                      x2={startX}
+                      y2={config.height - config.padding.bottom}
+                      stroke="#E5E7EB"
+                      strokeDasharray="3,3"
+                      strokeWidth="1"
+                    />
+                  )}
+                  {/* 大运名称 */}
+                  <text
+                    x={midX}
+                    y={config.padding.top - 28}
+                    textAnchor="middle"
+                    className="text-[12px] font-medium"
+                    fill="#DC2626"
+                  >
+                    {group.daYun}
+                  </text>
+                </g>
+              );
+            })}
 
-          {/* 曲线 */}
-          <path
-            d={curvePath}
-            fill="none"
-            stroke="url(#lineGradient)"
-            strokeWidth="0.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+            {/* 填充区域 */}
+            <path d={areaPath} fill="url(#curveAreaGradient)" />
 
-          {/* 数据点 */}
-          {chartData.map((point, i) => {
-            const x = getX(i);
-            const y = getY(point.score);
-            const isHovered = hoveredIndex === i;
-            const isCurrent = point.age === currentAge;
-            const isHighlight = point.score >= 85;
-            const isWarning = point.score < 40;
+            {/* 曲线 */}
+            <path
+              d={curvePath}
+              fill="none"
+              stroke="#6366F1"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
 
-            return (
-              <g key={`point-${i}`}>
-                {(isHovered || isCurrent || isHighlight || isWarning) && (
-                  <>
-                    {/* 点 */}
+            {/* K线柱 - 每年都显示 */}
+            {interpolatedData.map((point, idx) => {
+              const x = getX(idx);
+              const y = getY(point.score);
+              const isHovered = hoveredIndex === idx;
+              const isCurrent = point.age === currentAge;
+              const barWidth = Math.max(4, config.chartWidth / interpolatedData.length * 0.7);
+
+              // 计算K线柱的颜色（相对于前一年）
+              const prevScore = idx > 0 ? interpolatedData[idx - 1].score : point.score;
+              const isUp = point.score >= prevScore;
+              const barTop = Math.min(y, getY(prevScore));
+              const barHeight = Math.abs(y - getY(prevScore));
+
+              return (
+                <g key={idx}>
+                  {/* K线柱 */}
+                  <rect
+                    x={x - barWidth / 2}
+                    y={barTop}
+                    width={barWidth}
+                    height={Math.max(barHeight, 1)}
+                    fill={isUp ? '#22C55E' : '#EF4444'}
+                    opacity={isHovered ? 1 : 0.6}
+                    rx="1"
+                  />
+
+                  {/* 当前年龄标记 */}
+                  {isCurrent && (
+                    <>
+                      <line
+                        x1={x}
+                        y1={config.padding.top}
+                        x2={x}
+                        y2={config.height - config.padding.bottom}
+                        stroke="#F59E0B"
+                        strokeWidth="2"
+                        strokeDasharray="4,4"
+                      />
+                      <text
+                        x={x}
+                        y={config.padding.top - 10}
+                        textAnchor="middle"
+                        className="text-[11px] font-bold"
+                        fill="#F59E0B"
+                      >
+                        ★{point.score}
+                      </text>
+                      <circle
+                        cx={x}
+                        cy={y}
+                        r="5"
+                        fill="#F59E0B"
+                        stroke="white"
+                        strokeWidth="2"
+                      />
+                    </>
+                  )}
+
+                  {/* 关键点标记 */}
+                  {point.isKeyPoint && !isCurrent && (
                     <circle
                       cx={x}
                       cy={y}
-                      r={isHovered ? 2 : 1.5}
-                      fill={point.isUp ? '#10B981' : '#EF4444'}
+                      r={isHovered ? 5 : 3}
+                      fill="#6366F1"
                       stroke="white"
-                      strokeWidth="0.5"
+                      strokeWidth="2"
                     />
-                    {/* 高光点标注 */}
-                    {isHighlight && !isHovered && (
-                      <text
-                        x={x}
-                        y={y - 5}
-                        textAnchor="middle"
-                        fill="#F59E0B"
-                        fontSize="3"
-                      >
-                        {point.score}
-                      </text>
-                    )}
-                    {/* 当前年份标注 */}
-                    {isCurrent && (
-                      <>
-                        <line
-                          x1={x}
-                          y1={padding.top}
-                          x2={x}
-                          y2={padding.top + chartHeight}
-                          stroke="#F59E0B"
-                          strokeDasharray="2,1"
-                          strokeWidth="0.3"
-                        />
-                        <text
-                          x={x}
-                          y={padding.top - 3}
-                          textAnchor="middle"
-                          fill="#F59E0B"
-                          fontSize="3"
-                          fontWeight="bold"
-                        >
-                          今
-                        </text>
-                      </>
-                    )}
-                  </>
-                )}
-              </g>
-            );
-          })}
+                  )}
 
-          {/* X轴 */}
-          <line
-            x1={padding.left}
-            y1={padding.top + chartHeight}
-            x2={100 - padding.right}
-            y2={padding.top + chartHeight}
-            stroke="#E5E7EB"
-            strokeWidth="0.3"
-          />
+                  {/* Hover点 */}
+                  {isHovered && !isCurrent && !point.isKeyPoint && (
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="4"
+                      fill={isUp ? '#22C55E' : '#EF4444'}
+                      stroke="white"
+                      strokeWidth="2"
+                    />
+                  )}
+                </g>
+              );
+            })}
 
-          {/* X轴刻度 */}
-          {xTicks.map((point, i) => {
-            const idx = chartData.findIndex(d => d.age === point.age);
-            const x = getX(idx);
-            return (
-              <text
-                key={`x-${i}`}
-                x={x}
-                y={padding.top + chartHeight + 12}
-                textAnchor="middle"
-                fill="#9CA3AF"
-                fontSize="3"
-              >
-                {point.age}
-              </text>
-            );
-          })}
+            {/* X轴 */}
+            <line
+              x1={config.padding.left}
+              y1={config.height - config.padding.bottom}
+              x2={config.width - config.padding.right}
+              y2={config.height - config.padding.bottom}
+              stroke="#E5E7EB"
+              strokeWidth="1"
+            />
 
-          {/* Y轴标签 */}
-          <text
-            x={10}
-            y={padding.top + chartHeight / 2}
-            textAnchor="middle"
-            fill="#9CA3AF"
-            fontSize="3"
-            transform={`rotate(-90, 10, ${padding.top + chartHeight / 2})`}
-          >
-            运势分
-          </text>
+            {/* X轴刻度 - 每10年 */}
+            {xTickAges.map(age => {
+              const idx = interpolatedData.findIndex(p => p.age === age);
+              if (idx === -1) return null;
+              const x = getX(idx);
+              return (
+                <text
+                  key={age}
+                  x={x}
+                  y={config.height - config.padding.bottom + 20}
+                  textAnchor="middle"
+                  className="text-[11px]"
+                  fill="#9CA3AF"
+                >
+                  {age}
+                </text>
+              );
+            })}
 
-          {/* X轴标签 */}
-          <text
-            x={50}
-            y={height - 5}
-            textAnchor="middle"
-            fill="#9CA3AF"
-            fontSize="3"
-          >
-            年龄
-          </text>
-        </svg>
+            {/* 轴标签 */}
+            <text
+              x={config.width - 15}
+              y={config.height - 15}
+              textAnchor="end"
+              className="text-[10px]"
+              fill="#9CA3AF"
+            >
+              年龄
+            </text>
+          </svg>
+        </div>
 
         {/* Tooltip */}
-        {tooltip && (
+        {hoveredData && (
           <div
-            className="absolute z-50 pointer-events-none"
+            className="absolute z-50 pointer-events-none transition-opacity duration-150"
             style={{
-              left: Math.min(tooltip.x, (containerRef.current?.offsetWidth || 0) - 200),
-              top: tooltip.y + 20,
+              left: Math.min(tooltipPos.x + 15, (containerRef.current?.offsetWidth || 600) - 200),
+              top: Math.max(tooltipPos.y - 120, 10),
             }}
           >
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 min-w-[200px]">
-              <div className="flex items-center justify-between mb-3">
+            <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-3 min-w-[180px]">
+              <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
                 <div>
-                  <span className="text-lg font-bold text-gray-800">{tooltip.data.year} </span>
-                  <span className="text-gray-800">{tooltip.data.ganZhi}</span>
-                  <span className="text-gray-500 ml-1">({tooltip.data.age}岁)</span>
+                  <span className="text-base font-bold text-gray-800">{hoveredData.year}年</span>
+                  <span className="text-gray-600 ml-2">{hoveredData.ganZhi}</span>
                 </div>
-                <span
-                  className={`px-2 py-1 rounded text-xs font-bold text-white ${
-                    tooltip.data.isUp ? 'bg-red-500' : 'bg-green-500'
-                  }`}
-                >
-                  {tooltip.data.isUp ? '吉' : '凶'} {tooltip.data.isUp ? '▲' : '▼'}
+                <span className="text-sm text-gray-500">({hoveredData.age}岁)</span>
+              </div>
+
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-indigo-600">大运: {hoveredData.daYun}</span>
+                {hoveredData.isKeyPoint && (
+                  <span className="px-2 py-0.5 rounded text-xs font-bold text-white bg-indigo-500">
+                    关键年
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-500">运势评分:</span>
+                <span className={`text-lg font-bold ${hoveredData.score >= 60 ? 'text-green-600' : 'text-red-500'}`}>
+                  {hoveredData.score}
                 </span>
               </div>
 
-              <div className="text-sm text-indigo-600 mb-3">
-                大运: {tooltip.data.daYun}
-              </div>
-
-              {isPaid && tooltip.data.open !== undefined && (
-                <div className="grid grid-cols-4 gap-2 mb-3 text-center text-sm">
-                  <div>
-                    <div className="text-gray-400">开盘</div>
-                    <div className="font-mono font-bold text-gray-700">{tooltip.data.open}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-400">收盘</div>
-                    <div className="font-mono font-bold text-gray-700">{tooltip.data.close}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-400">最高</div>
-                    <div className="font-mono font-bold text-gray-700">{tooltip.data.high}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-400">最低</div>
-                    <div className="font-mono font-bold text-gray-700">{tooltip.data.low}</div>
-                  </div>
-                </div>
-              )}
-
-              <div className="text-sm text-gray-600 leading-relaxed">
-                {tooltip.data.reason}
+              <div className="text-xs text-gray-500 pt-2 border-t border-gray-100">
+                {hoveredData.reason}
               </div>
             </div>
           </div>
