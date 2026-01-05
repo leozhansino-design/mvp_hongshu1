@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import html2canvas from 'html2canvas';
-import { Header, BaziChartDisplay } from '@/components';
+import { Header, BaziChartDisplay, LifeCurveChart } from '@/components';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult } from '@/services/api';
 import {
@@ -179,6 +179,18 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           </button>
         </div>
 
+        {/* 人生曲线图 - 放在最上面 */}
+        {data?.chartPoints && data.chartPoints.length > 0 && (
+          <div className="mb-6">
+            <LifeCurveChart
+              data={data.chartPoints}
+              currentAge={currentAge}
+              isPaid={isPaid}
+              birthYear={birthInfo.year}
+            />
+          </div>
+        )}
+
         {/* 八字排盘 */}
         {data?.baziChart && (
           <div className="mystic-card mb-6">
@@ -300,63 +312,6 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                 <p className="text-xs text-text-secondary mb-1">适合行业</p>
                 <p className="text-purple-300 text-sm">{data.luckyInfo.industry}</p>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* 人生曲线 */}
-        {data?.chartPoints && data.chartPoints.length > 0 && (
-          <div className="mystic-card mb-6">
-            <h2 className="font-serif text-xl text-gold-400 mb-4">
-              {isPaid ? '百年运势详图' : '人生运势概览'}
-            </h2>
-            <div className="overflow-x-auto">
-              <div className="min-w-[600px]">
-                {/* 简易曲线图 */}
-                <div className="h-48 flex items-end justify-between gap-1 px-2">
-                  {data.chartPoints.map((point, idx) => {
-                    const height = ((point.score - 30) / 65) * 100;
-                    const isCurrentAge = point.age <= currentAge && (data.chartPoints[idx + 1]?.age > currentAge || idx === data.chartPoints.length - 1);
-                    return (
-                      <div key={idx} className="flex-1 flex flex-col items-center">
-                        <div
-                          className={`w-full rounded-t transition-all ${
-                            isCurrentAge ? 'bg-gold-400' : point.score >= 70 ? 'bg-kline-up' : point.score < 50 ? 'bg-kline-down' : 'bg-purple-500'
-                          }`}
-                          style={{ height: `${height}%` }}
-                          title={`${point.age}岁: ${point.score}分 - ${point.reason}`}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-between mt-2 text-xs text-text-secondary px-2">
-                  {data.chartPoints.map((point, idx) => (
-                    <span key={idx} className="flex-1 text-center">{point.age}岁</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* 曲线数据点详情 */}
-            <div className="mt-6 space-y-2">
-              {data.chartPoints.map((point, idx) => (
-                <div key={idx} className="flex items-center gap-4 p-3 rounded-lg bg-mystic-900/30 text-sm">
-                  <span className="w-12 text-gold-400 font-mono">{point.age}岁</span>
-                  <span className="w-16 text-purple-300">{point.daYun}</span>
-                  <span className="w-12 text-text-secondary">{point.ganZhi}</span>
-                  <div className="flex-1 flex items-center gap-2">
-                    <div className="w-16 h-2 bg-mystic-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${point.score >= 70 ? 'bg-kline-up' : point.score < 50 ? 'bg-kline-down' : 'bg-purple-500'}`}
-                        style={{ width: `${point.score}%` }}
-                      />
-                    </div>
-                    <span className="w-8 text-right font-mono">{point.score}</span>
-                  </div>
-                  <span className="flex-1 text-text-secondary truncate">{point.reason}</span>
-                </div>
-              ))}
             </div>
           </div>
         )}
