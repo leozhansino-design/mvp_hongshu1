@@ -58,6 +58,7 @@ export interface PaidVersionResult {
 }
 
 export type Gender = 'male' | 'female';
+export type CalendarType = 'solar' | 'lunar';
 
 export interface BirthInfo {
   gender: Gender;
@@ -65,6 +66,8 @@ export interface BirthInfo {
   month: number;
   day: number;
   hour: string;
+  name?: string;
+  calendarType?: CalendarType;
 }
 
 export interface StoredResult {

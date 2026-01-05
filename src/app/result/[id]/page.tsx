@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import html2canvas from 'html2canvas';
-import { KLineChart, BaguaLoader } from '@/components';
+import { KLineChart, BaguaLoader, Header } from '@/components';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult } from '@/services/api';
 import {
@@ -84,16 +83,22 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <BaguaLoader message="加载命数..." />
+      <div className="min-h-screen">
+        <Header />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
+          <BaguaLoader message="加载中..." />
+        </div>
       </div>
     );
   }
 
   if (upgrading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <BaguaLoader />
+      <div className="min-h-screen">
+        <Header />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
+          <BaguaLoader />
+        </div>
       </div>
     );
   }
@@ -109,28 +114,26 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const currentPhase = (isPaid ? paidResult?.currentPhase : freeResult?.currentPhase) as PhaseType | undefined;
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
-          <Link href="/" className="btn-outline text-sm">
-            ← 返回
-          </Link>
+    <div className="min-h-screen">
+      <Header />
+      <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
+        <div className="mb-6 flex items-center justify-end">
           <button
             onClick={handleShare}
             disabled={shareLoading}
             className="btn-outline text-sm"
           >
-            {shareLoading ? '生成中...' : '分享命数'}
+            {shareLoading ? '生成中...' : '分享报告'}
           </button>
         </div>
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 md:mb-8">
           <h1 className="font-serif text-2xl md:text-3xl text-gold-400 mb-2">
-            命数轨迹
+            {birthInfo.name ? `${birthInfo.name}的命盘` : '命盘报告'}
           </h1>
-          <p className="text-text-secondary">
-            {birthInfo.gender === 'male' ? '乾造' : '坤造'} ·
-            {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日 ·
+          <p className="text-text-secondary text-sm md:text-base">
+            {birthInfo.gender === 'male' ? '男' : '女'} ·
+            {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日 ·
             {HOUR_LABELS[birthInfo.hour]}
           </p>
         </div>

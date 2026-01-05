@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { BirthForm, BaguaLoader } from '@/components';
+import Header from '@/components/Header';
 import { generateFreeResult } from '@/services/api';
 import {
   getRemainingUsage,
@@ -63,65 +64,55 @@ export default function HomePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4">
-        <BaguaLoader />
+      <div className="min-h-screen">
+        <Header />
+        <div className="flex flex-col items-center justify-center px-4" style={{ minHeight: 'calc(100vh - 56px)' }}>
+          <BaguaLoader />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
-          <svg viewBox="0 0 100 100" className="w-full h-full">
-            <defs>
-              <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#D4AF37" />
-                <stop offset="100%" stopColor="#FFD700" />
-              </linearGradient>
-            </defs>
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="url(#logoGradient)"
-              strokeWidth="2"
-            />
-            <path
-              d="M50 5 A45 45 0 0 1 50 95 A22.5 22.5 0 0 1 50 50 A22.5 22.5 0 0 0 50 5"
-              fill="url(#logoGradient)"
-            />
-            <circle cx="50" cy="27.5" r="5" fill="#0D0221" />
-            <circle cx="50" cy="72.5" r="5" fill="url(#logoGradient)" />
-          </svg>
+    <div className="min-h-screen">
+      <Header />
+      <div className="flex flex-col items-center justify-center px-4 py-8 md:py-12" style={{ minHeight: 'calc(100vh - 56px)' }}>
+        <div className="text-center mb-6 md:mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 md:w-16 md:h-16 mb-3 md:mb-4">
+            <svg viewBox="0 0 24 24" className="w-full h-full text-gold-400">
+              <path
+                fill="currentColor"
+                d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+              />
+            </svg>
+          </div>
+
+          <h1 className="font-serif text-3xl md:text-5xl text-gold-gradient mb-2 md:mb-3">
+            人生曲线
+          </h1>
+          <p className="text-text-secondary text-base md:text-lg">
+            探索命运轨迹，把握人生节奏
+          </p>
         </div>
 
-        <h1 className="font-serif text-4xl md:text-5xl text-gold-gradient mb-3">
-          人生曲线
-        </h1>
-        <p className="text-text-secondary text-lg">
-          观天象，知命数，见未来
+        <div className="mystic-card-gold w-full max-w-md">
+          <BirthForm
+            onSubmit={handleSubmit}
+            disabled={isLoading}
+            remainingUsage={remainingUsage}
+          />
+
+          {error && (
+            <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+              <p className="text-red-400 text-sm text-center">{error}</p>
+            </div>
+          )}
+        </div>
+
+        <p className="mt-6 md:mt-8 text-xs md:text-sm text-text-secondary">
+          已有 <span className="text-gold-400 font-mono">{totalGenerated.toLocaleString()}</span> 人生成过命盘报告
         </p>
       </div>
-
-      <div className="mystic-card-gold w-full max-w-md">
-        <BirthForm
-          onSubmit={handleSubmit}
-          disabled={isLoading}
-          remainingUsage={remainingUsage}
-        />
-
-        {error && (
-          <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-            <p className="text-red-400 text-sm text-center">{error}</p>
-          </div>
-        )}
-      </div>
-
-      <p className="mt-8 text-sm text-text-secondary">
-        已有 <span className="text-gold-400 font-mono">{totalGenerated.toLocaleString()}</span> 人探寻过命数轨迹
-      </p>
     </div>
   );
 }
