@@ -28,10 +28,11 @@ export default function HomePage() {
   }, []);
 
   const handleSubmit = useCallback(async (birthInfo: BirthInfo) => {
-    if (!canUseFreeTrial()) {
-      setError('免费次数已用尽，请解锁完整版');
-      return;
-    }
+    // TODO: 测试完成后恢复次数限制
+    // if (!canUseFreeTrial()) {
+    //   setError('免费次数已用尽，请解锁完整版');
+    //   return;
+    // }
 
     setIsLoading(true);
     setError(null);

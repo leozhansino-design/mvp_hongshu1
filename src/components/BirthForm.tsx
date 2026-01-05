@@ -402,17 +402,16 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
 
       <button
         type="submit"
-        disabled={!isValid || disabled || remainingUsage <= 0}
+        disabled={!isValid || disabled}
         className="btn-gold w-full py-4 text-lg font-serif"
       >
-        {remainingUsage <= 0 ? '免费次数已用尽' : '开始测算'}
+        开始测算
       </button>
 
-      {remainingUsage > 0 && (
-        <p className="text-center text-sm text-text-secondary">
-          免费体验 · 剩余 <span className="text-gold-400">{remainingUsage}/3</span> 次
-        </p>
-      )}
+      {/* TODO: 测试完成后恢复次数显示 */}
+      <p className="text-center text-sm text-text-secondary">
+        测试模式 · <span className="text-yellow-400">无限次数</span>
+      </p>
     </form>
   );
 }
