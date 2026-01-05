@@ -1,7 +1,7 @@
 export const API_CONFIG = {
   baseUrl: 'https://api.bltcy.ai/v1',
   apiKey: 'sk-z4a6qvhXCbfboOyBwL33BR66mJdHTKj5NO4pfIUSkLBm2jGF',
-  model: 'gemini-2.5-flash-preview-05-20',
+  model: 'gemini-3-flash-preview',
 };
 
 export const FREE_USAGE_LIMIT = 3;
@@ -27,11 +27,11 @@ export const SYSTEM_PROMPT = `你是一位精通八字命理的AI大师，融合
 3. 解读专业但通俗易懂，专业术语需解释
 4. 警示之言必须给出化解之道
 
-**输出规则:**
-- 严格输出JSON格式
-- 不要markdown代码块
-- 不要任何解释性文字
-- 只输出JSON本身`;
+**输出规则（极其重要）:**
+- 直接输出纯JSON，第一个字符必须是{
+- 禁止使用\`\`\`json或\`\`\`等markdown代码块
+- 禁止在JSON前后添加任何解释性文字
+- 确保JSON完整闭合，所有括号配对正确`;
 
 export const FREE_VERSION_PROMPT = (
   gender: string,

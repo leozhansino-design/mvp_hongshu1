@@ -78,20 +78,11 @@ export default function HomePage() {
       <Header />
       <div className="flex flex-col items-center justify-center px-4 py-8 md:py-12" style={{ minHeight: 'calc(100vh - 56px)' }}>
         <div className="text-center mb-6 md:mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 md:w-16 md:h-16 mb-3 md:mb-4">
-            <svg viewBox="0 0 24 24" className="w-full h-full text-gold-400">
-              <path
-                fill="currentColor"
-                d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-              />
-            </svg>
-          </div>
-
           <h1 className="font-serif text-3xl md:text-5xl text-gold-gradient mb-2 md:mb-3">
             人生曲线
           </h1>
-          <p className="text-text-secondary text-base md:text-lg">
-            探索命运轨迹，把握人生节奏
+          <p className="text-text-secondary text-sm md:text-base">
+            探索命运轨迹 · 把握人生节奏
           </p>
         </div>
 

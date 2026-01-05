@@ -67,7 +67,7 @@ export async function generateFreeResult(
         { role: 'user', content: userPrompt }
       ],
       temperature: 0.7,
-      max_tokens: 4000,
+      max_tokens: 8000,
     }),
   });
 
@@ -77,6 +77,14 @@ export async function generateFreeResult(
   }
 
   const data = await response.json();
+
+  // 检查是否因长度被截断
+  const finishReason = data.choices[0]?.finish_reason;
+  if (finishReason === 'length') {
+    console.error('响应被截断:', data);
+    throw new Error('AI响应被截断，请重试');
+  }
+
   const content = data.choices[0]?.message?.content;
 
   if (!content) {
@@ -84,7 +92,24 @@ export async function generateFreeResult(
   }
 
   try {
-    const cleanedContent = content.replace(/```json\n?|\n?```/g, '').trim();
+    // 清理markdown代码块和多余空白
+    let cleanedContent = content
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*/g, '')
+      .trim();
+
+    // 确保从{开始
+    const jsonStart = cleanedContent.indexOf('{');
+    if (jsonStart > 0) {
+      cleanedContent = cleanedContent.substring(jsonStart);
+    }
+
+    // 确保以}结束
+    const jsonEnd = cleanedContent.lastIndexOf('}');
+    if (jsonEnd > 0 && jsonEnd < cleanedContent.length - 1) {
+      cleanedContent = cleanedContent.substring(0, jsonEnd + 1);
+    }
+
     const result = JSON.parse(cleanedContent) as FreeVersionResult;
 
     if (!result.chartPoints || !Array.isArray(result.chartPoints)) {
@@ -92,9 +117,10 @@ export async function generateFreeResult(
     }
 
     return result;
-  } catch {
+  } catch (e) {
     console.error('JSON解析失败:', content);
-    throw new Error('AI返回的数据格式不正确');
+    console.error('解析错误:', e);
+    throw new Error('AI返回的数据格式不正确，请重试');
   }
 }
 
@@ -130,7 +156,7 @@ export async function generatePaidResult(
         { role: 'user', content: userPrompt }
       ],
       temperature: 0.7,
-      max_tokens: 8000,
+      max_tokens: 16000,
     }),
   });
 
@@ -140,6 +166,14 @@ export async function generatePaidResult(
   }
 
   const data = await response.json();
+
+  // 检查是否因长度被截断
+  const finishReason = data.choices[0]?.finish_reason;
+  if (finishReason === 'length') {
+    console.error('响应被截断:', data);
+    throw new Error('AI响应被截断，请重试');
+  }
+
   const content = data.choices[0]?.message?.content;
 
   if (!content) {
@@ -147,7 +181,24 @@ export async function generatePaidResult(
   }
 
   try {
-    const cleanedContent = content.replace(/```json\n?|\n?```/g, '').trim();
+    // 清理markdown代码块和多余空白
+    let cleanedContent = content
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*/g, '')
+      .trim();
+
+    // 确保从{开始
+    const jsonStart = cleanedContent.indexOf('{');
+    if (jsonStart > 0) {
+      cleanedContent = cleanedContent.substring(jsonStart);
+    }
+
+    // 确保以}结束
+    const jsonEnd = cleanedContent.lastIndexOf('}');
+    if (jsonEnd > 0 && jsonEnd < cleanedContent.length - 1) {
+      cleanedContent = cleanedContent.substring(0, jsonEnd + 1);
+    }
+
     const result = JSON.parse(cleanedContent) as PaidVersionResult;
 
     if (!result.chartPoints || !Array.isArray(result.chartPoints)) {
@@ -155,9 +206,10 @@ export async function generatePaidResult(
     }
 
     return result;
-  } catch {
+  } catch (e) {
     console.error('JSON解析失败:', content);
-    throw new Error('AI返回的数据格式不正确');
+    console.error('解析错误:', e);
+    throw new Error('AI返回的数据格式不正确，请重试');
   }
 }
 

@@ -10,6 +10,22 @@ interface BirthFormProps {
   remainingUsage: number;
 }
 
+// 十二时辰定义
+const SHI_CHEN_OPTIONS = [
+  { value: 0, label: '子时', time: '23:00-01:00' },
+  { value: 1, label: '丑时', time: '01:00-03:00' },
+  { value: 3, label: '寅时', time: '03:00-05:00' },
+  { value: 5, label: '卯时', time: '05:00-07:00' },
+  { value: 7, label: '辰时', time: '07:00-09:00' },
+  { value: 9, label: '巳时', time: '09:00-11:00' },
+  { value: 11, label: '午时', time: '11:00-13:00' },
+  { value: 13, label: '未时', time: '13:00-15:00' },
+  { value: 15, label: '申时', time: '15:00-17:00' },
+  { value: 17, label: '酉时', time: '17:00-19:00' },
+  { value: 19, label: '戌时', time: '19:00-21:00' },
+  { value: 21, label: '亥时', time: '21:00-23:00' },
+];
+
 export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthFormProps) {
   const [name, setName] = useState<string>('');
   const [gender, setGender] = useState<Gender | null>(null);
@@ -17,8 +33,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
   const [year, setYear] = useState<number | ''>('');
   const [month, setMonth] = useState<number | ''>('');
   const [day, setDay] = useState<number | ''>('');
-  const [hour, setHour] = useState<number | ''>('');
-  const [minute, setMinute] = useState<number | ''>('');
+  const [shiChen, setShiChen] = useState<number | ''>('');
   const [birthPlace, setBirthPlace] = useState<string>('');
   const [showCities, setShowCities] = useState(false);
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
@@ -36,8 +51,6 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
   }, [currentYear]);
 
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-  const minutes = Array.from({ length: 60 }, (_, i) => i);
 
   const daysInMonth = useMemo(() => {
     if (!year || !month) return 31;
@@ -54,17 +67,17 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
     return CHINA_CITIES.filter(city => city.includes(birthPlace));
   }, [birthPlace]);
 
-  const isValid = gender && year && month && day && hour !== '' && minute !== '';
+  const isValid = gender && year && month && day && shiChen !== '';
 
   // 自动计算八字
   useEffect(() => {
-    if (year && month && day && hour !== '' && minute !== '') {
+    if (year && month && day && shiChen !== '') {
       const bazi = calculateBazi(
         year as number,
         month as number,
         day as number,
-        hour as number,
-        minute as number,
+        shiChen as number,
+        0,
         calendarType === 'lunar'
       );
       setBaziResult(bazi);
@@ -75,8 +88,8 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
           year as number,
           month as number,
           day as number,
-          hour as number,
-          minute as number,
+          shiChen as number,
+          0,
           gender,
           calendarType === 'lunar'
         );
@@ -88,7 +101,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
       setBaziResult(null);
       setDaYunResult(null);
     }
-  }, [year, month, day, hour, minute, gender, calendarType]);
+  }, [year, month, day, shiChen, gender, calendarType]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,8 +112,8 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
       year: year as number,
       month: month as number,
       day: day as number,
-      hour: hour as number,
-      minute: minute as number,
+      hour: shiChen as number,
+      minute: 0,
       name: name || undefined,
       calendarType,
       birthPlace: birthPlace || undefined,
@@ -112,19 +125,20 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
     setYear(now.getFullYear());
     setMonth(now.getMonth() + 1);
     setDay(now.getDate());
-    setHour(now.getHours());
-    setMinute(now.getMinutes());
-  };
-
-  // 时辰显示
-  const getShiChenLabel = (h: number): string => {
-    const shiChenMap: Record<number, string> = {
-      0: '子', 1: '丑', 2: '丑', 3: '寅', 4: '寅', 5: '卯',
-      6: '卯', 7: '辰', 8: '辰', 9: '巳', 10: '巳', 11: '午',
-      12: '午', 13: '未', 14: '未', 15: '申', 16: '申', 17: '酉',
-      18: '酉', 19: '戌', 20: '戌', 21: '亥', 22: '亥', 23: '子',
-    };
-    return shiChenMap[h] || '';
+    // 根据当前小时设置时辰
+    const hour = now.getHours();
+    if (hour === 23 || hour === 0) setShiChen(0);
+    else if (hour >= 1 && hour < 3) setShiChen(1);
+    else if (hour >= 3 && hour < 5) setShiChen(3);
+    else if (hour >= 5 && hour < 7) setShiChen(5);
+    else if (hour >= 7 && hour < 9) setShiChen(7);
+    else if (hour >= 9 && hour < 11) setShiChen(9);
+    else if (hour >= 11 && hour < 13) setShiChen(11);
+    else if (hour >= 13 && hour < 15) setShiChen(13);
+    else if (hour >= 15 && hour < 17) setShiChen(15);
+    else if (hour >= 17 && hour < 19) setShiChen(17);
+    else if (hour >= 19 && hour < 21) setShiChen(19);
+    else if (hour >= 21 && hour < 23) setShiChen(21);
   };
 
   return (
@@ -255,11 +269,11 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
         </div>
       </div>
 
-      {/* 出生时间 */}
+      {/* 出生时辰 - 12时辰选择 */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm text-text-secondary">
-            出生时间 <span className="text-kline-down">*</span>
+            出生时辰 <span className="text-kline-down">*</span>
           </label>
           <button
             type="button"
@@ -269,36 +283,18 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
             当前时间
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex items-center gap-1">
-            <select
-              value={hour}
-              onChange={(e) => setHour(e.target.value ? parseInt(e.target.value) : '')}
-              className="select-mystic"
-            >
-              <option value="">时</option>
-              {hours.map((h) => (
-                <option key={h} value={h}>
-                  {h.toString().padStart(2, '0')} ({getShiChenLabel(h)}时)
-                </option>
-              ))}
-            </select>
-            <span className="text-text-secondary">时</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <select
-              value={minute}
-              onChange={(e) => setMinute(e.target.value ? parseInt(e.target.value) : '')}
-              className="select-mystic"
-            >
-              <option value="">分</option>
-              {minutes.map((m) => (
-                <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
-              ))}
-            </select>
-            <span className="text-text-secondary">分</span>
-          </div>
-        </div>
+        <select
+          value={shiChen}
+          onChange={(e) => setShiChen(e.target.value ? parseInt(e.target.value) : '')}
+          className="select-mystic w-full"
+        >
+          <option value="">请选择时辰</option>
+          {SHI_CHEN_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label} ({option.time})
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* 出生地 */}
@@ -404,19 +400,12 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
         </div>
       )}
 
-      {/* AI驱动提示 */}
-      <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
-        <span className="text-purple-400">✦</span>
-        <span className="text-sm text-purple-300">AI命理大师 · 深度解读命盘</span>
-      </div>
-
       <button
         type="submit"
         disabled={!isValid || disabled || remainingUsage <= 0}
-        className="btn-gold w-full py-4 text-lg font-serif flex items-center justify-center gap-2"
+        className="btn-gold w-full py-4 text-lg font-serif"
       >
-        <span className="text-xl">✦</span>
-        {remainingUsage <= 0 ? '免费次数已用尽' : '生成人生K线'}
+        {remainingUsage <= 0 ? '免费次数已用尽' : '开始测算'}
       </button>
 
       {remainingUsage > 0 && (

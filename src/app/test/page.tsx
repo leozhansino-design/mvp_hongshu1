@@ -76,7 +76,7 @@ export default function TestPage() {
             { role: 'user', content: userPrompt }
           ],
           temperature: 0.7,
-          max_tokens: version === 'free' ? 4000 : 8000,
+          max_tokens: version === 'free' ? 8000 : 16000,
         }),
       });
 
