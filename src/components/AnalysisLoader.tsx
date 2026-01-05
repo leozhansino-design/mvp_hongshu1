@@ -39,15 +39,19 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
     const progressTimer = setInterval(() => {
       setProgress((prev) => {
         const increment = Math.random() * 8 + 2;
-        const newProgress = Math.min(prev + increment, 100);
+        // 最高到99%，不要到100%
+        const newProgress = Math.min(prev + increment, 99);
 
         // 更新当前模块
-        const moduleIndex = Math.floor((newProgress / 100) * ANALYSIS_MODULES.length);
+        const moduleIndex = Math.floor((newProgress / 99) * ANALYSIS_MODULES.length);
         setCurrentModuleIndex(Math.min(moduleIndex, ANALYSIS_MODULES.length - 1));
 
-        if (newProgress >= 100) {
+        if (newProgress >= 99) {
           clearInterval(progressTimer);
-          onComplete?.();
+          // 稍微延迟后调用完成回调
+          setTimeout(() => {
+            onComplete?.();
+          }, 500);
         }
 
         return newProgress;
@@ -62,8 +66,8 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
     if (queuePosition > 0) {
       return `排队中，约 ${queuePosition * 3} 秒`;
     }
-    const remaining = Math.ceil((100 - progress) / 10);
-    return `约 ${remaining} 秒`;
+    const remaining = Math.ceil((99 - progress) / 10);
+    return remaining > 0 ? `约 ${remaining} 秒` : '即将完成';
   }, [queuePosition, progress]);
 
   return (

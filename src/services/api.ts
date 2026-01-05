@@ -87,7 +87,7 @@ export async function generateFreeResult(
     const cleanedContent = content.replace(/```json\n?|\n?```/g, '').trim();
     const result = JSON.parse(cleanedContent) as FreeVersionResult;
 
-    if (!result.klineData || !Array.isArray(result.klineData)) {
+    if (!result.chartPoints || !Array.isArray(result.chartPoints)) {
       throw new Error('返回数据格式不正确');
     }
 
@@ -150,7 +150,7 @@ export async function generatePaidResult(
     const cleanedContent = content.replace(/```json\n?|\n?```/g, '').trim();
     const result = JSON.parse(cleanedContent) as PaidVersionResult;
 
-    if (!result.klineData || !Array.isArray(result.klineData)) {
+    if (!result.chartPoints || !Array.isArray(result.chartPoints)) {
       throw new Error('返回数据格式不正确');
     }
 

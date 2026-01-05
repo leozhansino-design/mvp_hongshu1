@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import html2canvas from 'html2canvas';
-import { KLineChart, BaguaLoader, Header, BaziChartDisplay } from '@/components';
+import { Header, BaziChartDisplay } from '@/components';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult } from '@/services/api';
 import {
@@ -15,6 +15,66 @@ import {
 
 interface PageParams {
   id: string;
+}
+
+// 评分圆环组件
+function ScoreRing({ score, label, size = 'md' }: { score: number; label: string; size?: 'sm' | 'md' }) {
+  const radius = size === 'sm' ? 28 : 36;
+  const strokeWidth = size === 'sm' ? 4 : 5;
+  const circumference = 2 * Math.PI * radius;
+  const progress = (score / 100) * circumference;
+  const color = score >= 75 ? '#22c55e' : score >= 50 ? '#D4AF37' : '#ef4444';
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className={`relative ${size === 'sm' ? 'w-16 h-16' : 'w-20 h-20'}`}>
+        <svg className="w-full h-full transform -rotate-90">
+          <circle
+            cx="50%"
+            cy="50%"
+            r={radius}
+            stroke="#2D1B4E"
+            strokeWidth={strokeWidth}
+            fill="none"
+          />
+          <circle
+            cx="50%"
+            cy="50%"
+            r={radius}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference - progress}
+            strokeLinecap="round"
+            className="transition-all duration-1000"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className={`font-mono font-bold ${size === 'sm' ? 'text-lg' : 'text-xl'}`} style={{ color }}>
+            {score}
+          </span>
+        </div>
+      </div>
+      <span className="text-xs text-text-secondary mt-1">{label}</span>
+    </div>
+  );
+}
+
+// 分析卡片组件
+function AnalysisCard({ title, content, score, icon }: { title: string; content: string; score: number; icon: string }) {
+  return (
+    <div className="p-4 rounded-lg bg-mystic-900/50 border border-purple-500/20">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{icon}</span>
+          <h3 className="font-serif text-gold-400">{title}</h3>
+        </div>
+        <ScoreRing score={score} label="" size="sm" />
+      </div>
+      <p className="text-text-primary text-sm leading-relaxed">{content}</p>
+    </div>
+  );
 }
 
 export default function ResultPage({ params }: { params: Promise<PageParams> }) {
@@ -38,7 +98,6 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
   const handleUpgrade = async () => {
     if (!result) return;
-
     setUpgrading(true);
     try {
       const paidResult = await generatePaidResult(result.birthInfo);
@@ -59,7 +118,6 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
   const handleShare = async () => {
     if (!shareRef.current) return;
-
     setShareLoading(true);
     try {
       const canvas = await html2canvas(shareRef.current, {
@@ -67,7 +125,6 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
         scale: 2,
         useCORS: true,
       });
-
       const link = document.createElement('a');
       link.download = `life-curve-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
@@ -80,112 +137,67 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     }
   };
 
-  if (loading) {
+  if (loading || upgrading) {
     return (
       <div className="min-h-screen">
         <Header />
         <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
-          <BaguaLoader message="加载中..." />
+          <div className="text-gold-400 animate-pulse">
+            {upgrading ? '正在解锁完整命数...' : '加载中...'}
+          </div>
         </div>
       </div>
     );
   }
 
-  if (upgrading) {
-    return (
-      <div className="min-h-screen">
-        <Header />
-        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
-          <BaguaLoader />
-        </div>
-      </div>
-    );
-  }
-
-  if (!result) {
-    return null;
-  }
+  if (!result) return null;
 
   const { birthInfo, freeResult, paidResult, isPaid } = result;
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
-
-  const currentPhase = (isPaid ? paidResult?.currentPhase : freeResult?.currentPhase) as PhaseType | undefined;
+  const data = isPaid ? paidResult : freeResult;
+  const currentPhase = data?.currentPhase as PhaseType | undefined;
 
   return (
     <div className="min-h-screen">
       <Header />
       <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
-        <div className="mb-6 flex items-center justify-end">
-          <button
-            onClick={handleShare}
-            disabled={shareLoading}
-            className="btn-outline text-sm"
-          >
-            {shareLoading ? '生成中...' : '分享报告'}
+        {/* 顶部信息 */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="font-serif text-2xl md:text-3xl text-gold-400">
+              {birthInfo.name ? `${birthInfo.name}的命盘` : '命盘报告'}
+            </h1>
+            <p className="text-text-secondary text-sm mt-1">
+              {birthInfo.gender === 'male' ? '乾造' : '坤造'} ·
+              {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日
+              {birthInfo.hour !== undefined ? ` ${String(birthInfo.hour).padStart(2, '0')}:${String(birthInfo.minute || 0).padStart(2, '0')}` : ''}
+            </p>
+          </div>
+          <button onClick={handleShare} disabled={shareLoading} className="btn-outline text-sm">
+            {shareLoading ? '生成中...' : '分享'}
           </button>
         </div>
 
-        <div className="text-center mb-6 md:mb-8">
-          <h1 className="font-serif text-2xl md:text-3xl text-gold-400 mb-2">
-            {birthInfo.name ? `${birthInfo.name}的命盘` : '命盘报告'}
-          </h1>
-          <p className="text-text-secondary text-sm md:text-base">
-            {birthInfo.gender === 'male' ? '乾造' : '坤造'} ·
-            {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日
-            {birthInfo.hour !== undefined && birthInfo.minute !== undefined
-              ? ` ${String(birthInfo.hour).padStart(2, '0')}:${String(birthInfo.minute).padStart(2, '0')}`
-              : ''}
-          </p>
-        </div>
-
         {/* 八字排盘 */}
-        {(isPaid ? paidResult?.baziChart : freeResult?.baziChart) && (
+        {data?.baziChart && (
           <div className="mystic-card mb-6">
             <h2 className="font-serif text-xl text-gold-400 mb-4">四柱八字</h2>
-            <BaziChartDisplay
-              chart={(isPaid ? paidResult?.baziChart : freeResult?.baziChart)!}
-              showDetails={true}
-            />
+            <BaziChartDisplay chart={data.baziChart} showDetails={true} />
           </div>
         )}
 
-        <div className="mystic-card mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-serif text-xl text-gold-400">
-              {isPaid ? '百年运势详图' : '百年运势'}
-            </h2>
-            <span className="text-xs text-text-secondary">
-              {isPaid ? '流年级别 · 100个数据点' : '大运级别 · 10个数据点'}
-            </span>
-          </div>
+        {/* 命理总评 */}
+        {data && (
+          <div className="mystic-card mb-6">
+            <div className="flex items-start justify-between mb-4">
+              <h2 className="font-serif text-xl text-gold-400">命理总评</h2>
+              <ScoreRing score={data.summaryScore} label="综合" />
+            </div>
+            <p className="text-text-primary leading-relaxed">{data.summary}</p>
 
-          {isPaid && paidResult ? (
-            <KLineChart
-              data={paidResult.klineData}
-              currentAge={currentAge}
-              isPaid={true}
-              highlights={paidResult.highlights.map((h) => ({ age: h.age, score: h.score }))}
-              warnings={paidResult.warnings.map((w) => ({ age: w.age, score: w.score }))}
-            />
-          ) : freeResult ? (
-            <KLineChart
-              data={freeResult.klineData}
-              currentAge={currentAge}
-            />
-          ) : null}
-
-          <p className="text-xs text-text-secondary text-center mt-2">
-            {isPaid ? '✦ 金色标记为高光年份 ◆ 红色标记为警示年份' : '大运十年一换，此为概览'}
-          </p>
-        </div>
-
-        <div className="mystic-card mb-6">
-          <h2 className="font-serif text-xl text-gold-400 mb-4">汝之命数</h2>
-
-          <div className="space-y-4">
             {currentPhase && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-mystic-900/50">
+              <div className="mt-4 p-3 rounded-lg bg-mystic-800/50 flex items-center gap-3">
                 <span className="text-2xl">
                   {currentPhase === 'rising' && '📈'}
                   {currentPhase === 'peak' && '⭐'}
@@ -194,253 +206,231 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                   {currentPhase === 'valley' && '🌙'}
                 </span>
                 <div>
-                  <p className="text-text-secondary text-sm">当前阶段</p>
-                  <p className="text-gold-400 font-serif">
-                    正值「{PHASE_LABELS[currentPhase]}」
-                  </p>
+                  <span className="text-text-secondary text-sm">当前运势阶段：</span>
+                  <span className="text-gold-400 font-serif ml-2">{PHASE_LABELS[currentPhase]}</span>
                 </div>
               </div>
             )}
+          </div>
+        )}
 
-            {!isPaid && freeResult && (
-              <>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-mystic-900/50">
-                    <span className="text-2xl">✦</span>
-                    <div>
-                      <p className="text-text-secondary text-sm">高光运程</p>
-                      <p className="text-kline-up">
-                        <span className="font-mono">{freeResult.highlightCount}</span> 段鸿运
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-mystic-900/50">
-                    <span className="text-2xl">◆</span>
-                    <div>
-                      <p className="text-text-secondary text-sm">警示运程</p>
-                      <p className="text-kline-down">
-                        <span className="font-mono">{freeResult.warningCount}</span> 段需慎
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 日主分析 */}
-                {freeResult.dayMasterAnalysis && (
-                  <div className="p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-mystic-900/50 border border-purple-500/20">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-gold-400">命主</span>
-                      <span className="px-2 py-0.5 rounded bg-gold-400/20 text-gold-400 text-sm font-serif">
-                        {freeResult.dayMasterAnalysis.dayMaster}
-                      </span>
-                      <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-xs">
-                        {freeResult.dayMasterAnalysis.strength}
-                      </span>
-                    </div>
-                    <p className="text-text-secondary text-sm leading-relaxed">
-                      {freeResult.dayMasterAnalysis.description}
-                    </p>
-                  </div>
-                )}
-
-                {/* 五行分布 */}
-                {freeResult.fiveElements && (
-                  <div className="p-4 rounded-lg bg-mystic-900/50">
-                    <p className="text-text-secondary text-sm mb-3">五行分布</p>
-                    <div className="flex justify-between">
-                      {[
-                        { key: 'wood', label: '木', color: 'bg-green-500', value: freeResult.fiveElements.wood },
-                        { key: 'fire', label: '火', color: 'bg-red-500', value: freeResult.fiveElements.fire },
-                        { key: 'earth', label: '土', color: 'bg-yellow-500', value: freeResult.fiveElements.earth },
-                        { key: 'metal', label: '金', color: 'bg-gray-300', value: freeResult.fiveElements.metal },
-                        { key: 'water', label: '水', color: 'bg-blue-500', value: freeResult.fiveElements.water },
-                      ].map((el) => (
-                        <div key={el.key} className="flex flex-col items-center gap-1">
-                          <div className="flex gap-0.5">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <div
-                                key={i}
-                                className={`w-2 h-4 rounded-sm ${i < el.value ? el.color : 'bg-mystic-800'}`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-xs text-text-secondary">{el.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 开运指南 */}
-                <div className="grid grid-cols-3 gap-2">
-                  {freeResult.luckyDirection && (
-                    <div className="p-3 rounded-lg bg-mystic-900/50 text-center">
-                      <p className="text-xs text-text-secondary mb-1">吉方</p>
-                      <p className="text-purple-300 text-sm">{freeResult.luckyDirection}</p>
-                    </div>
-                  )}
-                  {freeResult.luckyColor && (
-                    <div className="p-3 rounded-lg bg-mystic-900/50 text-center">
-                      <p className="text-xs text-text-secondary mb-1">吉色</p>
-                      <p className="text-purple-300 text-sm">{freeResult.luckyColor}</p>
-                    </div>
-                  )}
-                  {freeResult.luckyNumber && (
-                    <div className="p-3 rounded-lg bg-mystic-900/50 text-center">
-                      <p className="text-xs text-text-secondary mb-1">吉数</p>
-                      <p className="text-purple-300 text-sm">{freeResult.luckyNumber}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* 简要分析 */}
-                <div className="space-y-3">
-                  {freeResult.personality && (
-                    <div className="p-4 rounded-lg bg-mystic-900/50">
-                      <p className="text-gold-400 text-sm mb-2">性格特质</p>
-                      <p className="text-text-primary text-sm leading-relaxed">{freeResult.personality}</p>
-                    </div>
-                  )}
-                  {freeResult.careerHint && (
-                    <div className="p-4 rounded-lg bg-mystic-900/50">
-                      <p className="text-gold-400 text-sm mb-2">事业方向</p>
-                      <p className="text-text-primary text-sm leading-relaxed">{freeResult.careerHint}</p>
-                    </div>
-                  )}
-                  {freeResult.wealthHint && (
-                    <div className="p-4 rounded-lg bg-mystic-900/50">
-                      <p className="text-gold-400 text-sm mb-2">财运概况</p>
-                      <p className="text-text-primary text-sm leading-relaxed">{freeResult.wealthHint}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* 核心分析 */}
-                <div className="p-4 rounded-lg bg-gradient-to-b from-mystic-900/80 to-mystic-800/50 border border-gold-400/20">
-                  <p className="text-gold-400 text-sm mb-2">核心命理</p>
-                  <p className="text-text-primary leading-relaxed">
-                    {freeResult.coreAnalysis}
-                  </p>
-                </div>
-              </>
+        {/* 日主分析 */}
+        {data?.dayMaster && (
+          <div className="mystic-card mb-6">
+            <h2 className="font-serif text-xl text-gold-400 mb-4">日主分析</h2>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500/30 to-gold-400/30 text-gold-400 font-serif text-xl">
+                {data.dayMaster.stem}{data.dayMaster.element}
+              </span>
+              <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-sm">
+                {data.dayMaster.strength}
+              </span>
+            </div>
+            <p className="text-text-primary leading-relaxed">{data.dayMaster.description}</p>
+            {data.usefulGod && (
+              <div className="mt-4 p-3 rounded-lg bg-mystic-800/50">
+                <span className="text-gold-400 text-sm">用神喜忌：</span>
+                <p className="text-text-secondary text-sm mt-1">{data.usefulGod}</p>
+              </div>
             )}
           </div>
-        </div>
+        )}
 
-        {isPaid && paidResult && (
-          <>
-            <div className="mystic-card mb-6">
-              <h2 className="font-serif text-xl text-gold-400 mb-4">鸿运之年</h2>
-              <div className="space-y-4">
-                {paidResult.highlights.map((h, i) => (
-                  <div key={i} className="p-4 rounded-lg bg-mystic-900/50 border-l-2 border-gold-400">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-gold-400 font-mono">{h.age}岁</span>
-                      <span className="text-text-secondary">({h.year}年)</span>
+        {/* 五行分布 */}
+        {data?.fiveElements && (
+          <div className="mystic-card mb-6">
+            <h2 className="font-serif text-xl text-gold-400 mb-4">五行分布</h2>
+            <div className="grid grid-cols-5 gap-4">
+              {[
+                { key: 'wood', label: '木', color: 'bg-green-500', textColor: 'text-green-400', value: data.fiveElements.wood },
+                { key: 'fire', label: '火', color: 'bg-red-500', textColor: 'text-red-400', value: data.fiveElements.fire },
+                { key: 'earth', label: '土', color: 'bg-yellow-500', textColor: 'text-yellow-400', value: data.fiveElements.earth },
+                { key: 'metal', label: '金', color: 'bg-gray-300', textColor: 'text-gray-300', value: data.fiveElements.metal },
+                { key: 'water', label: '水', color: 'bg-blue-500', textColor: 'text-blue-400', value: data.fiveElements.water },
+              ].map((el) => (
+                <div key={el.key} className="flex flex-col items-center">
+                  <div className={`w-12 h-12 rounded-full ${el.color} flex items-center justify-center text-white font-bold text-lg mb-2`}>
+                    {el.value}
+                  </div>
+                  <span className={`text-sm ${el.textColor}`}>{el.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 八维分析 */}
+        {data && (
+          <div className="mystic-card mb-6">
+            <h2 className="font-serif text-xl text-gold-400 mb-4">八维详批</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <AnalysisCard title="性格命格" content={data.personality} score={data.personalityScore} icon="🎭" />
+              <AnalysisCard title="事业前程" content={data.career} score={data.careerScore} icon="💼" />
+              <AnalysisCard title="财帛运势" content={data.wealth} score={data.wealthScore} icon="💰" />
+              <AnalysisCard title="婚姻姻缘" content={data.marriage} score={data.marriageScore} icon="💕" />
+              <AnalysisCard title="健康体质" content={data.health} score={data.healthScore} icon="🏥" />
+              <AnalysisCard title="风水开运" content={data.fengShui} score={data.fengShuiScore} icon="🏠" />
+              <AnalysisCard title="六亲关系" content={data.family} score={data.familyScore} icon="👨‍👩‍👧" />
+            </div>
+          </div>
+        )}
+
+        {/* 开运指南 */}
+        {data?.luckyInfo && (
+          <div className="mystic-card mb-6">
+            <h2 className="font-serif text-xl text-gold-400 mb-4">开运指南</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
+                <p className="text-2xl mb-2">🧭</p>
+                <p className="text-xs text-text-secondary mb-1">吉利方位</p>
+                <p className="text-purple-300 text-sm">{data.luckyInfo.direction}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
+                <p className="text-2xl mb-2">🎨</p>
+                <p className="text-xs text-text-secondary mb-1">幸运颜色</p>
+                <p className="text-purple-300 text-sm">{data.luckyInfo.color}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
+                <p className="text-2xl mb-2">🔢</p>
+                <p className="text-xs text-text-secondary mb-1">幸运数字</p>
+                <p className="text-purple-300 text-sm">{data.luckyInfo.number}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
+                <p className="text-2xl mb-2">💼</p>
+                <p className="text-xs text-text-secondary mb-1">适合行业</p>
+                <p className="text-purple-300 text-sm">{data.luckyInfo.industry}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 人生曲线 */}
+        {data?.chartPoints && data.chartPoints.length > 0 && (
+          <div className="mystic-card mb-6">
+            <h2 className="font-serif text-xl text-gold-400 mb-4">
+              {isPaid ? '百年运势详图' : '人生运势概览'}
+            </h2>
+            <div className="overflow-x-auto">
+              <div className="min-w-[600px]">
+                {/* 简易曲线图 */}
+                <div className="h-48 flex items-end justify-between gap-1 px-2">
+                  {data.chartPoints.map((point, idx) => {
+                    const height = ((point.score - 30) / 65) * 100;
+                    const isCurrentAge = point.age <= currentAge && (data.chartPoints[idx + 1]?.age > currentAge || idx === data.chartPoints.length - 1);
+                    return (
+                      <div key={idx} className="flex-1 flex flex-col items-center">
+                        <div
+                          className={`w-full rounded-t transition-all ${
+                            isCurrentAge ? 'bg-gold-400' : point.score >= 70 ? 'bg-kline-up' : point.score < 50 ? 'bg-kline-down' : 'bg-purple-500'
+                          }`}
+                          style={{ height: `${height}%` }}
+                          title={`${point.age}岁: ${point.score}分 - ${point.reason}`}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-between mt-2 text-xs text-text-secondary px-2">
+                  {data.chartPoints.map((point, idx) => (
+                    <span key={idx} className="flex-1 text-center">{point.age}岁</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 曲线数据点详情 */}
+            <div className="mt-6 space-y-2">
+              {data.chartPoints.map((point, idx) => (
+                <div key={idx} className="flex items-center gap-4 p-3 rounded-lg bg-mystic-900/30 text-sm">
+                  <span className="w-12 text-gold-400 font-mono">{point.age}岁</span>
+                  <span className="w-16 text-purple-300">{point.daYun}</span>
+                  <span className="w-12 text-text-secondary">{point.ganZhi}</span>
+                  <div className="flex-1 flex items-center gap-2">
+                    <div className="w-16 h-2 bg-mystic-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${point.score >= 70 ? 'bg-kline-up' : point.score < 50 ? 'bg-kline-down' : 'bg-purple-500'}`}
+                        style={{ width: `${point.score}%` }}
+                      />
+                    </div>
+                    <span className="w-8 text-right font-mono">{point.score}</span>
+                  </div>
+                  <span className="flex-1 text-text-secondary truncate">{point.reason}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 高光年份 */}
+        {data?.highlights && data.highlights.length > 0 && (
+          <div className="mystic-card mb-6">
+            <h2 className="font-serif text-xl text-gold-400 mb-4">✦ 高光之年</h2>
+            <div className="space-y-4">
+              {data.highlights.map((h, i) => (
+                <div key={i} className="p-4 rounded-lg bg-gradient-to-r from-gold-400/10 to-transparent border-l-2 border-gold-400">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-gold-400 font-mono text-lg">{h.age}岁</span>
+                    <span className="text-text-secondary">({h.year}年)</span>
+                    {h.type && (
                       <span className="px-2 py-0.5 text-xs rounded-full bg-gold-400/20 text-gold-400">
                         {TYPE_LABELS[h.type] || h.type}
                       </span>
-                    </div>
-                    <p className="font-serif text-lg text-text-primary mb-1">{h.title}</p>
-                    <p className="text-text-secondary text-sm">{h.description}</p>
+                    )}
                   </div>
-                ))}
-              </div>
+                  <p className="font-serif text-lg text-text-primary mb-1">{h.title}</p>
+                  <p className="text-text-secondary text-sm">{h.description}</p>
+                </div>
+              ))}
             </div>
+          </div>
+        )}
 
-            <div className="mystic-card mb-6">
-              <h2 className="font-serif text-xl text-kline-down mb-4">谨慎之年</h2>
-              <div className="space-y-4">
-                {paidResult.warnings.map((w, i) => (
-                  <div key={i} className="p-4 rounded-lg bg-mystic-900/50 border-l-2 border-kline-down">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-kline-down font-mono">{w.age}岁</span>
-                      <span className="text-text-secondary">({w.year}年)</span>
+        {/* 警示年份 */}
+        {data?.warnings && data.warnings.length > 0 && (
+          <div className="mystic-card mb-6">
+            <h2 className="font-serif text-xl text-kline-down mb-4">◆ 谨慎之年</h2>
+            <div className="space-y-4">
+              {data.warnings.map((w, i) => (
+                <div key={i} className="p-4 rounded-lg bg-kline-down/5 border-l-2 border-kline-down">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-kline-down font-mono text-lg">{w.age}岁</span>
+                    <span className="text-text-secondary">({w.year}年)</span>
+                    {w.type && (
                       <span className="px-2 py-0.5 text-xs rounded-full bg-kline-down/20 text-kline-down">
                         {TYPE_LABELS[w.type] || w.type}
                       </span>
-                    </div>
-                    <p className="font-serif text-lg text-text-primary mb-1">{w.title}</p>
-                    <p className="text-text-secondary text-sm mb-2">{w.description}</p>
-                    <p className="text-accent-blue text-sm">
-                      化解之道：{w.advice}
-                    </p>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mystic-card mb-6">
-              <h2 className="font-serif text-xl text-gold-400 mb-4">五维详批</h2>
-              <div className="space-y-4">
-                {Object.entries(paidResult.summary).map(([key, value]) => (
-                  <div key={key} className="p-4 rounded-lg bg-mystic-900/50">
-                    <h3 className="font-serif text-gold-400 mb-2">
-                      {key === 'personality' && '性格命格'}
-                      {key === 'career' && '事业前程'}
-                      {key === 'wealth' && '财帛运势'}
-                      {key === 'love' && '姻缘情感'}
-                      {key === 'health' && '身体康健'}
-                    </h3>
-                    <p className="text-text-primary text-sm leading-relaxed">{value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mystic-card mb-6">
-              <h2 className="font-serif text-xl text-gold-400 mb-4">喜忌提示</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-mystic-900/50">
-                  <p className="text-text-secondary text-sm mb-2">喜用五行</p>
-                  <div className="flex gap-2">
-                    {paidResult.luckyElements.map((el, i) => (
-                      <span key={i} className="px-3 py-1 rounded-full bg-kline-up/20 text-kline-up">
-                        {el}
-                      </span>
-                    ))}
-                  </div>
+                  <p className="font-serif text-lg text-text-primary mb-1">{w.title}</p>
+                  <p className="text-text-secondary text-sm mb-2">{w.description}</p>
+                  <p className="text-accent-blue text-sm">
+                    <span className="text-gold-400">化解之道：</span>{w.advice}
+                  </p>
                 </div>
-                <div className="p-4 rounded-lg bg-mystic-900/50">
-                  <p className="text-text-secondary text-sm mb-2">忌讳五行</p>
-                  <div className="flex gap-2">
-                    {paidResult.unluckyElements.map((el, i) => (
-                      <span key={i} className="px-3 py-1 rounded-full bg-kline-down/20 text-kline-down">
-                        {el}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
-          </>
+          </div>
         )}
 
+        {/* 升级提示 */}
         {!isPaid && (
           <div className="mystic-card-gold text-center">
-            <h2 className="font-serif text-xl text-gold-400 mb-2">
-              欲知天机全貌？
-            </h2>
-            <p className="text-text-secondary mb-6">
-              解锁完整命数 · ¥19.9
-            </p>
-
+            <h2 className="font-serif text-xl text-gold-400 mb-2">欲知天机全貌？</h2>
+            <p className="text-text-secondary mb-6">解锁完整命数 · ¥19.9</p>
             <ul className="text-left mb-6 space-y-2 max-w-xs mx-auto">
               <li className="flex items-center gap-2 text-text-primary">
                 <span className="text-gold-400">✦</span> 百年逐年运势详图
               </li>
               <li className="flex items-center gap-2 text-text-primary">
-                <span className="text-gold-400">✦</span> 高光年份具体解读
+                <span className="text-gold-400">✦</span> 十神深度解析
               </li>
               <li className="flex items-center gap-2 text-text-primary">
-                <span className="text-gold-400">✦</span> 警示年份应对之策
+                <span className="text-gold-400">✦</span> 大运流年详批
               </li>
               <li className="flex items-center gap-2 text-text-primary">
-                <span className="text-gold-400">✦</span> 性格/事业/财运/姻缘/健康 五维详批
+                <span className="text-gold-400">✦</span> 今明两年运势预测
               </li>
             </ul>
-
             <button onClick={handleUpgrade} className="btn-gold px-8 py-3">
               洞悉全局
             </button>
@@ -450,32 +440,18 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           </div>
         )}
 
-        <div
-          ref={shareRef}
-          className="fixed -left-[9999px] w-[1080px] p-12"
-          style={{ background: 'linear-gradient(180deg, #0D0221 0%, #1A0A2E 50%, #16213E 100%)' }}
-        >
+        {/* 分享图隐藏区域 */}
+        <div ref={shareRef} className="fixed -left-[9999px] w-[1080px] p-12" style={{ background: 'linear-gradient(180deg, #0D0221 0%, #1A0A2E 50%, #16213E 100%)' }}>
           <div className="text-center mb-8">
             <p className="text-gold-400 text-3xl mb-2">✦ 人生曲线 ✦</p>
+            <p className="text-text-secondary">{birthInfo.name || '命盘报告'}</p>
           </div>
-
-          <div className="bg-mystic-800/50 rounded-lg p-6 mb-8">
-            <div className="h-[400px] flex items-center justify-center text-text-secondary">
-              K线图预览区域
-            </div>
+          <div className="text-center mb-8">
+            <p className="text-gold-400 text-2xl">综合评分：{data?.summaryScore}</p>
+            <p className="text-text-primary text-xl mt-4">
+              当前正值「{currentPhase ? PHASE_LABELS[currentPhase] : ''}」
+            </p>
           </div>
-
-          {!isPaid && freeResult && (
-            <div className="text-center mb-8">
-              <p className="text-gold-400 text-2xl mb-4">
-                「我的高光之年有 {freeResult.highlightCount} 段」
-              </p>
-              <p className="text-text-primary text-xl">
-                当前正值「{currentPhase ? PHASE_LABELS[currentPhase] : ''}」
-              </p>
-            </div>
-          )}
-
           <div className="border-t border-purple-500/30 pt-8 text-center">
             <p className="text-text-secondary mb-4">扫码探寻你的命数轨迹</p>
             <div className="w-32 h-32 bg-white mx-auto rounded-lg flex items-center justify-center">
