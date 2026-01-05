@@ -117,8 +117,8 @@ export function calculateBazi(
   isLunar: boolean = false
 ): BaziResult | null {
   try {
-    let solar: typeof Solar;
-    let lunar: typeof Lunar;
+    let solar: Solar;
+    let lunar: Lunar;
 
     if (isLunar) {
       // 农历转公历
@@ -239,8 +239,8 @@ export function calculateDaYun(
   isLunar: boolean = false
 ): { startInfo: string; daYunList: DaYunItem[] } | null {
   try {
-    let solar: typeof Solar;
-    let lunar: typeof Lunar;
+    let solar: Solar;
+    let lunar: Lunar;
 
     if (isLunar) {
       lunar = Lunar.fromYmd(year, month, day);
@@ -297,8 +297,8 @@ export function calculateLiuNian(
   isLunar: boolean = false
 ): LiuNianItem[] {
   try {
-    let solar: typeof Solar;
-    let lunar: typeof Lunar;
+    let solar: Solar;
+    let lunar: Lunar;
 
     if (isLunar) {
       lunar = Lunar.fromYmd(year, month, day);
