@@ -16,19 +16,17 @@ interface InterpolatedPoint {
   daYun: string;
   ganZhi: string;
   reason: string;
-  isKeyPoint: boolean; // 是否是原始关键点
+  isKeyPoint: boolean;
 }
 
-// 三次样条插值函数
-function cubicInterpolate(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, t: number): number {
+// 三次样条插值
+function cubicInterpolate(y0: number, y1: number, y2: number, y3: number, t: number): number {
   const t2 = t * t;
   const t3 = t2 * t;
-
   const a = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
   const b = y0 - 2.5 * y1 + 2 * y2 - 0.5 * y3;
   const c = -0.5 * y0 + 0.5 * y2;
   const d = y1;
-
   return a * t3 + b * t2 + c * t + d;
 }
 
@@ -37,11 +35,11 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-  // 对原始数据进行插值，生成每年的数据点
+  // 对原始数据进行插值
   const interpolatedData = useMemo((): InterpolatedPoint[] => {
     if (data.length === 0) return [];
 
-    // 如果已经是100个点（付费版），直接使用
+    // 付费版直接使用
     if (data.length >= 50) {
       return data.map((point) => ({
         age: point.age,
@@ -54,13 +52,11 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
       }));
     }
 
-    // 免费版：10个点插值为每年的点
+    // 免费版：插值
     const result: InterpolatedPoint[] = [];
     const sortedData = [...data].sort((a, b) => a.age - b.age);
 
-    // 为每一年生成数据点
     for (let age = 1; age <= 90; age++) {
-      // 找到这个年龄所在的区间
       let i = 0;
       while (i < sortedData.length - 1 && sortedData[i + 1].age <= age) {
         i++;
@@ -71,11 +67,9 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
       const prevPoint = sortedData[Math.max(i - 1, 0)];
       const nextNextPoint = sortedData[Math.min(i + 2, sortedData.length - 1)];
 
-      // 检查是否是关键点
       const keyPoint = sortedData.find(p => p.age === age);
 
       if (keyPoint) {
-        // 如果是关键点，直接使用原始数据
         result.push({
           age,
           year: birthYear + age - 1,
@@ -86,32 +80,22 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
           isKeyPoint: true,
         });
       } else {
-        // 插值计算
-        const x0 = prevPoint.age;
-        const y0 = prevPoint.score;
-        const x1 = currentPoint.age;
-        const y1 = currentPoint.score;
-        const x2 = nextPoint.age;
-        const y2 = nextPoint.score;
-        const x3 = nextNextPoint.age;
-        const y3 = nextNextPoint.score;
-
-        // 计算插值位置 t (0-1)
-        const t = x1 === x2 ? 0 : (age - x1) / (x2 - x1);
-
-        // 三次样条插值
-        const interpolatedScore = Math.round(cubicInterpolate(x0, y0, x1, y1, x2, y2, x3, y3, t));
-
-        // 限制分数范围
+        const t = currentPoint.age === nextPoint.age ? 0 : (age - currentPoint.age) / (nextPoint.age - currentPoint.age);
+        const interpolatedScore = Math.round(cubicInterpolate(
+          prevPoint.score, currentPoint.score, nextPoint.score, nextNextPoint.score, t
+        ));
         const score = Math.max(30, Math.min(95, interpolatedScore));
+
+        // 生成该大运阶段的通用描述
+        const daYunDescription = `${currentPoint.daYun}大运期间，${currentPoint.reason.slice(0, 15)}`;
 
         result.push({
           age,
           year: birthYear + age - 1,
           score,
           daYun: currentPoint.daYun,
-          ganZhi: `${age}岁`,
-          reason: `${currentPoint.daYun}运程中`,
+          ganZhi: `流年${age}岁`,
+          reason: daYunDescription,
           isKeyPoint: false,
         });
       }
@@ -120,7 +104,7 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
     return result;
   }, [data, birthYear]);
 
-  // 找到大运分组
+  // 大运分组
   const daYunGroups = useMemo(() => {
     const groups: { daYun: string; startIndex: number; endIndex: number }[] = [];
     let currentDaYun = '';
@@ -145,7 +129,7 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
   const config = useMemo(() => {
     const padding = { top: 50, right: 35, bottom: 50, left: 45 };
     const width = 1100;
-    const height = 350;
+    const height = 320;
     return {
       padding,
       width,
@@ -155,18 +139,16 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
     };
   }, []);
 
-  // 计算X坐标
   const getX = useCallback((index: number) => {
     if (interpolatedData.length <= 1) return config.padding.left;
     return config.padding.left + (index / (interpolatedData.length - 1)) * config.chartWidth;
   }, [interpolatedData.length, config]);
 
-  // 计算Y坐标 (0-100范围)
   const getY = useCallback((score: number) => {
     return config.padding.top + config.chartHeight - (score / 100) * config.chartHeight;
   }, [config]);
 
-  // 生成平滑曲线路径
+  // 生成平滑曲线 - 使用贝塞尔曲线
   const curvePath = useMemo(() => {
     if (interpolatedData.length === 0) return '';
 
@@ -175,19 +157,27 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
       y: getY(d.score),
     }));
 
-    if (points.length === 1) {
-      return `M ${points[0].x} ${points[0].y}`;
+    let path = `M ${points[0].x} ${points[0].y}`;
+
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(i - 1, 0)];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[Math.min(i + 2, points.length - 1)];
+
+      const tension = 0.3;
+      const cp1x = p1.x + (p2.x - p0.x) * tension;
+      const cp1y = p1.y + (p2.y - p0.y) * tension;
+      const cp2x = p2.x - (p3.x - p1.x) * tension;
+      const cp2y = p2.y - (p3.y - p1.y) * tension;
+
+      path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
     }
 
-    // 使用简单的线段连接（因为数据已经是插值后的）
-    let path = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 1; i < points.length; i++) {
-      path += ` L ${points[i].x} ${points[i].y}`;
-    }
     return path;
   }, [interpolatedData, getX, getY]);
 
-  // 填充区域路径
+  // 填充区域
   const areaPath = useMemo(() => {
     if (!curvePath || interpolatedData.length === 0) return '';
     const lastX = getX(interpolatedData.length - 1);
@@ -196,7 +186,7 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
     return `${curvePath} L ${lastX},${bottomY} L ${firstX},${bottomY} Z`;
   }, [curvePath, interpolatedData.length, getX, config]);
 
-  // 鼠标移动处理
+  // 鼠标事件
   const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
@@ -217,17 +207,13 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
     setHoveredIndex(null);
   }, []);
 
-  // Y轴刻度
   const yTicks = [0, 25, 50, 75, 100];
-
-  // X轴刻度 - 每10年显示
   const xTickAges = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90];
-
   const hoveredData = hoveredIndex !== null ? interpolatedData[hoveredIndex] : null;
 
   return (
     <div ref={containerRef} className="relative w-full">
-      {/* 标题和图例 */}
+      {/* 标题 */}
       <div className="flex items-center justify-between mb-3 px-2">
         <div className="flex items-center gap-2">
           <span className="w-6 h-6 bg-indigo-600 text-white rounded flex items-center justify-center text-sm font-bold">K</span>
@@ -248,25 +234,29 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
         </div>
       </div>
 
-      {/* 图表容器 */}
+      {/* 图表 */}
       <div className="relative bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <svg
             viewBox={`0 0 ${config.width} ${config.height}`}
             className="min-w-[900px] w-full"
-            style={{ height: '350px' }}
+            style={{ height: '320px' }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
             <defs>
-              {/* 渐变填充 */}
-              <linearGradient id="curveAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#818CF8" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#818CF8" stopOpacity="0.02" />
+              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#818CF8" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#818CF8" stopOpacity="0.05" />
+              </linearGradient>
+              <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#6366F1" />
+                <stop offset="50%" stopColor="#8B5CF6" />
+                <stop offset="100%" stopColor="#6366F1" />
               </linearGradient>
             </defs>
 
-            {/* Y轴网格线 */}
+            {/* Y轴网格 */}
             {yTicks.map(tick => (
               <g key={tick}>
                 <line
@@ -290,7 +280,7 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
               </g>
             ))}
 
-            {/* 大运分割线和标签 */}
+            {/* 大运标签 */}
             {daYunGroups.map((group, idx) => {
               const startX = getX(group.startIndex);
               const endX = getX(group.endIndex);
@@ -298,7 +288,6 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
 
               return (
                 <g key={idx}>
-                  {/* 大运分割线 */}
                   {idx > 0 && (
                     <line
                       x1={startX}
@@ -310,7 +299,6 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
                       strokeWidth="1"
                     />
                   )}
-                  {/* 大运名称 */}
                   <text
                     x={midX}
                     y={config.padding.top - 28}
@@ -325,45 +313,27 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
             })}
 
             {/* 填充区域 */}
-            <path d={areaPath} fill="url(#curveAreaGradient)" />
+            <path d={areaPath} fill="url(#areaGradient)" />
 
-            {/* 曲线 */}
+            {/* 平滑曲线 */}
             <path
               d={curvePath}
               fill="none"
-              stroke="#6366F1"
-              strokeWidth="2.5"
+              stroke="url(#lineGradient)"
+              strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
 
-            {/* K线柱 - 每年都显示 */}
+            {/* 关键数据点 */}
             {interpolatedData.map((point, idx) => {
               const x = getX(idx);
               const y = getY(point.score);
               const isHovered = hoveredIndex === idx;
               const isCurrent = point.age === currentAge;
-              const barWidth = Math.max(4, config.chartWidth / interpolatedData.length * 0.7);
-
-              // 计算K线柱的颜色（相对于前一年）
-              const prevScore = idx > 0 ? interpolatedData[idx - 1].score : point.score;
-              const isUp = point.score >= prevScore;
-              const barTop = Math.min(y, getY(prevScore));
-              const barHeight = Math.abs(y - getY(prevScore));
 
               return (
                 <g key={idx}>
-                  {/* K线柱 */}
-                  <rect
-                    x={x - barWidth / 2}
-                    y={barTop}
-                    width={barWidth}
-                    height={Math.max(barHeight, 1)}
-                    fill={isUp ? '#22C55E' : '#EF4444'}
-                    opacity={isHovered ? 1 : 0.6}
-                    rx="1"
-                  />
-
                   {/* 当前年龄标记 */}
                   {isCurrent && (
                     <>
@@ -385,14 +355,7 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
                       >
                         ★{point.score}
                       </text>
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r="5"
-                        fill="#F59E0B"
-                        stroke="white"
-                        strokeWidth="2"
-                      />
+                      <circle cx={x} cy={y} r="6" fill="#F59E0B" stroke="white" strokeWidth="2" />
                     </>
                   )}
 
@@ -401,7 +364,7 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
                     <circle
                       cx={x}
                       cy={y}
-                      r={isHovered ? 5 : 3}
+                      r={isHovered ? 5 : 4}
                       fill="#6366F1"
                       stroke="white"
                       strokeWidth="2"
@@ -410,14 +373,7 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
 
                   {/* Hover点 */}
                   {isHovered && !isCurrent && !point.isKeyPoint && (
-                    <circle
-                      cx={x}
-                      cy={y}
-                      r="4"
-                      fill={isUp ? '#22C55E' : '#EF4444'}
-                      stroke="white"
-                      strokeWidth="2"
-                    />
+                    <circle cx={x} cy={y} r="5" fill="#8B5CF6" stroke="white" strokeWidth="2" />
                   )}
                 </g>
               );
@@ -433,7 +389,7 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
               strokeWidth="1"
             />
 
-            {/* X轴刻度 - 每10年 */}
+            {/* X轴刻度 */}
             {xTickAges.map(age => {
               const idx = interpolatedData.findIndex(p => p.age === age);
               if (idx === -1) return null;
@@ -452,7 +408,6 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
               );
             })}
 
-            {/* 轴标签 */}
             <text
               x={config.width - 15}
               y={config.height - 15}
@@ -468,10 +423,10 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
         {/* Tooltip */}
         {hoveredData && (
           <div
-            className="absolute z-50 pointer-events-none transition-opacity duration-150"
+            className="absolute z-50 pointer-events-none"
             style={{
               left: Math.min(tooltipPos.x + 15, (containerRef.current?.offsetWidth || 600) - 200),
-              top: Math.max(tooltipPos.y - 120, 10),
+              top: Math.max(tooltipPos.y - 100, 10),
             }}
           >
             <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-3 min-w-[180px]">
