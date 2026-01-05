@@ -1,0 +1,226 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --mystic-900: #0D0221;
+  --mystic-800: #1A0A2E;
+  --mystic-700: #16213E;
+  --gold-400: #FFD700;
+  --gold-500: #D4AF37;
+  --purple-400: #9D4EDD;
+  --purple-500: #7B2CBF;
+  --kline-up: #22D3EE;
+  --kline-down: #F43F5E;
+  --accent-blue: #00D9FF;
+  --text-primary: #E8E6E3;
+  --text-secondary: #9CA3AF;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: linear-gradient(180deg, var(--mystic-900) 0%, var(--mystic-800) 50%, var(--mystic-700) 100%);
+  min-height: 100vh;
+  color: var(--text-primary);
+}
+
+.font-serif {
+  font-family: 'Noto Serif SC', serif;
+}
+
+.font-mono {
+  font-family: 'Roboto Mono', monospace;
+}
+
+@layer components {
+  .mystic-card {
+    @apply relative rounded-lg p-6;
+    background: rgba(26, 10, 46, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    box-shadow: 0 0 40px rgba(157, 78, 221, 0.1);
+  }
+
+  .mystic-card-gold {
+    @apply mystic-card;
+    border-color: rgba(212, 175, 55, 0.4);
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.1);
+  }
+
+  .btn-gold {
+    @apply relative px-8 py-3 font-medium rounded-lg overflow-hidden transition-all duration-300;
+    background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);
+    color: var(--mystic-900);
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+  }
+
+  .btn-gold:hover {
+    box-shadow: 0 0 50px rgba(212, 175, 55, 0.6);
+    transform: translateY(-2px);
+  }
+
+  .btn-gold:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-outline {
+    @apply px-6 py-2 rounded-lg border transition-all duration-300;
+    border-color: rgba(212, 175, 55, 0.4);
+    color: var(--gold-400);
+  }
+
+  .btn-outline:hover {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: var(--gold-400);
+  }
+
+  .input-mystic {
+    @apply w-full px-4 py-3 rounded-lg transition-all duration-300 outline-none;
+    background: rgba(13, 2, 33, 0.6);
+    border: 1px solid rgba(157, 78, 221, 0.3);
+    color: var(--text-primary);
+  }
+
+  .input-mystic:focus {
+    border-color: var(--gold-400);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+  }
+
+  .select-mystic {
+    @apply w-full px-4 py-3 rounded-lg transition-all duration-300 outline-none appearance-none cursor-pointer;
+    background: rgba(13, 2, 33, 0.6);
+    border: 1px solid rgba(157, 78, 221, 0.3);
+    color: var(--text-primary);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239D4EDD' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    padding-right: 40px;
+  }
+
+  .select-mystic:focus {
+    border-color: var(--gold-400);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+  }
+
+  .select-mystic option {
+    background: var(--mystic-800);
+    color: var(--text-primary);
+  }
+
+  .gender-btn {
+    @apply flex-1 py-4 rounded-lg font-serif text-lg transition-all duration-300 cursor-pointer;
+    background: rgba(13, 2, 33, 0.6);
+    border: 1px solid rgba(157, 78, 221, 0.3);
+    color: var(--text-secondary);
+  }
+
+  .gender-btn:hover {
+    border-color: var(--purple-400);
+  }
+
+  .gender-btn.active {
+    border-color: var(--gold-400);
+    color: var(--gold-400);
+    background: rgba(212, 175, 55, 0.1);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+  }
+
+  .text-gold {
+    color: var(--gold-400);
+  }
+
+  .text-gold-gradient {
+    background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@keyframes bagua-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes star-float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.5;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
+  }
+}
+
+.animate-bagua-spin {
+  animation: bagua-spin 8s linear infinite;
+}
+
+.animate-star-float {
+  animation: star-float 4s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.star-particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: var(--gold-400);
+  border-radius: 50%;
+  opacity: 0.5;
+  animation: star-float 6s ease-in-out infinite;
+}
+
+.recharts-cartesian-grid line {
+  stroke: rgba(157, 78, 221, 0.2) !important;
+}
+
+.recharts-text {
+  fill: var(--text-secondary) !important;
+  font-family: 'Roboto Mono', monospace !important;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--mystic-900);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--purple-500);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--purple-400);
+}
