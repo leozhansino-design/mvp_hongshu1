@@ -1,5 +1,5 @@
 import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT } from '@/lib/constants';
-import { FreeVersionResult, PaidVersionResult, BirthInfo, HOUR_LABELS } from '@/types';
+import { FreeVersionResult, PaidVersionResult, BirthInfo } from '@/types';
 
 interface APIConfig {
   baseUrl: string;
@@ -43,13 +43,15 @@ export async function generateFreeResult(
   birthInfo: BirthInfo,
   config: APIConfig = API_CONFIG
 ): Promise<FreeVersionResult> {
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour;
   const userPrompt = FREE_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
     birthInfo.month,
     birthInfo.day,
-    hourLabel
+    birthInfo.hour,
+    birthInfo.minute,
+    birthInfo.calendarType || 'solar',
+    birthInfo.birthPlace
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -102,15 +104,17 @@ export async function generatePaidResult(
 ): Promise<PaidVersionResult> {
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour;
 
   const userPrompt = PAID_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
     birthInfo.month,
     birthInfo.day,
-    hourLabel,
-    currentAge
+    birthInfo.hour,
+    birthInfo.minute,
+    birthInfo.calendarType || 'solar',
+    currentAge,
+    birthInfo.birthPlace
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -162,26 +166,30 @@ export function getSystemPrompt(): string {
 }
 
 export function getFreePrompt(birthInfo: BirthInfo): string {
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour;
   return FREE_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
     birthInfo.month,
     birthInfo.day,
-    hourLabel
+    birthInfo.hour,
+    birthInfo.minute,
+    birthInfo.calendarType || 'solar',
+    birthInfo.birthPlace
   );
 }
 
 export function getPaidPrompt(birthInfo: BirthInfo): string {
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour;
   return PAID_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
     birthInfo.month,
     birthInfo.day,
-    hourLabel,
-    currentAge
+    birthInfo.hour,
+    birthInfo.minute,
+    birthInfo.calendarType || 'solar',
+    currentAge,
+    birthInfo.birthPlace
   );
 }

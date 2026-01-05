@@ -11,7 +11,7 @@ import {
   generatePaidResult,
 } from '@/services/api';
 import { getUsageCount, resetUsage } from '@/services/storage';
-import { BirthInfo, HOUR_OPTIONS } from '@/types';
+import { BirthInfo } from '@/types';
 
 export default function DevPage() {
   const [config, setConfig] = useState({
@@ -33,7 +33,9 @@ export default function DevPage() {
     year: 1990,
     month: 6,
     day: 15,
-    hour: 'wu',
+    hour: 12,
+    minute: 0,
+    calendarType: 'solar',
   });
 
   const [generating, setGenerating] = useState(false);
@@ -195,19 +197,28 @@ export default function DevPage() {
                   />
                 </div>
 
-                <div className="col-span-2">
-                  <label className="block text-sm text-gray-400 mb-1">时辰</label>
-                  <select
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">时</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="23"
                     value={testBirthInfo.hour}
-                    onChange={(e) => setTestBirthInfo({ ...testBirthInfo, hour: e.target.value })}
+                    onChange={(e) => setTestBirthInfo({ ...testBirthInfo, hour: parseInt(e.target.value) || 0 })}
                     className="w-full px-3 py-2 bg-gray-700 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                  >
-                    {HOUR_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">分</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="59"
+                    value={testBirthInfo.minute}
+                    onChange={(e) => setTestBirthInfo({ ...testBirthInfo, minute: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 bg-gray-700 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                  />
                 </div>
               </div>
 

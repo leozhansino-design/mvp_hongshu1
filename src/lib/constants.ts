@@ -1,7 +1,7 @@
 export const API_CONFIG = {
   baseUrl: 'https://api.bltcy.ai/v1',
   apiKey: 'sk-z4a6qvhXCbfboOyBwL33BR66mJdHTKj5NO4pfIUSkLBm2jGF',
-  model: 'gpt-4o-mini',
+  model: 'gemini-2.5-flash-preview-05-20',
 };
 
 export const FREE_USAGE_LIMIT = 3;
@@ -12,17 +12,21 @@ export const STORAGE_KEYS = {
   resultPrefix: 'lc_result_',
 };
 
-export const SYSTEM_PROMPT = `你是一位精通八字命理的大师，学贯古今，对《三命通会》《滴天髓》《穷通宝鉴》等典籍了然于胸。
+export const SYSTEM_PROMPT = `你是一位精通八字命理的AI大师，融合传统命理学与现代数据分析技术。
+你对《三命通会》《滴天髓》《穷通宝鉴》等典籍了然于胸，同时能够将复杂的命理信息转化为易于理解的可视化数据。
 
-你需要根据用户的出生信息，推演其人生运势，并以K线数据形式呈现。
+你需要根据用户的出生信息，进行以下分析：
+1. 排出完整的八字命盘（年柱、月柱、日柱、时柱）
+2. 计算真太阳时并转换为农历日期
+3. 推演人生运势并以K线数据形式呈现
+4. 提供核心命理分析
 
 分析原则：
-1. 严格基于传统八字命理学
-2. 运势评分30-95，要有真实起伏，不可过于平缓
-3. 大运十年一换，流年每年不同，要体现周期变化
-4. 解读专业但通俗，避免过多术语
-5. 警示之言亦需给出化解之道，不可一味吓人
-6. 整体基调积极向上，予人希望
+1. 严格基于传统八字命理学进行推演
+2. 运势评分范围30-95，要有真实起伏，体现人生的高低起落
+3. 大运十年一换，流年每年不同，要体现周期变化规律
+4. 解读专业但通俗易懂，适当解释命理术语
+5. 警示之言亦需给出化解之道，整体基调积极向上
 
 输出规则：
 - 严格输出JSON格式
@@ -35,17 +39,30 @@ export const FREE_VERSION_PROMPT = (
   year: number,
   month: number,
   day: number,
-  hour: string
-) => `请为此命主推演大运级别的人生运势。
+  hour: number,
+  minute: number,
+  calendarType: string,
+  birthPlace?: string
+) => `请为此命主进行八字排盘和大运级别的人生运势推演。
 
 命主信息：
 - 性别: ${gender === 'male' ? '男' : '女'}
-- 生辰: ${year}年${month}月${day}日 ${hour}
+- 出生日期: ${year}年${month}月${day}日 ${hour}时${minute}分
+- 历法: ${calendarType === 'lunar' ? '农历' : '公历'}
+${birthPlace ? `- 出生地: ${birthPlace}` : ''}
 
 请输出JSON：
 {
+  "baziChart": {
+    "yearPillar": {"heavenlyStem": "甲", "earthlyBranch": "子", "fullName": "甲子"},
+    "monthPillar": {"heavenlyStem": "乙", "earthlyBranch": "丑", "fullName": "乙丑"},
+    "dayPillar": {"heavenlyStem": "丙", "earthlyBranch": "寅", "fullName": "丙寅"},
+    "hourPillar": {"heavenlyStem": "丁", "earthlyBranch": "卯", "fullName": "丁卯"},
+    "zodiac": "鼠",
+    "lunarDate": "农历X年X月X日",
+    "solarTime": "真太阳时 XX:XX"
+  },
   "klineData": [
-    // 10个数据点，每点代表一步大运（约10年）
     {"age": 1, "score": 55, "trend": "up"},
     {"age": 10, "score": 62, "trend": "up"},
     {"age": 20, "score": 58, "trend": "down"},
@@ -60,33 +77,69 @@ export const FREE_VERSION_PROMPT = (
   "currentPhase": "rising",
   "highlightCount": 3,
   "warningCount": 2,
-  "briefSummary": "命主八字...(100字左右的简要概述)"
+  "briefSummary": "命主八字日主为X，生于X月...(100字左右的简要概述，不要透露具体年份)",
+  "coreAnalysis": "核心命理分析：日主X生于X月，X为用神...(200字左右的核心命理解读)",
+  "dayMasterAnalysis": {
+    "dayMaster": "甲木",
+    "strength": "身旺/身弱",
+    "description": "日主X代表...，生于X月..."
+  },
+  "fiveElements": {
+    "wood": 2,
+    "fire": 1,
+    "earth": 2,
+    "metal": 1,
+    "water": 2
+  },
+  "luckyDirection": "东方、东南方",
+  "luckyColor": "绿色、青色",
+  "luckyNumber": "3、8",
+  "personality": "性格特点概述(80字左右)",
+  "careerHint": "事业方向提示(60字左右)",
+  "wealthHint": "财运概况提示(60字左右)"
 }
 
 注意：
-- score范围30-95，要有起伏
+- baziChart必须根据出生时间准确排出四柱八字
+- 如果是公历需要先转换为农历再排八字
+- score范围30-95，要有真实起伏
 - trend为该阶段相比上一阶段的走势
 - currentPhase可选: rising/peak/stable/declining/valley
-- briefSummary不要透露具体年份，引导用户解锁完整版`;
+- coreAnalysis要专业但易懂
+- fiveElements中的数字代表八字中该五行的数量
+- 各分析内容要专业但通俗易懂`;
 
 export const PAID_VERSION_PROMPT = (
   gender: string,
   year: number,
   month: number,
   day: number,
-  hour: string,
-  currentAge: number
-) => `请为此命主推演流年级别的详细人生运势。
+  hour: number,
+  minute: number,
+  calendarType: string,
+  currentAge: number,
+  birthPlace?: string
+) => `请为此命主进行八字排盘和流年级别的详细人生运势推演。
 
 命主信息：
 - 性别: ${gender === 'male' ? '男' : '女'}
-- 生辰: ${year}年${month}月${day}日 ${hour}
+- 出生日期: ${year}年${month}月${day}日 ${hour}时${minute}分
+- 历法: ${calendarType === 'lunar' ? '农历' : '公历'}
 - 当前年龄: ${currentAge}岁
+${birthPlace ? `- 出生地: ${birthPlace}` : ''}
 
 请输出JSON：
 {
+  "baziChart": {
+    "yearPillar": {"heavenlyStem": "甲", "earthlyBranch": "子", "fullName": "甲子"},
+    "monthPillar": {"heavenlyStem": "乙", "earthlyBranch": "丑", "fullName": "乙丑"},
+    "dayPillar": {"heavenlyStem": "丙", "earthlyBranch": "寅", "fullName": "丙寅"},
+    "hourPillar": {"heavenlyStem": "丁", "earthlyBranch": "卯", "fullName": "丁卯"},
+    "zodiac": "鼠",
+    "lunarDate": "农历X年X月X日",
+    "solarTime": "真太阳时 XX:XX"
+  },
   "klineData": [
-    // 100条数据，1岁到100岁每年一条
     {
       "age": 1,
       "year": ${year},
@@ -96,7 +149,7 @@ export const PAID_VERSION_PROMPT = (
       "low": 45,
       "trend": "up"
     }
-    // ... 共100条
+    // ... 共100条数据，1岁到100岁每年一条
   ],
   "highlights": [
     {
@@ -134,15 +187,17 @@ export const PAID_VERSION_PROMPT = (
 }
 
 注意：
+- baziChart必须根据出生时间准确排出四柱八字
 - K线的open/close/high/low要合理，close与open差值决定涨跌
 - type可选: career/wealth/love/health/general
 - 解读要专业但易懂，适当引用命理术语但需解释
 - 警示要给具体化解建议`;
 
 export const LOADING_MESSAGES = [
-  '排演四柱八字...',
+  '正在排演四柱八字...',
+  '计算真太阳时...',
   '推算大运流年...',
-  '窥探命数天机...',
   '解析命盘格局...',
   '演算吉凶走势...',
+  'AI深度分析中...',
 ];

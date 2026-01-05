@@ -2,16 +2,14 @@
 
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import html2canvas from 'html2canvas';
-import { KLineChart, BaguaLoader } from '@/components';
+import { KLineChart, BaguaLoader, Header, BaziChartDisplay } from '@/components';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult } from '@/services/api';
 import {
   StoredResult,
   PHASE_LABELS,
   TYPE_LABELS,
-  HOUR_LABELS,
   PhaseType,
 } from '@/types';
 
@@ -84,16 +82,22 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <BaguaLoader message="加载命数..." />
+      <div className="min-h-screen">
+        <Header />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
+          <BaguaLoader message="加载中..." />
+        </div>
       </div>
     );
   }
 
   if (upgrading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <BaguaLoader />
+      <div className="min-h-screen">
+        <Header />
+        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
+          <BaguaLoader />
+        </div>
       </div>
     );
   }
@@ -109,31 +113,42 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const currentPhase = (isPaid ? paidResult?.currentPhase : freeResult?.currentPhase) as PhaseType | undefined;
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
-          <Link href="/" className="btn-outline text-sm">
-            ← 返回
-          </Link>
+    <div className="min-h-screen">
+      <Header />
+      <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
+        <div className="mb-6 flex items-center justify-end">
           <button
             onClick={handleShare}
             disabled={shareLoading}
             className="btn-outline text-sm"
           >
-            {shareLoading ? '生成中...' : '分享命数'}
+            {shareLoading ? '生成中...' : '分享报告'}
           </button>
         </div>
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 md:mb-8">
           <h1 className="font-serif text-2xl md:text-3xl text-gold-400 mb-2">
-            命数轨迹
+            {birthInfo.name ? `${birthInfo.name}的命盘` : '命盘报告'}
           </h1>
-          <p className="text-text-secondary">
+          <p className="text-text-secondary text-sm md:text-base">
             {birthInfo.gender === 'male' ? '乾造' : '坤造'} ·
-            {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日 ·
-            {HOUR_LABELS[birthInfo.hour]}
+            {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日
+            {birthInfo.hour !== undefined && birthInfo.minute !== undefined
+              ? ` ${String(birthInfo.hour).padStart(2, '0')}:${String(birthInfo.minute).padStart(2, '0')}`
+              : ''}
           </p>
         </div>
+
+        {/* 八字排盘 */}
+        {(isPaid ? paidResult?.baziChart : freeResult?.baziChart) && (
+          <div className="mystic-card mb-6">
+            <h2 className="font-serif text-xl text-gold-400 mb-4">四柱八字</h2>
+            <BaziChartDisplay
+              chart={(isPaid ? paidResult?.baziChart : freeResult?.baziChart)!}
+              showDetails={true}
+            />
+          </div>
+        )}
 
         <div className="mystic-card mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -189,29 +204,123 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
             {!isPaid && freeResult && (
               <>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-mystic-900/50">
-                  <span className="text-2xl">✦</span>
-                  <div>
-                    <p className="text-text-secondary text-sm">高光运程</p>
-                    <p className="text-kline-up">
-                      有 <span className="font-mono">{freeResult.highlightCount}</span> 段鸿运当头之时
-                    </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-mystic-900/50">
+                    <span className="text-2xl">✦</span>
+                    <div>
+                      <p className="text-text-secondary text-sm">高光运程</p>
+                      <p className="text-kline-up">
+                        <span className="font-mono">{freeResult.highlightCount}</span> 段鸿运
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-mystic-900/50">
+                    <span className="text-2xl">◆</span>
+                    <div>
+                      <p className="text-text-secondary text-sm">警示运程</p>
+                      <p className="text-kline-down">
+                        <span className="font-mono">{freeResult.warningCount}</span> 段需慎
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-mystic-900/50">
-                  <span className="text-2xl">◆</span>
-                  <div>
-                    <p className="text-text-secondary text-sm">警示运程</p>
-                    <p className="text-kline-down">
-                      有 <span className="font-mono">{freeResult.warningCount}</span> 段需谨慎以对
+                {/* 日主分析 */}
+                {freeResult.dayMasterAnalysis && (
+                  <div className="p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-mystic-900/50 border border-purple-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-gold-400">命主</span>
+                      <span className="px-2 py-0.5 rounded bg-gold-400/20 text-gold-400 text-sm font-serif">
+                        {freeResult.dayMasterAnalysis.dayMaster}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-xs">
+                        {freeResult.dayMasterAnalysis.strength}
+                      </span>
+                    </div>
+                    <p className="text-text-secondary text-sm leading-relaxed">
+                      {freeResult.dayMasterAnalysis.description}
                     </p>
                   </div>
+                )}
+
+                {/* 五行分布 */}
+                {freeResult.fiveElements && (
+                  <div className="p-4 rounded-lg bg-mystic-900/50">
+                    <p className="text-text-secondary text-sm mb-3">五行分布</p>
+                    <div className="flex justify-between">
+                      {[
+                        { key: 'wood', label: '木', color: 'bg-green-500', value: freeResult.fiveElements.wood },
+                        { key: 'fire', label: '火', color: 'bg-red-500', value: freeResult.fiveElements.fire },
+                        { key: 'earth', label: '土', color: 'bg-yellow-500', value: freeResult.fiveElements.earth },
+                        { key: 'metal', label: '金', color: 'bg-gray-300', value: freeResult.fiveElements.metal },
+                        { key: 'water', label: '水', color: 'bg-blue-500', value: freeResult.fiveElements.water },
+                      ].map((el) => (
+                        <div key={el.key} className="flex flex-col items-center gap-1">
+                          <div className="flex gap-0.5">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <div
+                                key={i}
+                                className={`w-2 h-4 rounded-sm ${i < el.value ? el.color : 'bg-mystic-800'}`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-xs text-text-secondary">{el.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 开运指南 */}
+                <div className="grid grid-cols-3 gap-2">
+                  {freeResult.luckyDirection && (
+                    <div className="p-3 rounded-lg bg-mystic-900/50 text-center">
+                      <p className="text-xs text-text-secondary mb-1">吉方</p>
+                      <p className="text-purple-300 text-sm">{freeResult.luckyDirection}</p>
+                    </div>
+                  )}
+                  {freeResult.luckyColor && (
+                    <div className="p-3 rounded-lg bg-mystic-900/50 text-center">
+                      <p className="text-xs text-text-secondary mb-1">吉色</p>
+                      <p className="text-purple-300 text-sm">{freeResult.luckyColor}</p>
+                    </div>
+                  )}
+                  {freeResult.luckyNumber && (
+                    <div className="p-3 rounded-lg bg-mystic-900/50 text-center">
+                      <p className="text-xs text-text-secondary mb-1">吉数</p>
+                      <p className="text-purple-300 text-sm">{freeResult.luckyNumber}</p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="p-4 rounded-lg bg-mystic-900/50">
+                {/* 简要分析 */}
+                <div className="space-y-3">
+                  {freeResult.personality && (
+                    <div className="p-4 rounded-lg bg-mystic-900/50">
+                      <p className="text-gold-400 text-sm mb-2">性格特质</p>
+                      <p className="text-text-primary text-sm leading-relaxed">{freeResult.personality}</p>
+                    </div>
+                  )}
+                  {freeResult.careerHint && (
+                    <div className="p-4 rounded-lg bg-mystic-900/50">
+                      <p className="text-gold-400 text-sm mb-2">事业方向</p>
+                      <p className="text-text-primary text-sm leading-relaxed">{freeResult.careerHint}</p>
+                    </div>
+                  )}
+                  {freeResult.wealthHint && (
+                    <div className="p-4 rounded-lg bg-mystic-900/50">
+                      <p className="text-gold-400 text-sm mb-2">财运概况</p>
+                      <p className="text-text-primary text-sm leading-relaxed">{freeResult.wealthHint}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* 核心分析 */}
+                <div className="p-4 rounded-lg bg-gradient-to-b from-mystic-900/80 to-mystic-800/50 border border-gold-400/20">
+                  <p className="text-gold-400 text-sm mb-2">核心命理</p>
                   <p className="text-text-primary leading-relaxed">
-                    {freeResult.briefSummary}
+                    {freeResult.coreAnalysis}
                   </p>
                 </div>
               </>
