@@ -53,11 +53,11 @@ export default function HomePage() {
 
       saveResult(storedResult);
 
+      // 跳转后不再设置 loading 为 false，保持 loading 状态直到页面切换
       router.push(`/result/${resultId}`);
     } catch (err) {
       console.error('生成失败:', err);
       setError(err instanceof Error ? err.message : '天机运算失败，请稍后再试');
-    } finally {
       setIsLoading(false);
     }
   }, [router]);
