@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Gender, BirthInfo, HOUR_OPTIONS } from '@/types';
+import { Gender, BirthInfo, HOUR_OPTIONS, CalendarType } from '@/types';
 
 interface BirthFormProps {
   onSubmit: (birthInfo: BirthInfo) => void;
@@ -10,7 +10,9 @@ interface BirthFormProps {
 }
 
 export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthFormProps) {
+  const [name, setName] = useState<string>('');
   const [gender, setGender] = useState<Gender | null>(null);
+  const [calendarType, setCalendarType] = useState<CalendarType>('solar');
   const [year, setYear] = useState<number | ''>('');
   const [month, setMonth] = useState<number | ''>('');
   const [day, setDay] = useState<number | ''>('');
@@ -46,14 +48,31 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
       month: month as number,
       day: day as number,
       hour,
+      name: name || undefined,
+      calendarType,
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* 姓名（可选） */}
       <div>
-        <label className="block text-sm text-text-secondary mb-3">
-          性别
+        <label className="block text-sm text-text-secondary mb-2">
+          姓名 <span className="text-text-secondary/50">(选填)</span>
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="请输入姓名"
+          className="input-mystic"
+        />
+      </div>
+
+      {/* 性别 */}
+      <div>
+        <label className="block text-sm text-text-secondary mb-2">
+          性别 <span className="text-kline-down">*</span>
         </label>
         <div className="flex gap-4">
           <button
@@ -61,23 +80,55 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
             className={`gender-btn ${gender === 'male' ? 'active' : ''}`}
             onClick={() => setGender('male')}
           >
-            <span className="text-2xl">☰</span>
-            <span className="block mt-1">乾</span>
+            <span className="text-xl">♂</span>
+            <span className="block mt-1">男</span>
           </button>
           <button
             type="button"
             className={`gender-btn ${gender === 'female' ? 'active' : ''}`}
             onClick={() => setGender('female')}
           >
-            <span className="text-2xl">☷</span>
-            <span className="block mt-1">坤</span>
+            <span className="text-xl">♀</span>
+            <span className="block mt-1">女</span>
           </button>
         </div>
       </div>
 
+      {/* 历法选择 */}
       <div>
-        <label className="block text-sm text-text-secondary mb-3">
-          生辰
+        <label className="block text-sm text-text-secondary mb-2">
+          历法 <span className="text-kline-down">*</span>
+        </label>
+        <div className="flex gap-4">
+          <button
+            type="button"
+            className={`flex-1 py-2.5 rounded-lg text-sm transition-all ${
+              calendarType === 'solar'
+                ? 'bg-gold-400/20 border border-gold-400 text-gold-400'
+                : 'bg-mystic-900/50 border border-purple-500/30 text-text-secondary hover:border-purple-400'
+            }`}
+            onClick={() => setCalendarType('solar')}
+          >
+            阳历(公历)
+          </button>
+          <button
+            type="button"
+            className={`flex-1 py-2.5 rounded-lg text-sm transition-all ${
+              calendarType === 'lunar'
+                ? 'bg-gold-400/20 border border-gold-400 text-gold-400'
+                : 'bg-mystic-900/50 border border-purple-500/30 text-text-secondary hover:border-purple-400'
+            }`}
+            onClick={() => setCalendarType('lunar')}
+          >
+            阴历(农历)
+          </button>
+        </div>
+      </div>
+
+      {/* 生辰 */}
+      <div>
+        <label className="block text-sm text-text-secondary mb-2">
+          出生日期 <span className="text-kline-down">*</span>
         </label>
         <div className="grid grid-cols-3 gap-3">
           <select
@@ -115,9 +166,10 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
         </div>
       </div>
 
+      {/* 时辰 */}
       <div>
-        <label className="block text-sm text-text-secondary mb-3">
-          时辰
+        <label className="block text-sm text-text-secondary mb-2">
+          出生时辰 <span className="text-kline-down">*</span>
         </label>
         <select
           value={hour}
@@ -138,12 +190,12 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
         disabled={!isValid || disabled || remainingUsage <= 0}
         className="btn-gold w-full py-4 text-lg font-serif"
       >
-        {remainingUsage <= 0 ? '免费次数已用尽' : '窥探命数'}
+        {remainingUsage <= 0 ? '免费次数已用尽' : '开启命盘'}
       </button>
 
       {remainingUsage > 0 && (
         <p className="text-center text-sm text-text-secondary">
-          初窥天机 · 剩余 <span className="text-gold-400">{remainingUsage}/3</span> 次
+          免费体验 · 剩余 <span className="text-gold-400">{remainingUsage}/3</span> 次
         </p>
       )}
     </form>
