@@ -1,5 +1,26 @@
-import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT } from '@/lib/constants';
-import { FreeVersionResult, PaidVersionResult, BirthInfo } from '@/types';
+import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT, BaziForPrompt, DaYunForPrompt } from '@/lib/constants';
+import { FreeVersionResult, PaidVersionResult, BirthInfo, BaziChart } from '@/types';
+import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
+
+// 将计算结果转换为prompt格式
+function toBaziForPrompt(bazi: BaziResult): BaziForPrompt {
+  return {
+    yearPillar: bazi.chart.yearPillar.fullName,
+    monthPillar: bazi.chart.monthPillar.fullName,
+    dayPillar: bazi.chart.dayPillar.fullName,
+    hourPillar: bazi.chart.hourPillar.fullName,
+    zodiac: bazi.chart.zodiac,
+    lunarDate: bazi.chart.lunarDate,
+  };
+}
+
+function toDaYunForPrompt(daYunList: DaYunItem[]): DaYunForPrompt[] {
+  return daYunList.map(d => ({
+    ganZhi: d.ganZhi,
+    startAge: d.startAge,
+    endAge: d.endAge,
+  }));
+}
 
 // 修复常见的JSON格式错误
 function repairJSON(jsonStr: string): string {
@@ -112,15 +133,35 @@ export async function generateFreeResult(
   birthInfo: BirthInfo,
   config: APIConfig = API_CONFIG
 ): Promise<FreeVersionResult> {
+  // 预计算八字
+  const isLunar = birthInfo.calendarType === 'lunar';
+  const baziResult = calculateBazi(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, isLunar
+  );
+
+  if (!baziResult) {
+    throw new Error('八字计算失败，请检查出生信息');
+  }
+
+  // 预计算大运
+  const daYunResult = calculateDaYun(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+  );
+
+  if (!daYunResult) {
+    throw new Error('大运计算失败，请检查出生信息');
+  }
+
+  const baziForPrompt = toBaziForPrompt(baziResult);
+  const daYunForPrompt = toDaYunForPrompt(daYunResult.daYunList);
+
   const userPrompt = FREE_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
-    birthInfo.month,
-    birthInfo.day,
-    birthInfo.hour,
-    birthInfo.minute,
-    birthInfo.calendarType || 'solar',
-    birthInfo.birthPlace
+    baziForPrompt,
+    daYunForPrompt
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -160,11 +201,17 @@ export async function generateFreeResult(
     throw new Error('AI未返回有效内容');
   }
 
-  const result = parseJSONWithRepair(content) as FreeVersionResult;
+  const aiResult = parseJSONWithRepair(content) as Partial<FreeVersionResult>;
 
-  if (!result.chartPoints || !Array.isArray(result.chartPoints)) {
+  if (!aiResult.chartPoints || !Array.isArray(aiResult.chartPoints)) {
     throw new Error('返回数据格式不正确');
   }
+
+  // 使用预计算的八字，不依赖AI返回
+  const result: FreeVersionResult = {
+    ...aiResult as FreeVersionResult,
+    baziChart: baziResult.chart,
+  };
 
   return result;
 }
@@ -176,16 +223,36 @@ export async function generatePaidResult(
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
 
+  // 预计算八字
+  const isLunar = birthInfo.calendarType === 'lunar';
+  const baziResult = calculateBazi(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, isLunar
+  );
+
+  if (!baziResult) {
+    throw new Error('八字计算失败，请检查出生信息');
+  }
+
+  // 预计算大运
+  const daYunResult = calculateDaYun(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+  );
+
+  if (!daYunResult) {
+    throw new Error('大运计算失败，请检查出生信息');
+  }
+
+  const baziForPrompt = toBaziForPrompt(baziResult);
+  const daYunForPrompt = toDaYunForPrompt(daYunResult.daYunList);
+
   const userPrompt = PAID_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
-    birthInfo.month,
-    birthInfo.day,
-    birthInfo.hour,
-    birthInfo.minute,
-    birthInfo.calendarType || 'solar',
-    currentAge,
-    birthInfo.birthPlace
+    baziForPrompt,
+    daYunForPrompt,
+    currentAge
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -225,11 +292,17 @@ export async function generatePaidResult(
     throw new Error('AI未返回有效内容');
   }
 
-  const result = parseJSONWithRepair(content) as PaidVersionResult;
+  const aiResult = parseJSONWithRepair(content) as Partial<PaidVersionResult>;
 
-  if (!result.chartPoints || !Array.isArray(result.chartPoints)) {
+  if (!aiResult.chartPoints || !Array.isArray(aiResult.chartPoints)) {
     throw new Error('返回数据格式不正确');
   }
+
+  // 使用预计算的八字，不依赖AI返回
+  const result: PaidVersionResult = {
+    ...aiResult as PaidVersionResult,
+    baziChart: baziResult.chart,
+  };
 
   return result;
 }
@@ -238,31 +311,52 @@ export function getSystemPrompt(): string {
   return SYSTEM_PROMPT;
 }
 
+// 这些函数用于调试，需要先计算八字大运
 export function getFreePrompt(birthInfo: BirthInfo): string {
+  const isLunar = birthInfo.calendarType === 'lunar';
+  const baziResult = calculateBazi(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, isLunar
+  );
+  const daYunResult = calculateDaYun(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+  );
+
+  if (!baziResult || !daYunResult) {
+    return '八字计算失败';
+  }
+
   return FREE_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
-    birthInfo.month,
-    birthInfo.day,
-    birthInfo.hour,
-    birthInfo.minute,
-    birthInfo.calendarType || 'solar',
-    birthInfo.birthPlace
+    toBaziForPrompt(baziResult),
+    toDaYunForPrompt(daYunResult.daYunList)
   );
 }
 
 export function getPaidPrompt(birthInfo: BirthInfo): string {
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
+  const isLunar = birthInfo.calendarType === 'lunar';
+  const baziResult = calculateBazi(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, isLunar
+  );
+  const daYunResult = calculateDaYun(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+  );
+
+  if (!baziResult || !daYunResult) {
+    return '八字计算失败';
+  }
+
   return PAID_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
-    birthInfo.month,
-    birthInfo.day,
-    birthInfo.hour,
-    birthInfo.minute,
-    birthInfo.calendarType || 'solar',
-    currentAge,
-    birthInfo.birthPlace
+    toBaziForPrompt(baziResult),
+    toDaYunForPrompt(daYunResult.daYunList),
+    currentAge
   );
 }

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useMemo, useRef, useCallback } from 'react';
-import { ChartPoint, KLinePoint } from '@/types';
+import { ChartPoint, PaidChartPoint } from '@/types';
 
 interface ChartProps {
-  data: ChartPoint[] | KLinePoint[];
+  data: ChartPoint[] | PaidChartPoint[];
   currentAge?: number;
   birthYear: number;
 }

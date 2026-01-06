@@ -14,12 +14,15 @@ describe('API Service', () => {
     model: 'test-model',
   };
 
+  // 使用正确的 BirthInfo 格式（hour 是数字）
   const testBirthInfo: BirthInfo = {
     gender: 'male',
-    year: 1990,
-    month: 6,
-    day: 15,
-    hour: 'wu',
+    year: 1996,
+    month: 5,
+    day: 7,
+    hour: 15,
+    minute: 0,
+    calendarType: 'solar',
   };
 
   describe('testAPIConnection', () => {
@@ -65,26 +68,41 @@ describe('API Service', () => {
       expect(prompt).toContain('八字命理');
     });
 
-    test('getFreePrompt includes birth info', () => {
+    test('getFreePrompt includes pre-calculated bazi', () => {
       const prompt = getFreePrompt(testBirthInfo);
-      expect(prompt).toContain('1990');
-      expect(prompt).toContain('6');
-      expect(prompt).toContain('15');
-      expect(prompt).toContain('男');
-      expect(prompt).toContain('午时');
+      expect(prompt).toContain('1996');
+      expect(prompt).toContain('乾造');
+      // 验证预计算的八字信息
+      expect(prompt).toContain('年柱');
+      expect(prompt).toContain('月柱');
+      expect(prompt).toContain('日柱');
+      expect(prompt).toContain('时柱');
+      // 验证包含大运
+      expect(prompt).toContain('大运');
     });
 
-    test('getPaidPrompt includes birth info and age', () => {
+    test('getPaidPrompt includes pre-calculated bazi and daYun', () => {
       const prompt = getPaidPrompt(testBirthInfo);
-      expect(prompt).toContain('1990');
-      expect(prompt).toContain('男');
-      expect(prompt).toContain('流年级别');
+      expect(prompt).toContain('1996');
+      expect(prompt).toContain('乾造');
+      // 验证包含当前年龄
+      expect(prompt).toContain('虚岁');
+      // 验证预计算的八字和大运
+      expect(prompt).toContain('年柱');
+      expect(prompt).toContain('大运');
     });
 
-    test('getFreePrompt for female', () => {
+    test('getFreePrompt for female uses 坤造', () => {
       const femaleInfo: BirthInfo = { ...testBirthInfo, gender: 'female' };
       const prompt = getFreePrompt(femaleInfo);
-      expect(prompt).toContain('女');
+      expect(prompt).toContain('坤造');
+    });
+
+    test('prompt uses pre-calculated bazi not letting AI calculate', () => {
+      const prompt = getFreePrompt(testBirthInfo);
+      // 验证提示词明确告诉AI使用已提供的八字
+      expect(prompt).toContain('已排好');
+      expect(prompt).toContain('直接使用');
     });
   });
 });

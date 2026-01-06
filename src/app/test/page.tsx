@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT } from '@/lib/constants';
+import { useState, useMemo } from 'react';
+import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT, BaziForPrompt, DaYunForPrompt } from '@/lib/constants';
 import { BirthInfo, CHINA_CITIES } from '@/types';
+import { calculateBazi, calculateDaYun } from '@/lib/bazi';
 import Header from '@/components/Header';
 
 export default function TestPage() {
@@ -32,29 +33,48 @@ export default function TestPage() {
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
 
+  // 预计算八字和大运
+  const { baziForPrompt, daYunForPrompt } = useMemo(() => {
+    const isLunar = birthInfo.calendarType === 'lunar';
+    const baziResult = calculateBazi(
+      birthInfo.year, birthInfo.month, birthInfo.day,
+      birthInfo.hour, birthInfo.minute, isLunar
+    );
+    const daYunResult = calculateDaYun(
+      birthInfo.year, birthInfo.month, birthInfo.day,
+      birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+    );
+
+    if (!baziResult || !daYunResult) {
+      return { baziForPrompt: null, daYunForPrompt: [] };
+    }
+
+    const bazi: BaziForPrompt = {
+      yearPillar: baziResult.chart.yearPillar.fullName,
+      monthPillar: baziResult.chart.monthPillar.fullName,
+      dayPillar: baziResult.chart.dayPillar.fullName,
+      hourPillar: baziResult.chart.hourPillar.fullName,
+      zodiac: baziResult.chart.zodiac,
+      lunarDate: baziResult.chart.lunarDate,
+    };
+
+    const daYun: DaYunForPrompt[] = daYunResult.daYunList.map(d => ({
+      ganZhi: d.ganZhi,
+      startAge: d.startAge,
+      endAge: d.endAge,
+    }));
+
+    return { baziForPrompt: bazi, daYunForPrompt: daYun };
+  }, [birthInfo]);
+
   const systemPrompt = SYSTEM_PROMPT;
-  const userPrompt = version === 'free'
-    ? FREE_VERSION_PROMPT(
-        birthInfo.gender,
-        birthInfo.year,
-        birthInfo.month,
-        birthInfo.day,
-        birthInfo.hour,
-        birthInfo.minute,
-        birthInfo.calendarType || 'solar',
-        birthInfo.birthPlace
-      )
-    : PAID_VERSION_PROMPT(
-        birthInfo.gender,
-        birthInfo.year,
-        birthInfo.month,
-        birthInfo.day,
-        birthInfo.hour,
-        birthInfo.minute,
-        birthInfo.calendarType || 'solar',
-        currentAge,
-        birthInfo.birthPlace
-      );
+  const userPrompt = useMemo(() => {
+    if (!baziForPrompt) return '八字计算失败，请检查出生信息';
+
+    return version === 'free'
+      ? FREE_VERSION_PROMPT(birthInfo.gender, birthInfo.year, baziForPrompt, daYunForPrompt)
+      : PAID_VERSION_PROMPT(birthInfo.gender, birthInfo.year, baziForPrompt, daYunForPrompt, currentAge);
+  }, [version, birthInfo.gender, birthInfo.year, baziForPrompt, daYunForPrompt, currentAge]);
 
   const handleGenerate = async () => {
     setGenerating(true);

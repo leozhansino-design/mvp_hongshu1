@@ -1,18 +1,17 @@
 import {
   PHASE_LABELS,
   TYPE_LABELS,
-  HOUR_OPTIONS,
-  HOUR_LABELS,
+  getShichenFromHour,
 } from '@/types';
 
 describe('Type Definitions', () => {
   describe('PHASE_LABELS', () => {
     test('contains all phase types', () => {
-      expect(PHASE_LABELS.rising).toBe('上升之运');
-      expect(PHASE_LABELS.peak).toBe('巅峰之运');
-      expect(PHASE_LABELS.stable).toBe('平稳之运');
-      expect(PHASE_LABELS.declining).toBe('下降之运');
-      expect(PHASE_LABELS.valley).toBe('低谷之运');
+      expect(PHASE_LABELS.rising).toBe('上升期');
+      expect(PHASE_LABELS.peak).toBe('巅峰期');
+      expect(PHASE_LABELS.stable).toBe('平稳期');
+      expect(PHASE_LABELS.declining).toBe('调整期');
+      expect(PHASE_LABELS.valley).toBe('蓄势期');
     });
   });
 
@@ -26,32 +25,21 @@ describe('Type Definitions', () => {
     });
   });
 
-  describe('HOUR_OPTIONS', () => {
-    test('contains 13 options (12 hours + unknown)', () => {
-      expect(HOUR_OPTIONS.length).toBe(13);
-    });
-
-    test('each option has value and label', () => {
-      HOUR_OPTIONS.forEach((option) => {
-        expect(option).toHaveProperty('value');
-        expect(option).toHaveProperty('label');
-        expect(typeof option.value).toBe('string');
-        expect(typeof option.label).toBe('string');
-      });
-    });
-
-    test('includes unknown option', () => {
-      const unknown = HOUR_OPTIONS.find((o) => o.value === 'unknown');
-      expect(unknown).toBeDefined();
-      expect(unknown?.label).toBe('不详');
-    });
-  });
-
-  describe('HOUR_LABELS', () => {
-    test('matches HOUR_OPTIONS values', () => {
-      HOUR_OPTIONS.forEach((option) => {
-        expect(HOUR_LABELS[option.value]).toBeDefined();
-      });
+  describe('getShichenFromHour', () => {
+    test('returns correct shichen for each hour', () => {
+      expect(getShichenFromHour(0)).toBe('子时');
+      expect(getShichenFromHour(23)).toBe('子时');
+      expect(getShichenFromHour(1)).toBe('丑时');
+      expect(getShichenFromHour(3)).toBe('寅时');
+      expect(getShichenFromHour(5)).toBe('卯时');
+      expect(getShichenFromHour(7)).toBe('辰时');
+      expect(getShichenFromHour(9)).toBe('巳时');
+      expect(getShichenFromHour(11)).toBe('午时');
+      expect(getShichenFromHour(13)).toBe('未时');
+      expect(getShichenFromHour(15)).toBe('申时');
+      expect(getShichenFromHour(17)).toBe('酉时');
+      expect(getShichenFromHour(19)).toBe('戌时');
+      expect(getShichenFromHour(21)).toBe('亥时');
     });
   });
 });

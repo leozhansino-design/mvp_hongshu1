@@ -7,16 +7,12 @@ export interface ChartPoint {
   reason: string;     // 20-30字描述
 }
 
-// K线数据点（付费版）
-export interface KLinePoint {
+// 付费版数据点（简化版，只需score）
+export interface PaidChartPoint {
   age: number;
   year: number;
   daYun: string;
   ganZhi: string;
-  open: number;
-  close: number;
-  high: number;
-  low: number;
   score: number;
   reason: string;
 }
@@ -185,8 +181,8 @@ export interface PaidVersionResult {
   luckyInfo: LuckyInfo;
   // 大运列表
   daYunList: DaYunInfo[];
-  // K线数据
-  chartPoints: KLinePoint[];
+  // 曲线数据（简化版）
+  chartPoints: PaidChartPoint[];
   // 高光和警示
   highlights: HighlightYear[];
   warnings: WarningYear[];

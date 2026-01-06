@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import html2canvas from 'html2canvas';
-import { Header, BaziChartDisplay, LifeCurveChart } from '@/components';
+import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable } from '@/components';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult } from '@/services/api';
 import {
@@ -184,6 +184,18 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           <div className="mb-6">
             <LifeCurveChart
               data={data.chartPoints}
+              currentAge={currentAge}
+              birthYear={birthInfo.year}
+            />
+          </div>
+        )}
+
+        {/* 大运流年表格 - 仅付费版显示 */}
+        {isPaid && paidResult?.daYunList && paidResult.chartPoints && (
+          <div className="mb-6">
+            <DaYunTable
+              daYunList={paidResult.daYunList}
+              chartPoints={paidResult.chartPoints}
               currentAge={currentAge}
               birthYear={birthInfo.year}
             />
