@@ -13,16 +13,16 @@ import {
   ReferenceLine,
   Scatter,
 } from 'recharts';
-import { KLinePoint, KLinePointDetailed } from '@/types';
+import { ChartPoint, PaidChartPoint } from '@/types';
 
 interface FreeChartProps {
-  data: KLinePoint[];
+  data: ChartPoint[];
   currentAge?: number;
   isPaid?: false;
 }
 
 interface PaidChartProps {
-  data: KLinePointDetailed[];
+  data: PaidChartPoint[];
   currentAge?: number;
   isPaid: true;
   highlights?: { age: number; score: number }[];
@@ -32,7 +32,7 @@ interface PaidChartProps {
 type KLineChartProps = FreeChartProps | PaidChartProps;
 
 interface TooltipPayloadItem {
-  payload: KLinePoint | KLinePointDetailed;
+  payload: ChartPoint | PaidChartPoint;
   dataKey: string;
   value: number;
 }
@@ -56,22 +56,11 @@ function CustomTooltip({ active, payload, isPaid }: CustomTooltipProps) {
           <span className="text-text-secondary ml-2">({data.year}年)</span>
         )}
       </p>
-      {'score' in data ? (
-        <p className="text-text-primary">
-          运势: <span className={data.score >= 60 ? 'text-kline-up' : 'text-kline-down'}>
-            {data.score}
-          </span>
-        </p>
-      ) : (
-        <>
-          <p className="text-xs text-text-secondary">
-            开: {data.open} | 收: {data.close}
-          </p>
-          <p className="text-xs text-text-secondary">
-            高: {data.high} | 低: {data.low}
-          </p>
-        </>
-      )}
+      <p className="text-text-primary">
+        运势: <span className={data.score >= 60 ? 'text-kline-up' : 'text-kline-down'}>
+          {data.score}
+        </span>
+      </p>
     </div>
   );
 }
@@ -81,34 +70,24 @@ export default function KLineChart(props: KLineChartProps) {
 
   const chartData = useMemo(() => {
     if (isPaid) {
-      return (data as KLinePointDetailed[]).map((point) => ({
+      return (data as PaidChartPoint[]).map((point) => ({
         ...point,
-        value: (point.open + point.close) / 2,
-        isUp: point.close >= point.open,
+        value: point.score,
       }));
     }
-    return (data as KLinePoint[]).map((point) => ({
+    return (data as ChartPoint[]).map((point) => ({
       ...point,
       value: point.score,
     }));
   }, [data, isPaid]);
 
   const { minValue, maxValue } = useMemo(() => {
-    if (isPaid) {
-      const paidData = data as KLinePointDetailed[];
-      const values = paidData.flatMap((d) => [d.low, d.high]);
-      return {
-        minValue: Math.min(...values) - 5,
-        maxValue: Math.max(...values) + 5,
-      };
-    }
-    const freeData = data as KLinePoint[];
-    const values = freeData.map((d) => d.score);
+    const values = data.map((d) => d.score);
     return {
       minValue: Math.min(...values) - 5,
       maxValue: Math.max(...values) + 5,
     };
-  }, [data, isPaid]);
+  }, [data]);
 
   const gradientOffset = useMemo(() => {
     const values = chartData.map((d) => d.value);

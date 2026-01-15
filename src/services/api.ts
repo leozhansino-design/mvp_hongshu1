@@ -43,7 +43,7 @@ export async function generateFreeResult(
   birthInfo: BirthInfo,
   config: APIConfig = API_CONFIG
 ): Promise<FreeVersionResult> {
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour;
+  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour.toString();
   const userPrompt = FREE_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
@@ -85,7 +85,7 @@ export async function generateFreeResult(
     const cleanedContent = content.replace(/```json\n?|\n?```/g, '').trim();
     const result = JSON.parse(cleanedContent) as FreeVersionResult;
 
-    if (!result.klineData || !Array.isArray(result.klineData)) {
+    if (!result.chartPoints || !Array.isArray(result.chartPoints)) {
       throw new Error('返回数据格式不正确');
     }
 
@@ -102,7 +102,7 @@ export async function generatePaidResult(
 ): Promise<PaidVersionResult> {
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour;
+  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour.toString();
 
   const userPrompt = PAID_VERSION_PROMPT(
     birthInfo.gender,
@@ -146,7 +146,7 @@ export async function generatePaidResult(
     const cleanedContent = content.replace(/```json\n?|\n?```/g, '').trim();
     const result = JSON.parse(cleanedContent) as PaidVersionResult;
 
-    if (!result.klineData || !Array.isArray(result.klineData)) {
+    if (!result.chartPoints || !Array.isArray(result.chartPoints)) {
       throw new Error('返回数据格式不正确');
     }
 
@@ -162,7 +162,7 @@ export function getSystemPrompt(): string {
 }
 
 export function getFreePrompt(birthInfo: BirthInfo): string {
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour;
+  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour.toString();
   return FREE_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
@@ -175,7 +175,7 @@ export function getFreePrompt(birthInfo: BirthInfo): string {
 export function getPaidPrompt(birthInfo: BirthInfo): string {
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour;
+  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour.toString();
   return PAID_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,

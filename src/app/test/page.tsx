@@ -18,6 +18,7 @@ export default function TestPage() {
     month: 6,
     day: 15,
     hour: 11, // 午时
+    minute: 0,
     calendarType: 'solar',
   });
 
@@ -29,7 +30,7 @@ export default function TestPage() {
 
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour;
+  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour.toString();
 
   const systemPrompt = SYSTEM_PROMPT;
   const userPrompt = version === 'free'

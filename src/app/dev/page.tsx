@@ -34,6 +34,7 @@ export default function DevPage() {
     month: 6,
     day: 15,
     hour: 11, // 午时
+    minute: 0,
     calendarType: 'solar',
   });
 

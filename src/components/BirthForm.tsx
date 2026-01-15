@@ -26,7 +26,7 @@ const SHI_CHEN_OPTIONS = [
   { value: 21, label: '亥时', time: '21:00-23:00' },
 ];
 
-export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthFormProps) {
+export default function BirthForm({ onSubmit, disabled, remainingUsage: _remainingUsage }: BirthFormProps) {
   const [name, setName] = useState<string>('');
   const [gender, setGender] = useState<Gender | null>(null);
   const [calendarType, setCalendarType] = useState<CalendarType>('solar');

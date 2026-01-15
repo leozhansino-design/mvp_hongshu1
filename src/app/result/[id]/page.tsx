@@ -150,15 +150,15 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
           {isPaid && paidResult ? (
             <KLineChart
-              data={paidResult.klineData}
+              data={paidResult.chartPoints}
               currentAge={currentAge}
               isPaid={true}
-              highlights={paidResult.highlights.map((h) => ({ age: h.age, score: h.score }))}
-              warnings={paidResult.warnings.map((w) => ({ age: w.age, score: w.score }))}
+              highlights={paidResult.highlights.filter(h => h.score !== undefined).map((h) => ({ age: h.age, score: h.score! }))}
+              warnings={paidResult.warnings.filter(w => w.score !== undefined).map((w) => ({ age: w.age, score: w.score! }))}
             />
           ) : freeResult ? (
             <KLineChart
-              data={freeResult.klineData}
+              data={freeResult.chartPoints}
               currentAge={currentAge}
             />
           ) : null}
@@ -197,7 +197,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                   <div>
                     <p className="text-text-secondary text-sm">高光运程</p>
                     <p className="text-kline-up">
-                      有 <span className="font-mono">{freeResult.highlightCount}</span> 段鸿运当头之时
+                      有 <span className="font-mono">{freeResult.highlights.length}</span> 段鸿运当头之时
                     </p>
                   </div>
                 </div>
@@ -207,14 +207,14 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                   <div>
                     <p className="text-text-secondary text-sm">警示运程</p>
                     <p className="text-kline-down">
-                      有 <span className="font-mono">{freeResult.warningCount}</span> 段需谨慎以对
+                      有 <span className="font-mono">{freeResult.warnings.length}</span> 段需谨慎以对
                     </p>
                   </div>
                 </div>
 
                 <div className="p-4 rounded-lg bg-mystic-900/30 backdrop-blur-xl border border-purple-400/10">
                   <p className="text-text-primary leading-relaxed">
-                    {freeResult.briefSummary}
+                    {freeResult.summary}
                   </p>
                 </div>
               </>
@@ -232,9 +232,11 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-gold-400 font-mono">{h.age}岁</span>
                       <span className="text-text-secondary">({h.year}年)</span>
-                      <span className="px-2 py-0.5 text-xs rounded-full bg-gold-400/20 text-gold-400">
-                        {TYPE_LABELS[h.type] || h.type}
-                      </span>
+                      {h.type && (
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-gold-400/20 text-gold-400">
+                          {TYPE_LABELS[h.type] || h.type}
+                        </span>
+                      )}
                     </div>
                     <p className="font-serif text-lg text-text-primary mb-1">{h.title}</p>
                     <p className="text-text-secondary text-sm">{h.description}</p>
@@ -251,9 +253,11 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-kline-down font-mono">{w.age}岁</span>
                       <span className="text-text-secondary">({w.year}年)</span>
-                      <span className="px-2 py-0.5 text-xs rounded-full bg-kline-down/20 text-kline-down">
-                        {TYPE_LABELS[w.type] || w.type}
-                      </span>
+                      {w.type && (
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-kline-down/20 text-kline-down">
+                          {TYPE_LABELS[w.type] || w.type}
+                        </span>
+                      )}
                     </div>
                     <p className="font-serif text-lg text-text-primary mb-1">{w.title}</p>
                     <p className="text-text-secondary text-sm mb-2">{w.description}</p>
@@ -285,26 +289,10 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
             <div className="mystic-card mb-6">
               <h2 className="font-serif text-xl text-gold-400 mb-4">喜忌提示</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-mystic-900/50">
-                  <p className="text-text-secondary text-sm mb-2">喜用五行</p>
-                  <div className="flex gap-2">
-                    {paidResult.luckyElements.map((el, i) => (
-                      <span key={i} className="px-3 py-1 rounded-full bg-kline-up/20 text-kline-up">
-                        {el}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg bg-mystic-900/50">
-                  <p className="text-text-secondary text-sm mb-2">忌讳五行</p>
-                  <div className="flex gap-2">
-                    {paidResult.unluckyElements.map((el, i) => (
-                      <span key={i} className="px-3 py-1 rounded-full bg-kline-down/20 text-kline-down">
-                        {el}
-                      </span>
-                    ))}
-                  </div>
+              <div className="p-4 rounded-lg bg-mystic-900/50">
+                <p className="text-text-secondary text-sm mb-2">用神分析</p>
+                <div className="text-text-primary">
+                  {paidResult.usefulGod}
                 </div>
               </div>
             </div>
@@ -366,7 +354,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           {!isPaid && freeResult && (
             <div className="text-center mb-8">
               <p className="text-gold-400 text-2xl mb-4">
-                「我的高光之年有 {freeResult.highlightCount} 段」
+                「我的高光之年有 {freeResult.highlights.length} 段」
               </p>
               <p className="text-text-primary text-xl">
                 当前正值「{currentPhase ? PHASE_LABELS[currentPhase] : ''}」
