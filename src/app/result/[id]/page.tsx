@@ -270,29 +270,193 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             </div>
 
             <div className="mystic-card mb-6">
-              <h2 className="font-serif text-xl text-gold-400 mb-4">五维详批</h2>
+              <h2 className="font-serif text-xl text-gold-400 mb-4">八维详批</h2>
               <div className="space-y-4">
-                {Object.entries(paidResult.summary).map(([key, value]) => (
-                  <div key={key} className="p-4 rounded-lg bg-mystic-900/50">
-                    <h3 className="font-serif text-gold-400 mb-2">
-                      {key === 'personality' && '性格命格'}
-                      {key === 'career' && '事业前程'}
-                      {key === 'wealth' && '财帛运势'}
-                      {key === 'love' && '姻缘情感'}
-                      {key === 'health' && '身体康健'}
-                    </h3>
-                    <p className="text-text-primary text-sm leading-relaxed">{value}</p>
-                  </div>
-                ))}
+                {/* 命理总评 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50 border border-gold-400/20">
+                  <h3 className="font-serif text-gold-400 mb-2 flex items-center gap-2">
+                    <span>命理总评</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-gold-400/20">{paidResult.summaryScore}分</span>
+                  </h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{paidResult.summary}</p>
+                </div>
+
+                {/* 性格命格 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2 flex items-center gap-2">
+                    <span>性格命格</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-gold-400/20">{paidResult.personalityScore}分</span>
+                  </h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{paidResult.personality}</p>
+                </div>
+
+                {/* 事业前程 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2 flex items-center gap-2">
+                    <span>事业前程</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-gold-400/20">{paidResult.careerScore}分</span>
+                  </h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{paidResult.career}</p>
+                </div>
+
+                {/* 财帛运势 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2 flex items-center gap-2">
+                    <span>财帛运势</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-gold-400/20">{paidResult.wealthScore}分</span>
+                  </h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{paidResult.wealth}</p>
+                </div>
+
+                {/* 姻缘情感 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2 flex items-center gap-2">
+                    <span>姻缘情感</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-gold-400/20">{paidResult.marriageScore}分</span>
+                  </h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{paidResult.marriage}</p>
+                </div>
+
+                {/* 身体康健 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2 flex items-center gap-2">
+                    <span>身体康健</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-gold-400/20">{paidResult.healthScore}分</span>
+                  </h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{paidResult.health}</p>
+                </div>
+
+                {/* 风水开运 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2 flex items-center gap-2">
+                    <span>风水开运</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-gold-400/20">{paidResult.fengShuiScore}分</span>
+                  </h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{paidResult.fengShui}</p>
+                </div>
+
+                {/* 六亲关系 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2 flex items-center gap-2">
+                    <span>六亲关系</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-gold-400/20">{paidResult.familyScore}分</span>
+                  </h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{paidResult.family}</p>
+                </div>
               </div>
             </div>
 
             <div className="mystic-card mb-6">
-              <h2 className="font-serif text-xl text-gold-400 mb-4">喜忌提示</h2>
-              <div className="p-4 rounded-lg bg-mystic-900/50">
-                <p className="text-text-secondary text-sm mb-2">用神分析</p>
-                <div className="text-text-primary">
-                  {paidResult.usefulGod}
+              <h2 className="font-serif text-xl text-gold-400 mb-4">五行生克</h2>
+              <div className="space-y-4">
+                {/* 五行分布 */}
+                {paidResult.fiveElements && (
+                  <div className="p-4 rounded-lg bg-mystic-900/50">
+                    <h3 className="font-serif text-gold-400 mb-3">五行分布</h3>
+                    <div className="grid grid-cols-5 gap-3 mb-4">
+                      <div className="text-center">
+                        <div className="w-12 h-12 mx-auto rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center mb-2">
+                          <span className="text-green-400 font-bold">{paidResult.fiveElements.wood}</span>
+                        </div>
+                        <span className="text-green-400 text-xs">木</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="w-12 h-12 mx-auto rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center mb-2">
+                          <span className="text-red-400 font-bold">{paidResult.fiveElements.fire}</span>
+                        </div>
+                        <span className="text-red-400 text-xs">火</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="w-12 h-12 mx-auto rounded-full bg-yellow-500/20 border-2 border-yellow-500 flex items-center justify-center mb-2">
+                          <span className="text-yellow-400 font-bold">{paidResult.fiveElements.earth}</span>
+                        </div>
+                        <span className="text-yellow-400 text-xs">土</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="w-12 h-12 mx-auto rounded-full bg-gray-400/20 border-2 border-gray-400 flex items-center justify-center mb-2">
+                          <span className="text-gray-300 font-bold">{paidResult.fiveElements.metal}</span>
+                        </div>
+                        <span className="text-gray-300 text-xs">金</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="w-12 h-12 mx-auto rounded-full bg-blue-500/20 border-2 border-blue-500 flex items-center justify-center mb-2">
+                          <span className="text-blue-400 font-bold">{paidResult.fiveElements.water}</span>
+                        </div>
+                        <span className="text-blue-400 text-xs">水</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 五行生克原理 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-3">生克原理</h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <span className="text-green-400">● </span>
+                      <span className="text-text-secondary">相生：</span>
+                      <span className="text-text-primary">木生火，火生土，土生金，金生水，水生木</span>
+                    </div>
+                    <div>
+                      <span className="text-red-400">● </span>
+                      <span className="text-text-secondary">相克：</span>
+                      <span className="text-text-primary">木克土，土克水，水克火，火克金，金克木</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 解释说明 */}
+                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                  <p className="text-text-secondary text-xs leading-relaxed">
+                    💡 五行生克反映了命局的平衡状态。五行俱全且分布均衡为上佳，缺失或偏颇则需通过用神来调和。
+                    相生代表助力与滋养，相克代表制约与消耗。理解五行生克规律，有助于把握命运起伏的内在逻辑。
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mystic-card mb-6">
+              <h2 className="font-serif text-xl text-gold-400 mb-4">开运指南</h2>
+              <div className="space-y-4">
+                {/* 用神喜忌 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2">用神喜忌</h3>
+                  <p className="text-text-primary text-sm leading-relaxed">
+                    {paidResult.usefulGod}
+                  </p>
+                </div>
+
+                {/* 吉祥方位、颜色等 */}
+                {paidResult.luckyInfo && (
+                  <div className="p-4 rounded-lg bg-mystic-900/50">
+                    <h3 className="font-serif text-gold-400 mb-3">趋吉避凶</h3>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-text-secondary">吉利方位：</span>
+                        <span className="text-text-primary">{paidResult.luckyInfo.direction}</span>
+                      </div>
+                      <div>
+                        <span className="text-text-secondary">开运颜色：</span>
+                        <span className="text-text-primary">{paidResult.luckyInfo.color}</span>
+                      </div>
+                      <div>
+                        <span className="text-text-secondary">幸运数字：</span>
+                        <span className="text-text-primary">{paidResult.luckyInfo.number}</span>
+                      </div>
+                      <div>
+                        <span className="text-text-secondary">宜从行业：</span>
+                        <span className="text-text-primary">{paidResult.luckyInfo.industry}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 解释说明 */}
+                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                  <p className="text-text-secondary text-xs leading-relaxed">
+                    💡 开运指南根据八字喜忌推算，结合用神、五行平衡原理，为您量身定制趋吉避凶之道。
+                    日常生活中可适当运用上述方位、颜色、数字来增强运势，选择适合的行业方向更能事半功倍。
+                  </p>
                 </div>
               </div>
             </div>
@@ -323,7 +487,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
               </li>
               <li className="flex items-center gap-3 text-text-primary">
                 <div className="w-1.5 h-1.5 rounded-full bg-gold-400" />
-                性格/事业/财运/姻缘/健康 五维详批
+                性格/事业/财运/姻缘/健康/风水/六亲 八维详批
               </li>
             </ul>
 
