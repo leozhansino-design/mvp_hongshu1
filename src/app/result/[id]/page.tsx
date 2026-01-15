@@ -426,36 +426,26 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                 {paidResult.fiveElements && (
                   <div className="p-4 rounded-lg bg-mystic-900/50">
                     <h3 className="font-serif text-gold-400 mb-3">五行分布</h3>
-                    <div className="grid grid-cols-5 gap-3 mb-4">
+                    <div className="flex justify-between items-center px-4 text-sm">
                       <div className="text-center">
-                        <div className="w-12 h-12 mx-auto rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center mb-2">
-                          <span className="text-green-400 font-bold">{paidResult.fiveElements.wood}</span>
-                        </div>
-                        <span className="text-green-400 text-xs">木</span>
+                        <div className="text-white font-mono text-lg mb-1">{paidResult.fiveElements.wood}</div>
+                        <div className="text-text-secondary">木</div>
                       </div>
                       <div className="text-center">
-                        <div className="w-12 h-12 mx-auto rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center mb-2">
-                          <span className="text-red-400 font-bold">{paidResult.fiveElements.fire}</span>
-                        </div>
-                        <span className="text-red-400 text-xs">火</span>
+                        <div className="text-white font-mono text-lg mb-1">{paidResult.fiveElements.fire}</div>
+                        <div className="text-text-secondary">火</div>
                       </div>
                       <div className="text-center">
-                        <div className="w-12 h-12 mx-auto rounded-full bg-yellow-500/20 border-2 border-yellow-500 flex items-center justify-center mb-2">
-                          <span className="text-yellow-400 font-bold">{paidResult.fiveElements.earth}</span>
-                        </div>
-                        <span className="text-yellow-400 text-xs">土</span>
+                        <div className="text-white font-mono text-lg mb-1">{paidResult.fiveElements.earth}</div>
+                        <div className="text-text-secondary">土</div>
                       </div>
                       <div className="text-center">
-                        <div className="w-12 h-12 mx-auto rounded-full bg-gray-400/20 border-2 border-gray-400 flex items-center justify-center mb-2">
-                          <span className="text-gray-300 font-bold">{paidResult.fiveElements.metal}</span>
-                        </div>
-                        <span className="text-gray-300 text-xs">金</span>
+                        <div className="text-white font-mono text-lg mb-1">{paidResult.fiveElements.metal}</div>
+                        <div className="text-text-secondary">金</div>
                       </div>
                       <div className="text-center">
-                        <div className="w-12 h-12 mx-auto rounded-full bg-blue-500/20 border-2 border-blue-500 flex items-center justify-center mb-2">
-                          <span className="text-blue-400 font-bold">{paidResult.fiveElements.water}</span>
-                        </div>
-                        <span className="text-blue-400 text-xs">水</span>
+                        <div className="text-white font-mono text-lg mb-1">{paidResult.fiveElements.water}</div>
+                        <div className="text-text-secondary">水</div>
                       </div>
                     </div>
                   </div>
@@ -464,26 +454,22 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                 {/* 五行生克原理 */}
                 <div className="p-4 rounded-lg bg-mystic-900/50">
                   <h3 className="font-serif text-gold-400 mb-3">生克原理</h3>
-                  <div className="space-y-3 text-sm">
+                  <div className="space-y-2 text-sm">
                     <div>
-                      <span className="text-green-400">● </span>
                       <span className="text-text-secondary">相生：</span>
                       <span className="text-text-primary">木生火，火生土，土生金，金生水，水生木</span>
                     </div>
                     <div>
-                      <span className="text-red-400">● </span>
                       <span className="text-text-secondary">相克：</span>
                       <span className="text-text-primary">木克土，土克水，水克火，火克金，金克木</span>
                     </div>
+                    <div className="pt-2 border-t border-gray-700 mt-3">
+                      <p className="text-text-secondary text-xs leading-relaxed">
+                        五行生克反映了命局的平衡状态。五行俱全且分布均衡为上佳，缺失或偏颇则需通过用神来调和。
+                        相生代表助力与滋养，相克代表制约与消耗。
+                      </p>
+                    </div>
                   </div>
-                </div>
-
-                {/* 解释说明 */}
-                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                  <p className="text-text-secondary text-xs leading-relaxed">
-                    💡 五行生克反映了命局的平衡状态。五行俱全且分布均衡为上佳，缺失或偏颇则需通过用神来调和。
-                    相生代表助力与滋养，相克代表制约与消耗。理解五行生克规律，有助于把握命运起伏的内在逻辑。
-                  </p>
                 </div>
               </div>
             </div>
@@ -524,13 +510,6 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                   </div>
                 )}
 
-                {/* 解释说明 */}
-                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                  <p className="text-text-secondary text-xs leading-relaxed">
-                    💡 开运指南根据八字喜忌推算，结合用神、五行平衡原理，为您量身定制趋吉避凶之道。
-                    日常生活中可适当运用上述方位、颜色、数字来增强运势，选择适合的行业方向更能事半功倍。
-                  </p>
-                </div>
               </div>
             </div>
           </>
