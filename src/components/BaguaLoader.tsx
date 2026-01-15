@@ -14,12 +14,25 @@ export default function BaguaLoader({ message, queueCount = 0 }: BaguaLoaderProp
   const [progress, setProgress] = useState(0);
   const [displayQueue, setDisplayQueue] = useState(0);
 
-  // 初始化排队人数
+  // 初始化排队人数并模拟减少
   useEffect(() => {
-    if (queueCount < 1) {
-      setDisplayQueue(Math.floor(Math.random() * 5) + 1);
-    } else {
-      setDisplayQueue(queueCount);
+    // 如果实际排队人数少于1，显示随机1-5人
+    const initialQueue = queueCount < 1 ? Math.floor(Math.random() * 5) + 1 : queueCount;
+    setDisplayQueue(initialQueue);
+
+    // 模拟排队人数逐渐减少
+    if (initialQueue > 0) {
+      const decreaseInterval = setInterval(() => {
+        setDisplayQueue((prev) => {
+          if (prev <= 1) {
+            clearInterval(decreaseInterval);
+            return 1;
+          }
+          return prev - 1;
+        });
+      }, 2000); // 每2秒减少1人
+
+      return () => clearInterval(decreaseInterval);
     }
   }, [queueCount]);
 

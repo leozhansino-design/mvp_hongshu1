@@ -222,6 +222,79 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           </div>
         </div>
 
+        {/* 免费版五维分析 */}
+        {!isPaid && freeResult && (
+          <>
+            <div className="mystic-card mb-6">
+              <h2 className="font-serif text-xl text-gold-400 mb-4">五维简批</h2>
+              <div className="space-y-4">
+                {/* 性格命格 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2">性格命格</h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{freeResult.personality}</p>
+                </div>
+
+                {/* 事业前程 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2">事业前程</h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{freeResult.career}</p>
+                </div>
+
+                {/* 财帛运势 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2">财帛运势</h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{freeResult.wealth}</p>
+                </div>
+
+                {/* 姻缘情感 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2">姻缘情感</h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{freeResult.marriage}</p>
+                </div>
+
+                {/* 身体康健 */}
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2">身体康健</h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{freeResult.health}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 大运简评 */}
+            {freeResult.daYunList && freeResult.daYunList.length > 0 && (
+              <div className="mystic-card mb-6">
+                <h2 className="font-serif text-xl text-gold-400 mb-4">大运流年</h2>
+                <div className="space-y-3">
+                  {freeResult.daYunList.map((daYun, idx) => (
+                    <div key={idx} className="p-3 rounded-lg bg-mystic-900/50 border border-gray-700">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-gold-400 font-mono">{daYun.ganZhi}</span>
+                        <span className="text-text-secondary text-sm">{daYun.startAge}-{daYun.endAge}岁</span>
+                      </div>
+                      <p className="text-text-primary text-sm">{daYun.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 日主和用神 */}
+            <div className="mystic-card mb-6">
+              <h2 className="font-serif text-xl text-gold-400 mb-4">命理基础</h2>
+              <div className="space-y-4">
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2">日主特质</h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{freeResult.dayMaster.description}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-mystic-900/50">
+                  <h3 className="font-serif text-gold-400 mb-2">用神喜忌</h3>
+                  <p className="text-text-primary text-sm leading-relaxed">{freeResult.usefulGod}</p>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         {isPaid && paidResult && (
           <>
             <div className="mystic-card mb-6">
