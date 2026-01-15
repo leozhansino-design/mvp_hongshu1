@@ -67,11 +67,8 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-6 px-4">
       {/* 太极图 */}
-      <div className="relative w-48 h-48 md:w-56 md:h-56">
-        <div className="taiji-container">
-          <div className="bai"></div>
-          <div className="hei"></div>
-        </div>
+      <div className="relative w-48 h-48 md:w-56 md:h-56 flex items-center justify-center">
+        <div className="yinyang"></div>
       </div>
 
       {/* 状态信息 */}
@@ -139,78 +136,74 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
       </div>
 
       <style jsx>{`
-        @keyframes rotate {
+        .yinyang {
+          width: 200px;
+          height: 200px;
+          background: #fff;
+          box-sizing: border-box;
+          border-color: #000;
+          border-style: solid;
+          border-width: 3px 3px 100px 3px;
+          border-radius: 100%;
+          position: relative;
+          animation: yinyangRotate 4s infinite linear;
+        }
+
+        @media (min-width: 768px) {
+          .yinyang {
+            width: 224px;
+            height: 224px;
+            border-width: 3px 3px 112px 3px;
+          }
+
+          .yinyang::before {
+            width: 108px !important;
+            height: 108px !important;
+            border-width: 41px !important;
+          }
+
+          .yinyang::after {
+            width: 108px !important;
+            height: 108px !important;
+            border-width: 41px !important;
+          }
+        }
+
+        .yinyang::before {
+          content: "";
+          width: 97px;
+          height: 97px;
+          background: #fff;
+          box-sizing: border-box;
+          border-radius: 100%;
+          border: 37px solid #000;
+          position: absolute;
+          left: 0;
+          top: 100%;
+          transform: translate(0, -50%);
+        }
+
+        .yinyang::after {
+          content: "";
+          width: 97px;
+          height: 97px;
+          background: #000;
+          box-sizing: border-box;
+          border-radius: 100%;
+          border: 37px solid #fff;
+          position: absolute;
+          right: 0;
+          top: 100%;
+          transform: translate(0, -50%);
+        }
+
+        @keyframes yinyangRotate {
           from {
             transform: rotate(0deg);
           }
           to {
             transform: rotate(360deg);
           }
-        }
-
-        .taiji-container {
-          width: 100%;
-          height: 100%;
-          border-radius: 50%;
-          background: #fff;
-          border: 2px solid #ffffff;
-          position: relative;
-          animation: rotate 4s linear infinite;
-        }
-
-        .taiji-container::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 50%;
-          width: 50%;
-          height: 100%;
-          background: #000;
-          border-radius: 0 100% 100% 0 / 0 50% 50% 0;
-        }
-
-        .bai {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 50%;
-          background: #fff;
-          border-radius: 100% 100% 0 0 / 50% 50% 0 0;
-        }
-
-        .bai::after {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 25%;
-          transform: translateY(-50%);
-          width: 25%;
-          height: 50%;
-          background: #000;
-          border-radius: 50%;
-        }
-
-        .hei {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 50%;
-          background: #000;
-          border-radius: 0 0 100% 100% / 0 0 50% 50%;
-        }
-
-        .hei::after {
-          content: '';
-          position: absolute;
-          top: 50%;
-          right: 25%;
-          transform: translateY(-50%);
-          width: 25%;
-          height: 50%;
-          background: #fff;
-          border-radius: 50%;
         }
       `}</style>
     </div>
