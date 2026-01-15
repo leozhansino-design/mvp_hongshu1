@@ -139,60 +139,6 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
       </div>
 
       <style jsx>{`
-        .taiji-container {
-          width: 100%;
-          height: 100%;
-          border: 2px solid #ffffff;
-          background: linear-gradient(to bottom, #ffffff 50%, #000000 50%);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          animation: rotate 4s linear infinite;
-          position: relative;
-        }
-
-        .bai {
-          height: 50%;
-          width: 50%;
-          background: #ffffff;
-          border-radius: 50%;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          position: absolute;
-          left: 25%;
-          top: 0;
-        }
-
-        .bai::after {
-          content: '';
-          width: 15%;
-          aspect-ratio: 1;
-          background: #000000;
-          border-radius: 50%;
-        }
-
-        .hei {
-          height: 50%;
-          width: 50%;
-          background: #000000;
-          border-radius: 50%;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          position: absolute;
-          left: 25%;
-          bottom: 0;
-        }
-
-        .hei::after {
-          content: '';
-          width: 15%;
-          aspect-ratio: 1;
-          background: #ffffff;
-          border-radius: 50%;
-        }
-
         @keyframes rotate {
           from {
             transform: rotate(0deg);
@@ -200,6 +146,73 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
           to {
             transform: rotate(360deg);
           }
+        }
+
+        .taiji-container {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          background: #fff;
+          border: 2px solid #ffffff;
+          position: relative;
+          animation: rotate 4s linear infinite;
+        }
+
+        .taiji-container::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 50%;
+          width: 50%;
+          height: 100%;
+          background: #000;
+          border-radius: 0 100% 100% 0 / 0 50% 50% 0;
+        }
+
+        .bai {
+          position: absolute;
+          top: 0;
+          left: 50%;
+          width: 50%;
+          height: 50%;
+          background: #fff;
+          border-radius: 0 100% 100% 0 / 0 100% 100% 0;
+          transform: translateX(-50%);
+        }
+
+        .bai::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 20%;
+          height: 20%;
+          background: #000;
+          border-radius: 50%;
+        }
+
+        .hei {
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          width: 50%;
+          height: 50%;
+          background: #000;
+          border-radius: 0 100% 100% 0 / 0 100% 100% 0;
+          transform: translateX(-50%);
+        }
+
+        .hei::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 20%;
+          height: 20%;
+          background: #fff;
+          border-radius: 50%;
         }
       `}</style>
     </div>
