@@ -180,29 +180,35 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
 
       <style jsx>{`
         @keyframes taiji-forward {
-          from {
+          0% {
             transform: rotate(0deg);
           }
-          to {
+          50% {
+            transform: rotate(180deg);
+          }
+          100% {
             transform: rotate(360deg);
           }
         }
 
         @keyframes taiji-reverse {
-          from {
+          0% {
             transform: rotate(360deg);
           }
-          to {
+          50% {
+            transform: rotate(180deg);
+          }
+          100% {
             transform: rotate(0deg);
           }
         }
 
         .animate-taiji-forward {
-          animation: taiji-forward 3s linear infinite;
+          animation: taiji-forward 4s ease-in-out infinite;
         }
 
         .animate-taiji-reverse {
-          animation: taiji-reverse 3s linear infinite;
+          animation: taiji-reverse 4s ease-in-out infinite;
         }
       `}</style>
     </div>
