@@ -11,7 +11,6 @@ import {
   incrementUsage,
   saveResult,
   getTotalGeneratedCount,
-  canUseFreeTrial,
 } from '@/services/storage';
 import { BirthInfo, StoredResult } from '@/types';
 
