@@ -64,38 +64,10 @@ export default function BaguaLoader({ message, queueCount = 0 }: BaguaLoaderProp
     <div className="flex flex-col items-center justify-center gap-8">
       {/* 太极图 */}
       <div className="relative w-48 h-48">
-        <svg
-          viewBox="0 0 200 200"
-          className="w-full h-full animate-taiji-spin"
-        >
-          {/* 外圈 */}
-          <circle
-            cx="100"
-            cy="100"
-            r="98"
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth="2"
-          />
-
-          {/* 太极图主体 - 黑半边 */}
-          <path
-            d="M100 2 A98 98 0 0 1 100 198 A49 49 0 0 1 100 100 A49 49 0 0 0 100 2"
-            fill="#000000"
-          />
-
-          {/* 太极图主体 - 白半边 */}
-          <path
-            d="M100 198 A98 98 0 0 1 100 2 A49 49 0 0 0 100 100 A49 49 0 0 1 100 198"
-            fill="#ffffff"
-          />
-
-          {/* 白鱼眼（上方黑色区域的白点） */}
-          <circle cx="100" cy="51" r="16" fill="#ffffff" />
-
-          {/* 黑鱼眼（下方白色区域的黑点） */}
-          <circle cx="100" cy="149" r="16" fill="#000000" />
-        </svg>
+        <div className="taiji-container">
+          <div className="bai"></div>
+          <div className="hei"></div>
+        </div>
       </div>
 
       <div className="text-center max-w-sm w-full px-4">
@@ -150,17 +122,67 @@ export default function BaguaLoader({ message, queueCount = 0 }: BaguaLoaderProp
           }
         }
 
-        @keyframes taiji-spin {
-          0% {
-            transform: rotate(0deg);
-          }
-          100% {
-            transform: rotate(360deg);
-          }
+        .taiji-container {
+          width: 200px;
+          height: 200px;
+          border: 2px solid #ffffff;
+          background: linear-gradient(to bottom, #ffffff 50%, #000000 50%);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          animation: rotate 4s linear infinite;
+          position: relative;
         }
 
-        .animate-taiji-spin {
-          animation: taiji-spin 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .bai {
+          height: 50%;
+          width: 50%;
+          background: #ffffff;
+          border-radius: 50%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          position: absolute;
+          left: 25%;
+          top: 0;
+        }
+
+        .bai::after {
+          content: '';
+          width: 30px;
+          height: 30px;
+          background: #000000;
+          border-radius: 50%;
+        }
+
+        .hei {
+          height: 50%;
+          width: 50%;
+          background: #000000;
+          border-radius: 50%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          position: absolute;
+          left: 25%;
+          bottom: 0;
+        }
+
+        .hei::after {
+          content: '';
+          width: 30px;
+          height: 30px;
+          background: #ffffff;
+          border-radius: 50%;
+        }
+
+        @keyframes rotate {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
         }
       `}</style>
     </div>
