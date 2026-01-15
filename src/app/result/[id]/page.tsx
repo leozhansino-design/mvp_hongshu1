@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import html2canvas from 'html2canvas';
-import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagram } from '@/components';
+import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagram, DetailedDaYunTable } from '@/components';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult } from '@/services/api';
 import { calculateDaYun } from '@/lib/bazi';
@@ -219,64 +219,39 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             </button>
 
             {/* 大运流年展开内容 */}
-            {showDaYun && (
-              <div className="mt-4 pt-4 border-t border-gray-700">
-                {isPaid && paidResult?.daYunList ? (
-                  // 付费版：显示详细大运表格
-                  <DaYunTable
-                    daYunList={paidResult.daYunList}
-                    chartPoints={paidResult.chartPoints}
+            {showDaYun && (() => {
+              const isLunar = birthInfo.calendarType === 'lunar';
+              const daYunResult = calculateDaYun(
+                birthInfo.year,
+                birthInfo.month,
+                birthInfo.day,
+                birthInfo.hour || 0,
+                birthInfo.minute || 0,
+                birthInfo.gender,
+                isLunar
+              );
+
+              if (!daYunResult) return null;
+
+              // 显示0-100岁的大运
+              const daYunList = daYunResult.daYunList.filter(d => d.startAge <= 100);
+
+              return (
+                <div className="mt-4 pt-4 border-t border-gray-700">
+                  <DetailedDaYunTable
+                    daYunList={daYunList}
                     currentAge={currentAge}
                     birthYear={birthInfo.year}
+                    birthMonth={birthInfo.month}
+                    birthDay={birthInfo.day}
+                    birthHour={birthInfo.hour || 0}
+                    birthMinute={birthInfo.minute || 0}
+                    gender={birthInfo.gender}
+                    isLunar={isLunar}
                   />
-                ) : (() => {
-                  // 免费版：显示简化大运列表（直接从八字计算）
-                  const isLunar = birthInfo.calendarType === 'lunar';
-                  const daYunResult = calculateDaYun(
-                    birthInfo.year,
-                    birthInfo.month,
-                    birthInfo.day,
-                    birthInfo.hour || 0,
-                    birthInfo.minute || 0,
-                    birthInfo.gender,
-                    isLunar
-                  );
-
-                  if (!daYunResult) return null;
-
-                  // 显示0-100岁的大运
-                  const daYunList = daYunResult.daYunList.filter(d => d.startAge <= 100);
-
-                  return (
-                    <div>
-                      <h3 className="text-white font-serif mb-3">大运流年 (0-100岁)</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                        {daYunList.map((daYun, index) => {
-                          const isCurrent = currentAge >= daYun.startAge && currentAge <= daYun.endAge;
-                          return (
-                            <div
-                              key={index}
-                              className={`p-3 rounded border text-center transition-all ${
-                                isCurrent
-                                  ? 'bg-white/10 border-white/50'
-                                  : 'bg-black/30 border-gray-700'
-                              }`}
-                            >
-                              <div className={`font-mono text-sm mb-1 ${isCurrent ? 'text-gold-400' : 'text-white'}`}>
-                                {daYun.startAge}-{daYun.endAge}岁
-                              </div>
-                              <div className={`text-xs font-serif ${isCurrent ? 'text-white' : 'text-gray-400'}`}>
-                                {daYun.ganZhi}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
