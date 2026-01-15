@@ -15,7 +15,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-mystic-900/95 backdrop-blur-sm border-b border-purple-500/20">
+    <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-sm border-b border-gray-800">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
@@ -57,7 +57,7 @@ export default function Header() {
 
         {/* Mobile Menu */}
         {menuOpen && (
-          <nav className="md:hidden py-4 border-t border-purple-500/20">
+          <nav className="md:hidden py-4 border-t border-gray-800">
             {navItems.map((item) => (
               <Link
                 key={item.href}
