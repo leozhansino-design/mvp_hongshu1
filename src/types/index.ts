@@ -352,3 +352,19 @@ export function getShichenFromHour(hour: number): string {
   if (hour >= 21 && hour < 23) return '亥时';
   return '不详';
 }
+
+// 十二时辰选项
+export const HOUR_OPTIONS = [
+  { value: 0, label: '子时 (23:00-01:00)' },
+  { value: 1, label: '丑时 (01:00-03:00)' },
+  { value: 3, label: '寅时 (03:00-05:00)' },
+  { value: 5, label: '卯时 (05:00-07:00)' },
+  { value: 7, label: '辰时 (07:00-09:00)' },
+  { value: 9, label: '巳时 (09:00-11:00)' },
+  { value: 11, label: '午时 (11:00-13:00)' },
+  { value: 13, label: '未时 (13:00-15:00)' },
+  { value: 15, label: '申时 (15:00-17:00)' },
+  { value: 17, label: '酉时 (17:00-19:00)' },
+  { value: 19, label: '戌时 (19:00-21:00)' },
+  { value: 21, label: '亥时 (21:00-23:00)' },
+];
