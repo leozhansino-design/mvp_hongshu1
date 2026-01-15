@@ -108,6 +108,8 @@ export interface FreeVersionResult {
   // 五行和开运
   fiveElements: FiveElements;
   luckyInfo: LuckyInfo;
+  // 大运列表（新增）
+  daYunList?: DaYunInfo[];
   // 曲线数据
   chartPoints: ChartPoint[];
   // 高光和警示

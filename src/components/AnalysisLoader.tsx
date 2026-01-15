@@ -68,10 +68,7 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
     <div className="flex flex-col items-center justify-center gap-6 px-4">
       {/* 太极图 */}
       <div className="relative w-48 h-48 md:w-56 md:h-56 flex items-center justify-center">
-        <div className="taiji-circle">
-          <div className="yinyang"></div>
-          <div className="yinyang"></div>
-        </div>
+        <div className="yinyang"></div>
       </div>
 
       {/* 状态信息 */}
@@ -139,7 +136,7 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
       </div>
 
       <style jsx>{`
-        @keyframes rotate {
+        @keyframes yinyangRotate {
           from {
             transform: rotate(0deg);
           }
@@ -148,69 +145,65 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
           }
         }
 
-        .taiji-circle {
-          box-sizing: border-box;
-          height: 200px;
-          width: 200px;
-          border-radius: 50%;
-          padding-left: 100px;
-          background-image: linear-gradient(to left, #fff, #fff 50%, #000 50%, #000);
-          animation: rotate 4s linear infinite;
-        }
-
-        @media (min-width: 768px) {
-          .taiji-circle {
-            height: 224px;
-            width: 224px;
-            padding-left: 112px;
-          }
-
-          .yinyang {
-            height: 112px !important;
-            width: 112px !important;
-          }
-
-          .yinyang::before,
-          .yinyang::after {
-            border-width: 20px !important;
-            width: 16px !important;
-            height: 16px !important;
-          }
-        }
-
         .yinyang {
-          position: relative;
-          background-color: #fff;
-          height: 100px;
-          width: 100px;
-          border-radius: 50%;
-          background-image: linear-gradient(to left, #fff, #fff 50%, #000 50%, #000);
+          width: 200px;
+          height: 200px;
+          background: #fff;
+          box-sizing: border-box;
+          border-color: #000;
+          border-style: solid;
+          border-width: 3px 3px 100px 3px;
+          border-radius: 100%;
+          position: absolute;
+          animation: yinyangRotate 4s infinite linear;
         }
 
         .yinyang::before {
           content: '';
-          position: absolute;
-          top: 0;
-          left: 50%;
-          transform: translateX(-50%);
+          width: 97px;
+          height: 97px;
           background: #fff;
-          border: 18px solid #000;
-          border-radius: 50%;
-          width: 14px;
-          height: 14px;
+          box-sizing: border-box;
+          border-radius: 100%;
+          border: 37px solid #000;
+          position: absolute;
+          left: 0;
+          top: 100%;
+          transform: translate(0, -50%);
         }
 
         .yinyang::after {
           content: '';
-          position: absolute;
-          bottom: 0;
-          left: 50%;
-          transform: translateX(-50%);
+          width: 97px;
+          height: 97px;
           background: #000;
-          border: 18px solid #fff;
-          border-radius: 50%;
-          width: 14px;
-          height: 14px;
+          box-sizing: border-box;
+          border-radius: 100%;
+          border: 37px solid #fff;
+          position: absolute;
+          right: 0;
+          top: 100%;
+          transform: translate(0, -50%);
+        }
+
+        @media (min-width: 768px) {
+          .yinyang {
+            width: 224px;
+            height: 224px;
+            border-width: 3px 3px 112px 3px;
+          }
+
+          .yinyang::before {
+            width: 109px;
+            height: 109px;
+            border: 41px solid #000;
+          }
+
+          .yinyang::after {
+            width: 109px;
+            height: 109px;
+            border: 41px solid #fff;
+          }
         }
       `}</style>
     </div>

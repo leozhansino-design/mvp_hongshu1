@@ -73,35 +73,38 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
 
 请输出JSON：
 {
-  "summary": "命理总评（120字）",
+  "summary": "命理总评（150字）",
   "summaryScore": 75,
-  "personality": "性格分析（80字）",
+  "personality": "性格分析（100字）",
   "personalityScore": 80,
-  "career": "事业分析（80字）",
+  "career": "事业分析（100字）",
   "careerScore": 72,
-  "wealth": "财运分析（80字）",
+  "wealth": "财运分析（100字）",
   "wealthScore": 68,
-  "marriage": "婚姻分析（80字）",
+  "marriage": "婚姻分析（100字）",
   "marriageScore": 75,
-  "health": "健康分析（60字）",
+  "health": "健康分析（80字）",
   "healthScore": 70,
-  "dayMaster": {"stem": "${bazi.dayPillar[0]}", "element": "X", "strength": "身旺/身弱/中和", "description": "日主特质（50字）"},
-  "usefulGod": "用神喜忌（50字）",
+  "dayMaster": {"stem": "${bazi.dayPillar[0]}", "element": "X", "strength": "身旺/身弱/中和", "description": "日主特质（60字）"},
+  "usefulGod": "用神喜忌（60字）",
   "fiveElements": {"wood": 2, "fire": 1, "earth": 2, "metal": 1, "water": 2},
   "luckyInfo": {"direction": "方位", "color": "颜色", "number": "数字", "industry": "行业"},
+  "daYunList": [${daYunList.map(d => `{"startAge": ${d.startAge}, "endAge": ${d.endAge}, "ganZhi": "${d.ganZhi}", "description": "此运点评（25字）"}`).join(', ')}],
   "chartPoints": [
     {"age": 1, "score": 55, "daYun": "${daYunList[0]?.ganZhi || '童限'}", "ganZhi": "XX", "reason": "简述（15字）"}
   ],
-  "highlights": [{"age": 28, "year": ${year + 27}, "title": "标题", "description": "描述（40字）"}],
-  "warnings": [{"age": 35, "year": ${year + 34}, "title": "标题", "description": "描述", "advice": "建议（30字）"}],
+  "highlights": [{"age": 28, "year": ${year + 27}, "title": "标题", "description": "描述（50字）"}],
+  "warnings": [{"age": 35, "year": ${year + 34}, "title": "标题", "description": "描述（40字）", "advice": "建议（35字）"}],
   "currentPhase": "rising"
 }
 
 规则：
 1. 八字四柱直接使用上面给出的，不要自己推算
-2. chartPoints需10个点（1,10,20,30,40,50,60,70,80,90岁），daYun使用上面大运
-3. score范围30-95，必须有明显波动
-4. reason限15字内`;
+2. daYunList使用上面提供的大运，为每个大运添加25字以内的点评，说明该大运的特点和运势走向
+3. chartPoints需10个点（1,10,20,30,40,50,60,70,80,90岁），daYun使用上面大运
+4. score范围30-95，必须有明显波动
+5. reason限15字内
+6. highlights选2-3个高光时刻，warnings选2个警示年份`;
 
 export const PAID_VERSION_PROMPT = (
   gender: string,
