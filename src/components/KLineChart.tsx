@@ -129,24 +129,24 @@ export default function KLineChart(props: KLineChartProps) {
         >
           <defs>
             <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset={gradientOffset} stopColor="#22D3EE" stopOpacity={0.8} />
-              <stop offset={gradientOffset} stopColor="#F43F5E" stopOpacity={0.8} />
+              <stop offset={gradientOffset} stopColor="#6BA5C6" stopOpacity={0.9} />
+              <stop offset={gradientOffset} stopColor="#C66B6B" stopOpacity={0.9} />
             </linearGradient>
             <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#9D4EDD" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#9D4EDD" stopOpacity={0} />
+              <stop offset="5%" stopColor="#8B7AB8" stopOpacity={0.2} />
+              <stop offset="95%" stopColor="#8B7AB8" stopOpacity={0} />
             </linearGradient>
           </defs>
 
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="rgba(157, 78, 221, 0.2)"
+            stroke="rgba(139, 122, 184, 0.15)"
             vertical={false}
           />
 
           <XAxis
             dataKey="age"
-            axisLine={{ stroke: 'rgba(157, 78, 221, 0.3)' }}
+            axisLine={{ stroke: 'rgba(139, 122, 184, 0.2)' }}
             tickLine={false}
             tick={{ fill: '#9CA3AF', fontSize: 12 }}
             tickFormatter={(value) => `${value}岁`}
@@ -165,13 +165,13 @@ export default function KLineChart(props: KLineChartProps) {
           {currentAge && (
             <ReferenceLine
               x={currentAge}
-              stroke="#FFD700"
+              stroke="#C9A961"
               strokeWidth={2}
               strokeDasharray="5 5"
               label={{
                 value: '今',
                 position: 'top',
-                fill: '#FFD700',
+                fill: '#C9A961',
                 fontSize: 14,
               }}
             />
@@ -179,7 +179,7 @@ export default function KLineChart(props: KLineChartProps) {
 
           <ReferenceLine
             y={60}
-            stroke="rgba(157, 78, 221, 0.4)"
+            stroke="rgba(139, 122, 184, 0.3)"
             strokeDasharray="3 3"
           />
 
@@ -198,8 +198,8 @@ export default function KLineChart(props: KLineChartProps) {
             dot={false}
             activeDot={{
               r: 6,
-              fill: '#FFD700',
-              stroke: '#0D0221',
+              fill: '#C9A961',
+              stroke: '#0D0D1A',
               strokeWidth: 2,
             }}
           />
@@ -210,7 +210,7 @@ export default function KLineChart(props: KLineChartProps) {
                 age: h.age,
                 value: h.score,
               }))}
-              fill="#FFD700"
+              fill="#C9A961"
               shape="star"
             />
           )}
@@ -221,7 +221,7 @@ export default function KLineChart(props: KLineChartProps) {
                 age: w.age,
                 value: w.score,
               }))}
-              fill="#F43F5E"
+              fill="#C66B6B"
               shape="diamond"
             />
           )}

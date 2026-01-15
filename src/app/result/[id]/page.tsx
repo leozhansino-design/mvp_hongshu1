@@ -164,7 +164,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           ) : null}
 
           <p className="text-xs text-text-secondary text-center mt-2">
-            {isPaid ? '✦ 金色标记为高光年份 ◆ 红色标记为警示年份' : '大运十年一换，此为概览'}
+            {isPaid ? '金色标记为高光年份 · 红色标记为警示年份' : '大运十年一换，此为概览'}
           </p>
         </div>
 
@@ -173,14 +173,14 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
           <div className="space-y-4">
             {currentPhase && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-mystic-900/50">
-                <span className="text-2xl">
-                  {currentPhase === 'rising' && '📈'}
-                  {currentPhase === 'peak' && '⭐'}
-                  {currentPhase === 'stable' && '➡️'}
-                  {currentPhase === 'declining' && '📉'}
-                  {currentPhase === 'valley' && '🌙'}
-                </span>
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-mystic-900/30 backdrop-blur-xl border border-gold-400/20">
+                <div className={`w-3 h-3 rounded-full ${
+                  currentPhase === 'rising' ? 'bg-kline-up shadow-[0_0_12px_rgba(107,165,198,0.6)]' :
+                  currentPhase === 'peak' ? 'bg-gold-400 shadow-[0_0_12px_rgba(201,169,97,0.6)]' :
+                  currentPhase === 'stable' ? 'bg-text-secondary shadow-[0_0_12px_rgba(156,163,175,0.4)]' :
+                  currentPhase === 'declining' ? 'bg-kline-down shadow-[0_0_12px_rgba(198,107,107,0.6)]' :
+                  'bg-purple-400 shadow-[0_0_12px_rgba(139,122,184,0.6)]'
+                }`} />
                 <div>
                   <p className="text-text-secondary text-sm">当前阶段</p>
                   <p className="text-gold-400 font-serif">
@@ -192,8 +192,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
             {!isPaid && freeResult && (
               <>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-mystic-900/50">
-                  <span className="text-2xl">✦</span>
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-mystic-900/30 backdrop-blur-xl border border-kline-up/20">
+                  <div className="w-3 h-3 rounded-full bg-kline-up shadow-[0_0_12px_rgba(107,165,198,0.6)]" />
                   <div>
                     <p className="text-text-secondary text-sm">高光运程</p>
                     <p className="text-kline-up">
@@ -202,8 +202,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-mystic-900/50">
-                  <span className="text-2xl">◆</span>
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-mystic-900/30 backdrop-blur-xl border border-kline-down/20">
+                  <div className="w-3 h-3 rounded-full bg-kline-down shadow-[0_0_12px_rgba(198,107,107,0.6)]" />
                   <div>
                     <p className="text-text-secondary text-sm">警示运程</p>
                     <p className="text-kline-down">
@@ -212,7 +212,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg bg-mystic-900/50">
+                <div className="p-4 rounded-lg bg-mystic-900/30 backdrop-blur-xl border border-purple-400/10">
                   <p className="text-text-primary leading-relaxed">
                     {freeResult.briefSummary}
                   </p>
@@ -320,18 +320,22 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
               解锁完整命数 · ¥19.9
             </p>
 
-            <ul className="text-left mb-6 space-y-2 max-w-xs mx-auto">
-              <li className="flex items-center gap-2 text-text-primary">
-                <span className="text-gold-400">✦</span> 百年逐年运势详图
+            <ul className="text-left mb-6 space-y-3 max-w-xs mx-auto">
+              <li className="flex items-center gap-3 text-text-primary">
+                <div className="w-1.5 h-1.5 rounded-full bg-gold-400" />
+                百年逐年运势详图
               </li>
-              <li className="flex items-center gap-2 text-text-primary">
-                <span className="text-gold-400">✦</span> 高光年份具体解读
+              <li className="flex items-center gap-3 text-text-primary">
+                <div className="w-1.5 h-1.5 rounded-full bg-gold-400" />
+                高光年份具体解读
               </li>
-              <li className="flex items-center gap-2 text-text-primary">
-                <span className="text-gold-400">✦</span> 警示年份应对之策
+              <li className="flex items-center gap-3 text-text-primary">
+                <div className="w-1.5 h-1.5 rounded-full bg-gold-400" />
+                警示年份应对之策
               </li>
-              <li className="flex items-center gap-2 text-text-primary">
-                <span className="text-gold-400">✦</span> 性格/事业/财运/姻缘/健康 五维详批
+              <li className="flex items-center gap-3 text-text-primary">
+                <div className="w-1.5 h-1.5 rounded-full bg-gold-400" />
+                性格/事业/财运/姻缘/健康 五维详批
               </li>
             </ul>
 
@@ -350,7 +354,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           style={{ background: 'linear-gradient(180deg, #0D0221 0%, #1A0A2E 50%, #16213E 100%)' }}
         >
           <div className="text-center mb-8">
-            <p className="text-gold-400 text-3xl mb-2">✦ 人生曲线 ✦</p>
+            <p className="text-gold-400 text-3xl mb-2 font-serif">人生曲线</p>
           </div>
 
           <div className="bg-mystic-800/50 rounded-lg p-6 mb-8">
