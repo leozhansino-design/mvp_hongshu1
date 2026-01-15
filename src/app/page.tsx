@@ -20,6 +20,7 @@ export default function HomePage() {
   const [totalGenerated, setTotalGenerated] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [queueCount, setQueueCount] = useState(0);
 
   useEffect(() => {
     setRemainingUsage(getRemainingUsage());
@@ -35,6 +36,11 @@ export default function HomePage() {
 
     setIsLoading(true);
     setError(null);
+
+    // 模拟获取排队人数（实际应该从API获取）
+    // 这里简单模拟一个0-10之间的随机数
+    const actualQueue = Math.floor(Math.random() * 11);
+    setQueueCount(actualQueue);
 
     try {
       const resultId = uuidv4();
@@ -82,7 +88,7 @@ export default function HomePage() {
       <div className="min-h-screen">
         <Header />
         <div className="flex flex-col items-center justify-center px-4" style={{ minHeight: 'calc(100vh - 56px)' }}>
-          <BaguaLoader />
+          <BaguaLoader queueCount={queueCount} />
         </div>
       </div>
     );

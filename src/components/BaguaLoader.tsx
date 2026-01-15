@@ -5,11 +5,24 @@ import { LOADING_MESSAGES } from '@/lib/constants';
 
 interface BaguaLoaderProps {
   message?: string;
+  queueCount?: number;
 }
 
-export default function BaguaLoader({ message }: BaguaLoaderProps) {
+export default function BaguaLoader({ message, queueCount = 0 }: BaguaLoaderProps) {
   const [currentMessage, setCurrentMessage] = useState(LOADING_MESSAGES[0]);
   const [messageIndex, setMessageIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [displayQueue, setDisplayQueue] = useState(0);
+
+  // 初始化排队人数
+  useEffect(() => {
+    // 如果实际排队人数少于1，显示随机1-5人
+    if (queueCount < 1) {
+      setDisplayQueue(Math.floor(Math.random() * 5) + 1);
+    } else {
+      setDisplayQueue(queueCount);
+    }
+  }, [queueCount]);
 
   useEffect(() => {
     if (message) return;
@@ -26,6 +39,28 @@ export default function BaguaLoader({ message }: BaguaLoaderProps) {
       setCurrentMessage(LOADING_MESSAGES[messageIndex]);
     }
   }, [messageIndex, message]);
+
+  // 模拟进度条
+  useEffect(() => {
+    setProgress(0);
+    const duration = 20000; // 总时长20秒
+    const intervalTime = 100; // 每100ms更新一次
+    const increment = (100 / duration) * intervalTime;
+
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        const next = prev + increment;
+        // 最多到95%，给实际加载留一些空间
+        if (next >= 95) {
+          clearInterval(progressInterval);
+          return 95;
+        }
+        return next;
+      });
+    }, intervalTime);
+
+    return () => clearInterval(progressInterval);
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center gap-8">
@@ -80,11 +115,34 @@ export default function BaguaLoader({ message }: BaguaLoaderProps) {
         <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500/10 to-gold-400/10 blur-xl animate-pulse" />
       </div>
 
-      <div className="text-center">
-        <p className="font-serif text-lg text-gold-400">
+      <div className="text-center max-w-sm w-full px-4">
+        <p className="font-serif text-lg text-gold-400 mb-4">
           {message || currentMessage}
         </p>
-        <div className="mt-3 flex justify-center gap-1.5">
+
+        {/* 排队人数 */}
+        <div className="mb-4 text-text-secondary text-sm">
+          <span className="text-purple-400">当前排队：</span>
+          <span className="text-gold-400 font-mono mx-1">{displayQueue}</span>
+          <span>人</span>
+        </div>
+
+        {/* 进度条 */}
+        <div className="w-full mb-2">
+          <div className="h-2 bg-mystic-900/50 rounded-full overflow-hidden backdrop-blur-sm border border-gold-400/20">
+            <div
+              className="h-full bg-gradient-to-r from-purple-400 to-gold-400 transition-all duration-300 ease-out rounded-full"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* 进度百分比 */}
+        <div className="text-xs text-text-secondary mb-3">
+          推算中 <span className="text-gold-400 font-mono">{Math.floor(progress)}%</span>
+        </div>
+
+        <div className="flex justify-center gap-1.5">
           {[0, 1, 2].map((i) => (
             <span
               key={i}

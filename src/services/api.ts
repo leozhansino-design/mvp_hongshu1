@@ -1,5 +1,95 @@
-import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT } from '@/lib/constants';
-import { FreeVersionResult, PaidVersionResult, BirthInfo, HOUR_LABELS } from '@/types';
+import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT, BaziForPrompt, DaYunForPrompt } from '@/lib/constants';
+import { FreeVersionResult, PaidVersionResult, BirthInfo, BaziChart } from '@/types';
+import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
+
+// 将计算结果转换为prompt格式
+function toBaziForPrompt(bazi: BaziResult): BaziForPrompt {
+  return {
+    yearPillar: bazi.chart.yearPillar.fullName,
+    monthPillar: bazi.chart.monthPillar.fullName,
+    dayPillar: bazi.chart.dayPillar.fullName,
+    hourPillar: bazi.chart.hourPillar.fullName,
+    zodiac: bazi.chart.zodiac,
+    lunarDate: bazi.chart.lunarDate,
+  };
+}
+
+function toDaYunForPrompt(daYunList: DaYunItem[]): DaYunForPrompt[] {
+  return daYunList.map(d => ({
+    ganZhi: d.ganZhi,
+    startAge: d.startAge,
+    endAge: d.endAge,
+  }));
+}
+
+// 修复常见的JSON格式错误
+function repairJSON(jsonStr: string): string {
+  let repaired = jsonStr;
+
+  // 修复八字柱位缺少earthlyBranch键名的问题
+  // 例如: {"heavenlyStem": "癸", "巳", "fullName": "癸巳"}
+  // 修复为: {"heavenlyStem": "癸", "earthlyBranch": "巳", "fullName": "癸巳"}
+  const pillarPattern = /"heavenlyStem"\s*:\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"fullName"/g;
+  repaired = repaired.replace(pillarPattern, '"heavenlyStem": "$1", "earthlyBranch": "$2", "fullName"');
+
+  // 修复缺少键名的情况 - 通用模式
+  // 检测 "value1", "value2", "key": 这种模式，尝试修复
+  // 这种情况通常发生在连续的值之间
+
+  // 修复多余的逗号
+  repaired = repaired.replace(/,\s*,/g, ',');
+  repaired = repaired.replace(/,\s*}/g, '}');
+  repaired = repaired.replace(/,\s*]/g, ']');
+
+  // 修复缺少逗号的情况
+  repaired = repaired.replace(/}\s*{/g, '},{');
+  repaired = repaired.replace(/]\s*\[/g, '],[');
+
+  // 修复单引号改为双引号
+  // 小心处理，只替换作为JSON字符串分隔符的单引号
+
+  return repaired;
+}
+
+// 尝试多种方式解析JSON
+function parseJSONWithRepair(content: string): unknown {
+  // 第一次尝试：直接解析
+  try {
+    return JSON.parse(content);
+  } catch {
+    console.log('直接解析失败，尝试修复JSON...');
+  }
+
+  // 第二次尝试：清理并修复后解析
+  let cleanedContent = content
+    .replace(/```json\s*/gi, '')
+    .replace(/```\s*/g, '')
+    .trim();
+
+  // 确保从{开始
+  const jsonStart = cleanedContent.indexOf('{');
+  if (jsonStart > 0) {
+    cleanedContent = cleanedContent.substring(jsonStart);
+  }
+
+  // 确保以}结束
+  const jsonEnd = cleanedContent.lastIndexOf('}');
+  if (jsonEnd > 0 && jsonEnd < cleanedContent.length - 1) {
+    cleanedContent = cleanedContent.substring(0, jsonEnd + 1);
+  }
+
+  // 应用修复
+  const repairedContent = repairJSON(cleanedContent);
+
+  try {
+    return JSON.parse(repairedContent);
+  } catch (e) {
+    console.error('修复后仍无法解析:', e);
+    console.error('原始内容:', content.substring(0, 500));
+    console.error('修复后内容:', repairedContent.substring(0, 500));
+    throw new Error('AI返回的数据格式不正确，请重试');
+  }
+}
 
 interface APIConfig {
   baseUrl: string;
@@ -43,13 +133,35 @@ export async function generateFreeResult(
   birthInfo: BirthInfo,
   config: APIConfig = API_CONFIG
 ): Promise<FreeVersionResult> {
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour.toString();
+  // 预计算八字
+  const isLunar = birthInfo.calendarType === 'lunar';
+  const baziResult = calculateBazi(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, isLunar
+  );
+
+  if (!baziResult) {
+    throw new Error('八字计算失败，请检查出生信息');
+  }
+
+  // 预计算大运
+  const daYunResult = calculateDaYun(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+  );
+
+  if (!daYunResult) {
+    throw new Error('大运计算失败，请检查出生信息');
+  }
+
+  const baziForPrompt = toBaziForPrompt(baziResult);
+  const daYunForPrompt = toDaYunForPrompt(daYunResult.daYunList);
+
   const userPrompt = FREE_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
-    birthInfo.month,
-    birthInfo.day,
-    hourLabel
+    baziForPrompt,
+    daYunForPrompt
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -65,7 +177,7 @@ export async function generateFreeResult(
         { role: 'user', content: userPrompt }
       ],
       temperature: 0.7,
-      max_tokens: 4000,
+      max_tokens: 30000,
     }),
   });
 
@@ -75,25 +187,33 @@ export async function generateFreeResult(
   }
 
   const data = await response.json();
+
+  // 检查是否因长度被截断
+  const finishReason = data.choices[0]?.finish_reason;
+  if (finishReason === 'length') {
+    console.error('响应被截断:', data);
+    throw new Error('AI响应被截断，请重试');
+  }
+
   const content = data.choices[0]?.message?.content;
 
   if (!content) {
     throw new Error('AI未返回有效内容');
   }
 
-  try {
-    const cleanedContent = content.replace(/```json\n?|\n?```/g, '').trim();
-    const result = JSON.parse(cleanedContent) as FreeVersionResult;
+  const aiResult = parseJSONWithRepair(content) as Partial<FreeVersionResult>;
 
-    if (!result.chartPoints || !Array.isArray(result.chartPoints)) {
-      throw new Error('返回数据格式不正确');
-    }
-
-    return result;
-  } catch {
-    console.error('JSON解析失败:', content);
-    throw new Error('AI返回的数据格式不正确');
+  if (!aiResult.chartPoints || !Array.isArray(aiResult.chartPoints)) {
+    throw new Error('返回数据格式不正确');
   }
+
+  // 使用预计算的八字，不依赖AI返回
+  const result: FreeVersionResult = {
+    ...aiResult as FreeVersionResult,
+    baziChart: baziResult.chart,
+  };
+
+  return result;
 }
 
 export async function generatePaidResult(
@@ -102,14 +222,36 @@ export async function generatePaidResult(
 ): Promise<PaidVersionResult> {
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour.toString();
+
+  // 预计算八字
+  const isLunar = birthInfo.calendarType === 'lunar';
+  const baziResult = calculateBazi(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, isLunar
+  );
+
+  if (!baziResult) {
+    throw new Error('八字计算失败，请检查出生信息');
+  }
+
+  // 预计算大运
+  const daYunResult = calculateDaYun(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+  );
+
+  if (!daYunResult) {
+    throw new Error('大运计算失败，请检查出生信息');
+  }
+
+  const baziForPrompt = toBaziForPrompt(baziResult);
+  const daYunForPrompt = toDaYunForPrompt(daYunResult.daYunList);
 
   const userPrompt = PAID_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
-    birthInfo.month,
-    birthInfo.day,
-    hourLabel,
+    baziForPrompt,
+    daYunForPrompt,
     currentAge
   );
 
@@ -126,7 +268,7 @@ export async function generatePaidResult(
         { role: 'user', content: userPrompt }
       ],
       temperature: 0.7,
-      max_tokens: 8000,
+      max_tokens: 30000,
     }),
   });
 
@@ -136,52 +278,85 @@ export async function generatePaidResult(
   }
 
   const data = await response.json();
+
+  // 检查是否因长度被截断
+  const finishReason = data.choices[0]?.finish_reason;
+  if (finishReason === 'length') {
+    console.error('响应被截断:', data);
+    throw new Error('AI响应被截断，请重试');
+  }
+
   const content = data.choices[0]?.message?.content;
 
   if (!content) {
     throw new Error('AI未返回有效内容');
   }
 
-  try {
-    const cleanedContent = content.replace(/```json\n?|\n?```/g, '').trim();
-    const result = JSON.parse(cleanedContent) as PaidVersionResult;
+  const aiResult = parseJSONWithRepair(content) as Partial<PaidVersionResult>;
 
-    if (!result.chartPoints || !Array.isArray(result.chartPoints)) {
-      throw new Error('返回数据格式不正确');
-    }
-
-    return result;
-  } catch {
-    console.error('JSON解析失败:', content);
-    throw new Error('AI返回的数据格式不正确');
+  if (!aiResult.chartPoints || !Array.isArray(aiResult.chartPoints)) {
+    throw new Error('返回数据格式不正确');
   }
+
+  // 使用预计算的八字，不依赖AI返回
+  const result: PaidVersionResult = {
+    ...aiResult as PaidVersionResult,
+    baziChart: baziResult.chart,
+  };
+
+  return result;
 }
 
 export function getSystemPrompt(): string {
   return SYSTEM_PROMPT;
 }
 
+// 这些函数用于调试，需要先计算八字大运
 export function getFreePrompt(birthInfo: BirthInfo): string {
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour.toString();
+  const isLunar = birthInfo.calendarType === 'lunar';
+  const baziResult = calculateBazi(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, isLunar
+  );
+  const daYunResult = calculateDaYun(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+  );
+
+  if (!baziResult || !daYunResult) {
+    return '八字计算失败';
+  }
+
   return FREE_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
-    birthInfo.month,
-    birthInfo.day,
-    hourLabel
+    toBaziForPrompt(baziResult),
+    toDaYunForPrompt(daYunResult.daYunList)
   );
 }
 
 export function getPaidPrompt(birthInfo: BirthInfo): string {
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
-  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour.toString();
+  const isLunar = birthInfo.calendarType === 'lunar';
+  const baziResult = calculateBazi(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, isLunar
+  );
+  const daYunResult = calculateDaYun(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+  );
+
+  if (!baziResult || !daYunResult) {
+    return '八字计算失败';
+  }
+
   return PAID_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
-    birthInfo.month,
-    birthInfo.day,
-    hourLabel,
+    toBaziForPrompt(baziResult),
+    toDaYunForPrompt(daYunResult.daYunList),
     currentAge
   );
 }
