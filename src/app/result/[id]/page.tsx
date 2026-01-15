@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import html2canvas from 'html2canvas';
 import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagram, DetailedDaYunTable } from '@/components';
+import UnlockLoader from '@/components/UnlockLoader';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult } from '@/services/api';
 import { calculateDaYun } from '@/lib/bazi';
@@ -19,12 +20,15 @@ interface PageParams {
 }
 
 // 评分圆环组件
-function ScoreRing({ score, label, size = 'md' }: { score: number; label: string; size?: 'sm' | 'md' }) {
+function ScoreRing({ score, label, size = 'md' }: { score?: number; label: string; size?: 'sm' | 'md' }) {
+  // 如果score未定义，使用0
+  const validScore = score !== undefined && score !== null && !isNaN(score) ? score : 0;
+
   const radius = size === 'sm' ? 28 : 36;
   const strokeWidth = size === 'sm' ? 4 : 5;
   const circumference = 2 * Math.PI * radius;
-  const progress = (score / 100) * circumference;
-  const color = score >= 75 ? '#22c55e' : score >= 50 ? '#D4AF37' : '#ef4444';
+  const progress = (validScore / 100) * circumference;
+  const color = validScore >= 75 ? '#22c55e' : validScore >= 50 ? '#D4AF37' : '#ef4444';
 
   return (
     <div className="flex flex-col items-center">
@@ -53,17 +57,17 @@ function ScoreRing({ score, label, size = 'md' }: { score: number; label: string
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
           <span className={`font-mono font-bold ${size === 'sm' ? 'text-lg' : 'text-xl'}`} style={{ color }}>
-            {score}
+            {validScore}
           </span>
         </div>
       </div>
-      <span className="text-xs text-text-secondary mt-1">{label}</span>
+      {label && <span className="text-xs text-text-secondary mt-1">{label}</span>}
     </div>
   );
 }
 
 // 分析卡片组件
-function AnalysisCard({ title, content, score, icon }: { title: string; content: string; score: number; icon: string }) {
+function AnalysisCard({ title, content, score, icon }: { title: string; content: string; score?: number; icon: string }) {
   return (
     <div className="p-4 rounded-lg bg-black/30 border border-gray-700">
       <div className="flex items-start justify-between mb-3">
@@ -84,6 +88,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const [result, setResult] = useState<StoredResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
+  const [unlockComplete, setUnlockComplete] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [showDaYun, setShowDaYun] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
@@ -101,6 +106,11 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const handleUpgrade = async () => {
     if (!result) return;
     setUpgrading(true);
+    setUnlockComplete(false);
+  };
+
+  const handleUnlockComplete = async () => {
+    if (!result) return;
     try {
       const paidResult = await generatePaidResult(result.birthInfo);
       const updatedResult: StoredResult = {
@@ -110,10 +120,14 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
       };
       saveResult(updatedResult);
       setResult(updatedResult);
+      setUnlockComplete(true);
+      // 延迟一下再关闭upgrading，让用户看到完成状态
+      setTimeout(() => {
+        setUpgrading(false);
+      }, 500);
     } catch (error) {
       console.error('升级失败:', error);
       alert('天机运算失败，请稍后再试');
-    } finally {
       setUpgrading(false);
     }
   };
@@ -139,15 +153,22 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     }
   };
 
-  if (loading || upgrading) {
+  if (loading) {
     return (
       <div className="min-h-screen">
         <Header />
         <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
-          <div className="text-gold-400 animate-pulse">
-            {upgrading ? '正在解锁完整命数...' : '加载中...'}
-          </div>
+          <div className="text-gold-400 animate-pulse">加载中...</div>
         </div>
+      </div>
+    );
+  }
+
+  if (upgrading) {
+    return (
+      <div className="min-h-screen">
+        <Header />
+        <UnlockLoader onComplete={handleUnlockComplete} />
       </div>
     );
   }

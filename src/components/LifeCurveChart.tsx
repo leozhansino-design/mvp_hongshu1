@@ -85,9 +85,22 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
           prevPoint.score, currentPoint.score, nextPoint.score, nextNextPoint.score, t
         ));
 
-        // 添加小波动 - 使用age作为随机种子保证一致性
-        const fluctuation = Math.sin(age * 0.7) * 2.5 + Math.cos(age * 1.3) * 1.5;
-        const scoreWithFluctuation = interpolatedScore + fluctuation;
+        // 增强波动，模拟股票K线的趋势感
+        // 1. 基础三角波动 - 创造明显的上升下降段
+        const triangleWave = ((age % 7) - 3.5) * 3; // ±10.5的三角波
+
+        // 2. 正弦波动 - 增加自然感
+        const sineWave = Math.sin(age * 0.5) * 5;
+
+        // 3. 余弦波动 - 添加次级波动
+        const cosineWave = Math.cos(age * 0.3) * 3;
+
+        // 4. 趋势变化 - 根据当前位置与目标位置的差距
+        const trendFactor = (nextPoint.score - currentPoint.score) * t * 0.3;
+
+        // 综合所有波动
+        const totalFluctuation = triangleWave + sineWave + cosineWave + trendFactor;
+        const scoreWithFluctuation = interpolatedScore + totalFluctuation;
         const score = Math.max(30, Math.min(95, Math.round(scoreWithFluctuation)));
 
         // 生成该大运阶段的通用描述
