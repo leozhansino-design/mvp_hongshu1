@@ -17,7 +17,7 @@ export default function TestPage() {
     year: 1990,
     month: 6,
     day: 15,
-    hour: 'wu',
+    hour: 11, // 午时
     calendarType: 'solar',
   });
 
@@ -184,7 +184,7 @@ export default function TestPage() {
                   <label className="block text-sm text-gray-400 mb-1">时辰</label>
                   <select
                     value={birthInfo.hour}
-                    onChange={(e) => setBirthInfo({ ...birthInfo, hour: e.target.value })}
+                    onChange={(e) => setBirthInfo({ ...birthInfo, hour: parseInt(e.target.value) })}
                     className="w-full px-3 py-2 bg-gray-700 rounded border border-gray-600 text-sm"
                   >
                     {HOUR_OPTIONS.map((option) => (

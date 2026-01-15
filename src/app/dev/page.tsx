@@ -33,7 +33,8 @@ export default function DevPage() {
     year: 1990,
     month: 6,
     day: 15,
-    hour: 'wu',
+    hour: 11, // 午时
+    calendarType: 'solar',
   });
 
   const [generating, setGenerating] = useState(false);
@@ -199,7 +200,7 @@ export default function DevPage() {
                   <label className="block text-sm text-gray-400 mb-1">时辰</label>
                   <select
                     value={testBirthInfo.hour}
-                    onChange={(e) => setTestBirthInfo({ ...testBirthInfo, hour: e.target.value })}
+                    onChange={(e) => setTestBirthInfo({ ...testBirthInfo, hour: parseInt(e.target.value) })}
                     className="w-full px-3 py-2 bg-gray-700 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
                   >
                     {HOUR_OPTIONS.map((option) => (
