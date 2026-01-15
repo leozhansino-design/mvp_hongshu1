@@ -6,6 +6,7 @@ import html2canvas from 'html2canvas';
 import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagram } from '@/components';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult } from '@/services/api';
+import { calculateDaYun } from '@/lib/bazi';
 import {
   StoredResult,
   PHASE_LABELS,
@@ -33,7 +34,7 @@ function ScoreRing({ score, label, size = 'md' }: { score: number; label: string
             cx="50%"
             cy="50%"
             r={radius}
-            stroke="#2D1B4E"
+            stroke="#1a1a1a"
             strokeWidth={strokeWidth}
             fill="none"
           />
@@ -64,7 +65,7 @@ function ScoreRing({ score, label, size = 'md' }: { score: number; label: string
 // 分析卡片组件
 function AnalysisCard({ title, content, score, icon }: { title: string; content: string; score: number; icon: string }) {
   return (
-    <div className="p-4 rounded-lg bg-mystic-900/50 border border-purple-500/20">
+    <div className="p-4 rounded-lg bg-black/30 border border-gray-700">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-xl">{icon}</span>
@@ -228,27 +229,52 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                     currentAge={currentAge}
                     birthYear={birthInfo.year}
                   />
-                ) : data?.chartPoints ? (
-                  // 免费版：显示简化大运列表
-                  <div>
-                    <h3 className="text-white font-serif mb-3">大运流年</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {data.chartPoints.filter((_, i) => i % 10 === 0).map((point, index) => (
-                        <div
-                          key={index}
-                          className="p-3 rounded bg-black/30 border border-gray-700 text-center"
-                        >
-                          <div className="text-white font-mono text-sm mb-1">
-                            {point.age}岁
-                          </div>
-                          <div className="text-gray-400 text-xs">
-                            {point.daYun}
-                          </div>
-                        </div>
-                      ))}
+                ) : (() => {
+                  // 免费版：显示简化大运列表（直接从八字计算）
+                  const isLunar = birthInfo.calendarType === 'lunar';
+                  const daYunResult = calculateDaYun(
+                    birthInfo.year,
+                    birthInfo.month,
+                    birthInfo.day,
+                    birthInfo.hour || 0,
+                    birthInfo.minute || 0,
+                    birthInfo.gender,
+                    isLunar
+                  );
+
+                  if (!daYunResult) return null;
+
+                  // 显示0-100岁的大运
+                  const daYunList = daYunResult.daYunList.filter(d => d.startAge <= 100);
+
+                  return (
+                    <div>
+                      <h3 className="text-white font-serif mb-3">大运流年 (0-100岁)</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {daYunList.map((daYun, index) => {
+                          const isCurrent = currentAge >= daYun.startAge && currentAge <= daYun.endAge;
+                          return (
+                            <div
+                              key={index}
+                              className={`p-3 rounded border text-center transition-all ${
+                                isCurrent
+                                  ? 'bg-white/10 border-white/50'
+                                  : 'bg-black/30 border-gray-700'
+                              }`}
+                            >
+                              <div className={`font-mono text-sm mb-1 ${isCurrent ? 'text-gold-400' : 'text-white'}`}>
+                                {daYun.startAge}-{daYun.endAge}岁
+                              </div>
+                              <div className={`text-xs font-serif ${isCurrent ? 'text-white' : 'text-gray-400'}`}>
+                                {daYun.ganZhi}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ) : null}
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -322,13 +348,13 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           <div className="mystic-card mb-6">
             <h2 className="font-serif text-xl text-gold-400 mb-4">八维详批</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <AnalysisCard title="性格命格" content={data.personality} score={data.personalityScore} icon="🎭" />
-              <AnalysisCard title="事业前程" content={data.career} score={data.careerScore} icon="💼" />
-              <AnalysisCard title="财帛运势" content={data.wealth} score={data.wealthScore} icon="💰" />
-              <AnalysisCard title="婚姻姻缘" content={data.marriage} score={data.marriageScore} icon="💕" />
-              <AnalysisCard title="健康体质" content={data.health} score={data.healthScore} icon="🏥" />
-              <AnalysisCard title="风水开运" content={data.fengShui} score={data.fengShuiScore} icon="🏠" />
-              <AnalysisCard title="六亲关系" content={data.family} score={data.familyScore} icon="👨‍👩‍👧" />
+              {data.personality && <AnalysisCard title="性格命格" content={data.personality} score={data.personalityScore} icon="🎭" />}
+              {data.career && <AnalysisCard title="事业前程" content={data.career} score={data.careerScore} icon="💼" />}
+              {data.wealth && <AnalysisCard title="财帛运势" content={data.wealth} score={data.wealthScore} icon="💰" />}
+              {data.marriage && <AnalysisCard title="婚姻姻缘" content={data.marriage} score={data.marriageScore} icon="💕" />}
+              {data.health && <AnalysisCard title="健康体质" content={data.health} score={data.healthScore} icon="🏥" />}
+              {data.fengShui && <AnalysisCard title="风水开运" content={data.fengShui} score={data.fengShuiScore} icon="🏠" />}
+              {data.family && <AnalysisCard title="六亲关系" content={data.family} score={data.familyScore} icon="👨‍👩‍👧" />}
             </div>
           </div>
         )}

@@ -73,7 +73,7 @@ export const FREE_VERSION_PROMPT = (
 【大运】（已排好，请直接使用）
 ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
 
-请输出JSON：
+请输出JSON格式（注意：下面的分数只是格式示例，请根据实际命局给出真实评分）：
 {
   "summary": "命理总评（120字）",
   "summaryScore": 75,
@@ -87,6 +87,10 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
   "marriageScore": 75,
   "health": "健康分析（60字）",
   "healthScore": 70,
+  "fengShui": "风水开运（60字）",
+  "fengShuiScore": 78,
+  "family": "六亲关系（60字）",
+  "familyScore": 72,
   "dayMaster": {"stem": "${bazi.dayPillar[0]}", "element": "X", "strength": "身旺/身弱/中和", "description": "日主特质（50字）"},
   "usefulGod": "用神喜忌（50字）",
   "fiveElements": {"wood": 2, "fire": 1, "earth": 2, "metal": 1, "water": 2},
@@ -103,7 +107,8 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
 1. 八字四柱直接使用上面给出的，不要自己推算
 2. chartPoints需10个点（1,10,20,30,40,50,60,70,80,90岁），daYun使用上面大运
 3. score范围30-95，必须有明显波动
-4. reason限15字内`;
+4. reason限15字内
+5. **重要**：所有评分必须根据实际命局分析得出，不要照抄示例中的75、80等数值`;
 
 export const PAID_VERSION_PROMPT = (
   gender: string,
@@ -124,7 +129,7 @@ export const PAID_VERSION_PROMPT = (
 【大运】（已排好，请直接使用）
 ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
 
-请输出JSON：
+请输出JSON格式（注意：下面的分数只是格式示例，请根据实际命局给出真实评分）：
 {
   "summary": "命理总评（150字）",
   "summaryScore": 75,
@@ -165,7 +170,8 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
 2. chartPoints需80个点（1-80岁，每年一条），只需score（30-95），reason限15字
 3. daYunList使用上面提供的大运，添加description
 4. highlights选3-5个，warnings选2-3个
-5. tenGods每项限20字`;
+5. tenGods每项限20字
+6. **重要**：所有评分必须根据实际命局分析得出，不要照抄示例中的75、80等数值`;
 
 export const LOADING_MESSAGES = [
   '正在排演四柱八字...',

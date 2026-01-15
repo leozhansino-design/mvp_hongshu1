@@ -13,7 +13,6 @@ export default function BaguaLoader({ message, queueCount = 0 }: BaguaLoaderProp
   const [messageIndex, setMessageIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [displayQueue, setDisplayQueue] = useState(0);
-  const [isReverse, setIsReverse] = useState(false);
 
   // 初始化排队人数
   useEffect(() => {
@@ -61,24 +60,13 @@ export default function BaguaLoader({ message, queueCount = 0 }: BaguaLoaderProp
     return () => clearInterval(progressInterval);
   }, []);
 
-  // 太极图正反转动
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsReverse((prev) => !prev);
-    }, 3000); // 每3秒切换方向
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="flex flex-col items-center justify-center gap-8">
       {/* 太极图 */}
       <div className="relative w-48 h-48">
         <svg
           viewBox="0 0 200 200"
-          className={`w-full h-full transition-transform duration-3000 ${
-            isReverse ? 'animate-taiji-reverse' : 'animate-taiji-forward'
-          }`}
+          className="w-full h-full animate-taiji-spin"
         >
           {/* 外圈 */}
           <circle
@@ -162,36 +150,17 @@ export default function BaguaLoader({ message, queueCount = 0 }: BaguaLoaderProp
           }
         }
 
-        @keyframes taiji-forward {
+        @keyframes taiji-spin {
           0% {
             transform: rotate(0deg);
-          }
-          50% {
-            transform: rotate(180deg);
           }
           100% {
             transform: rotate(360deg);
           }
         }
 
-        @keyframes taiji-reverse {
-          0% {
-            transform: rotate(360deg);
-          }
-          50% {
-            transform: rotate(180deg);
-          }
-          100% {
-            transform: rotate(0deg);
-          }
-        }
-
-        .animate-taiji-forward {
-          animation: taiji-forward 4s ease-in-out infinite;
-        }
-
-        .animate-taiji-reverse {
-          animation: taiji-reverse 4s ease-in-out infinite;
+        .animate-taiji-spin {
+          animation: taiji-spin 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
       `}</style>
     </div>

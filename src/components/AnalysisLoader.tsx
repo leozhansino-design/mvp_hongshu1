@@ -11,7 +11,6 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
   const [progress, setProgress] = useState(0);
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
   const [queuePosition, setQueuePosition] = useState(() => Math.floor(Math.random() * 5) + 1);
-  const [isReverse, setIsReverse] = useState(false);
 
   // 模拟排队进度
   useEffect(() => {
@@ -56,15 +55,6 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
     return () => clearInterval(progressTimer);
   }, [queuePosition, onComplete]);
 
-  // 太极图正反转动
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsReverse((prev) => !prev);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   // 估计剩余时间
   const estimatedTime = useMemo(() => {
     if (queuePosition > 0) {
@@ -80,9 +70,7 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
       <div className="relative w-48 h-48 md:w-56 md:h-56">
         <svg
           viewBox="0 0 200 200"
-          className={`w-full h-full transition-transform ${
-            isReverse ? 'animate-taiji-reverse' : 'animate-taiji-forward'
-          }`}
+          className="w-full h-full animate-taiji-spin"
         >
           {/* 外圈 */}
           <circle
@@ -179,36 +167,17 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
       </div>
 
       <style jsx>{`
-        @keyframes taiji-forward {
+        @keyframes taiji-spin {
           0% {
             transform: rotate(0deg);
-          }
-          50% {
-            transform: rotate(180deg);
           }
           100% {
             transform: rotate(360deg);
           }
         }
 
-        @keyframes taiji-reverse {
-          0% {
-            transform: rotate(360deg);
-          }
-          50% {
-            transform: rotate(180deg);
-          }
-          100% {
-            transform: rotate(0deg);
-          }
-        }
-
-        .animate-taiji-forward {
-          animation: taiji-forward 4s ease-in-out infinite;
-        }
-
-        .animate-taiji-reverse {
-          animation: taiji-reverse 4s ease-in-out infinite;
+        .animate-taiji-spin {
+          animation: taiji-spin 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
       `}</style>
     </div>
