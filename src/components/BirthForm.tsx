@@ -164,10 +164,10 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
           <div className="flex gap-2">
             <button
               type="button"
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1 ${
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1 border ${
                 gender === 'male'
-                  ? 'bg-purple-500/30 border border-purple-400 text-purple-300'
-                  : 'bg-mystic-900/50 border border-purple-500/30 text-text-secondary hover:border-purple-400'
+                  ? 'bg-white/10 border-white text-white'
+                  : 'bg-black/50 border-gray-700 text-text-secondary hover:border-gray-500'
               }`}
               onClick={() => setGender('male')}
             >
@@ -175,10 +175,10 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
             </button>
             <button
               type="button"
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1 ${
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1 border ${
                 gender === 'female'
-                  ? 'bg-pink-500/30 border border-pink-400 text-pink-300'
-                  : 'bg-mystic-900/50 border border-purple-500/30 text-text-secondary hover:border-purple-400'
+                  ? 'bg-white/10 border-white text-white'
+                  : 'bg-black/50 border-gray-700 text-text-secondary hover:border-gray-500'
               }`}
               onClick={() => setGender('female')}
             >
@@ -200,9 +200,9 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
               name="calendar"
               checked={calendarType === 'solar'}
               onChange={() => setCalendarType('solar')}
-              className="w-4 h-4 text-purple-500 bg-mystic-900 border-purple-500/50"
+              className="w-4 h-4 accent-white bg-black border-gray-700"
             />
-            <span className={calendarType === 'solar' ? 'text-gold-400' : 'text-text-secondary'}>
+            <span className={calendarType === 'solar' ? 'text-white' : 'text-text-secondary'}>
               公历
             </span>
           </label>
@@ -212,9 +212,9 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
               name="calendar"
               checked={calendarType === 'lunar'}
               onChange={() => setCalendarType('lunar')}
-              className="w-4 h-4 text-purple-500 bg-mystic-900 border-purple-500/50"
+              className="w-4 h-4 accent-white bg-black border-gray-700"
             />
-            <span className={calendarType === 'lunar' ? 'text-gold-400' : 'text-text-secondary'}>
+            <span className={calendarType === 'lunar' ? 'text-white' : 'text-text-secondary'}>
               农历
             </span>
           </label>
@@ -278,7 +278,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
           <button
             type="button"
             onClick={setCurrentTime}
-            className="text-xs text-purple-400 hover:text-purple-300 px-2 py-1 rounded border border-purple-500/30 hover:border-purple-400"
+            className="text-xs text-white hover:text-gray-300 px-2 py-1 rounded border border-gray-700 hover:border-gray-500 bg-black/50"
           >
             当前时间
           </button>
@@ -326,7 +326,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
           )}
         </div>
         {showCities && filteredCities.length > 0 && (
-          <div className="absolute z-10 w-full mt-1 max-h-48 overflow-y-auto bg-mystic-800 border border-purple-500/30 rounded-lg shadow-lg">
+          <div className="absolute z-10 w-full mt-1 max-h-48 overflow-y-auto bg-black/95 border border-gray-700 rounded-lg shadow-lg">
             {filteredCities.slice(0, 20).map((city) => (
               <button
                 key={city}
@@ -335,7 +335,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
                   setBirthPlace(city);
                   setShowCities(false);
                 }}
-                className="w-full px-3 py-2 text-left text-sm text-text-secondary hover:bg-purple-500/20 hover:text-text-primary"
+                className="w-full px-3 py-2 text-left text-sm text-text-secondary hover:bg-white/10 hover:text-text-primary"
               >
                 {city}
               </button>
@@ -346,9 +346,9 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
 
       {/* 八字预览 */}
       {baziResult && (
-        <div className="p-4 rounded-xl bg-gradient-to-br from-purple-900/30 to-mystic-900/50 border border-purple-500/30">
+        <div className="p-4 rounded-xl bg-black/80 border border-gray-700">
           <div className="text-center mb-3">
-            <span className="text-xs text-purple-400">命盘预览</span>
+            <span className="text-xs text-white">命盘预览</span>
             <p className="text-xs text-text-secondary mt-1">
               {baziResult.chart.lunarDate} · {baziResult.chart.zodiac}年
             </p>
@@ -364,9 +364,9 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
             ].map((item) => (
               <div key={item.label} className="text-center">
                 <div className="text-xs text-text-secondary mb-1">{item.label}</div>
-                <div className="bg-mystic-900/80 rounded-lg p-2 border border-purple-500/20">
+                <div className="bg-black/80 rounded-lg p-2 border border-gray-700">
                   <div className="text-gold-400 font-bold text-lg">{item.pillar.heavenlyStem}</div>
-                  <div className="text-purple-300 font-bold text-lg">{item.pillar.earthlyBranch}</div>
+                  <div className="text-white font-bold text-lg">{item.pillar.earthlyBranch}</div>
                 </div>
                 <div className="text-xs text-text-secondary/70 mt-1">{item.naYin}</div>
               </div>
@@ -384,12 +384,12 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
 
           {/* 大运预览 */}
           {daYunResult && daYunResult.daYunList.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-purple-500/20">
-              <div className="text-xs text-purple-400 text-center mb-2">大运排盘</div>
+            <div className="mt-3 pt-3 border-t border-gray-700">
+              <div className="text-xs text-white text-center mb-2">大运排盘</div>
               <div className="text-xs text-text-secondary/70 text-center mb-2">{daYunResult.startInfo}</div>
               <div className="flex gap-1 overflow-x-auto pb-1">
                 {daYunResult.daYunList.slice(0, 8).map((daYun, idx) => (
-                  <div key={idx} className="flex-shrink-0 text-center px-2 py-1 bg-mystic-900/50 rounded border border-purple-500/10">
+                  <div key={idx} className="flex-shrink-0 text-center px-2 py-1 bg-black/50 rounded border border-gray-700">
                     <div className="text-gold-400 text-sm font-medium">{daYun.ganZhi}</div>
                     <div className="text-text-secondary/60 text-xs">{daYun.startAge}-{daYun.endAge}岁</div>
                   </div>
