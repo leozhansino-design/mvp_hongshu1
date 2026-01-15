@@ -1,60 +1,198 @@
-export interface KLinePoint {
+// 曲线数据点（免费版）
+export interface ChartPoint {
   age: number;
   score: number;
-  trend: 'up' | 'down' | 'stable';
+  daYun: string;      // 大运干支
+  ganZhi: string;     // 流年干支
+  reason: string;     // 20-30字描述
 }
 
-export interface KLinePointDetailed {
+// 付费版数据点（简化版，只需score）
+export interface PaidChartPoint {
   age: number;
   year: number;
-  open: number;
-  close: number;
-  high: number;
-  low: number;
-  trend: 'up' | 'down' | 'stable';
+  daYun: string;
+  ganZhi: string;
+  score: number;
+  reason: string;
 }
 
 export interface HighlightYear {
   age: number;
   year: number;
-  score: number;
-  type: 'career' | 'wealth' | 'love' | 'health' | 'general';
   title: string;
   description: string;
+  type?: string;
+  score?: number;
+  ganZhi?: string;
+  advice?: string;
 }
 
 export interface WarningYear {
   age: number;
   year: number;
-  score: number;
-  type: 'career' | 'wealth' | 'love' | 'health' | 'general';
   title: string;
   description: string;
   advice: string;
+  type?: string;
+  score?: number;
+  ganZhi?: string;
 }
 
+// 八字四柱
+export interface BaziPillar {
+  heavenlyStem: string;  // 天干
+  earthlyBranch: string; // 地支
+  fullName: string;      // 完整名称如"甲子"
+}
+
+export interface BaziChart {
+  yearPillar: BaziPillar;   // 年柱
+  monthPillar: BaziPillar;  // 月柱
+  dayPillar: BaziPillar;    // 日柱
+  hourPillar: BaziPillar;   // 时柱
+  zodiac: string;           // 生肖
+  lunarDate: string;        // 农历日期
+  solarTime: string;        // 真太阳时
+}
+
+// 日主分析
+export interface DayMaster {
+  stem: string;           // 天干
+  element: string;        // 五行
+  strength: string;       // 身旺/身弱/中和
+  description: string;    // 描述
+}
+
+// 五行统计
+export interface FiveElements {
+  wood: number;
+  fire: number;
+  earth: number;
+  metal: number;
+  water: number;
+}
+
+// 开运信息
+export interface LuckyInfo {
+  direction: string;      // 吉利方位
+  color: string;          // 幸运颜色
+  number: string;         // 幸运数字
+  industry: string;       // 适合行业
+  partner?: string;       // 适合合作
+}
+
+// 免费版结果
 export interface FreeVersionResult {
-  klineData: KLinePoint[];
-  currentPhase: 'rising' | 'peak' | 'stable' | 'declining' | 'valley';
-  highlightCount: number;
-  warningCount: number;
-  briefSummary: string;
-}
-
-export interface PaidVersionResult {
-  klineData: KLinePointDetailed[];
+  baziChart: BaziChart;
+  // 各维度分析和评分
+  summary: string;
+  summaryScore: number;
+  personality: string;
+  personalityScore: number;
+  career: string;
+  careerScore: number;
+  wealth: string;
+  wealthScore: number;
+  marriage: string;
+  marriageScore: number;
+  health: string;
+  healthScore: number;
+  fengShui: string;
+  fengShuiScore: number;
+  family: string;
+  familyScore: number;
+  // 日主和用神
+  dayMaster: DayMaster;
+  usefulGod: string;
+  // 五行和开运
+  fiveElements: FiveElements;
+  luckyInfo: LuckyInfo;
+  // 曲线数据
+  chartPoints: ChartPoint[];
+  // 高光和警示
   highlights: HighlightYear[];
   warnings: WarningYear[];
+  // 当前阶段
   currentPhase: 'rising' | 'peak' | 'stable' | 'declining' | 'valley';
-  summary: {
-    personality: string;
-    career: string;
-    wealth: string;
-    love: string;
-    health: string;
+}
+
+// 大运信息
+export interface DaYunInfo {
+  startAge: number;
+  endAge: number;
+  ganZhi: string;
+  description: string;
+}
+
+// 十神分析
+export interface TenGods {
+  正官?: string;
+  七杀?: string;
+  正印?: string;
+  偏印?: string;
+  比肩?: string;
+  劫财?: string;
+  食神?: string;
+  伤官?: string;
+  正财?: string;
+  偏财?: string;
+}
+
+// 流年运势
+export interface YearlyFortune {
+  year: number;
+  ganZhi: string;
+  score: number;
+  overview: string;
+  career?: string;
+  wealth?: string;
+  love?: string;
+  health?: string;
+  advice?: string;
+}
+
+// 付费版结果
+export interface PaidVersionResult {
+  baziChart: BaziChart;
+  // 各维度详细分析和评分
+  summary: string;
+  summaryScore: number;
+  personality: string;
+  personalityScore: number;
+  career: string;
+  careerScore: number;
+  wealth: string;
+  wealthScore: number;
+  marriage: string;
+  marriageScore: number;
+  health: string;
+  healthScore: number;
+  fengShui: string;
+  fengShuiScore: number;
+  family: string;
+  familyScore: number;
+  // 日主和用神
+  dayMaster: DayMaster;
+  usefulGod: string;
+  tenGods?: TenGods;
+  // 五行和开运
+  fiveElements: FiveElements;
+  luckyInfo: LuckyInfo;
+  // 大运列表
+  daYunList: DaYunInfo[];
+  // 曲线数据（简化版）
+  chartPoints: PaidChartPoint[];
+  // 高光和警示
+  highlights: HighlightYear[];
+  warnings: WarningYear[];
+  // 流年运势
+  yearlyFortune?: {
+    thisYear: YearlyFortune;
+    nextYear?: YearlyFortune;
   };
-  luckyElements: string[];
-  unluckyElements: string[];
+  // 当前阶段
+  currentPhase: 'rising' | 'peak' | 'stable' | 'declining' | 'valley';
 }
 
 export type Gender = 'male' | 'female';
@@ -65,9 +203,11 @@ export interface BirthInfo {
   year: number;
   month: number;
   day: number;
-  hour: string;
+  hour: number;
+  minute: number;
   name?: string;
   calendarType?: CalendarType;
+  birthPlace?: string;
 }
 
 export interface StoredResult {
@@ -82,11 +222,11 @@ export interface StoredResult {
 export type PhaseType = 'rising' | 'peak' | 'stable' | 'declining' | 'valley';
 
 export const PHASE_LABELS: Record<PhaseType, string> = {
-  rising: '上升之运',
-  peak: '巅峰之运',
-  stable: '平稳之运',
-  declining: '下降之运',
-  valley: '低谷之运',
+  rising: '上升期',
+  peak: '巅峰期',
+  stable: '平稳期',
+  declining: '调整期',
+  valley: '蓄势期',
 };
 
 export const TYPE_LABELS: Record<string, string> = {
@@ -94,45 +234,105 @@ export const TYPE_LABELS: Record<string, string> = {
   wealth: '财运',
   love: '姻缘',
   health: '健康',
+  family: '家庭',
   general: '综合',
 };
 
 export const TYPE_ICONS: Record<string, string> = {
-  career: '📈',
+  career: '💼',
   wealth: '💰',
   love: '💕',
   health: '🏥',
+  family: '👨‍👩‍👧',
   general: '✨',
 };
 
-export const HOUR_OPTIONS = [
-  { value: 'zi', label: '子时 (23:00-01:00)' },
-  { value: 'chou', label: '丑时 (01:00-03:00)' },
-  { value: 'yin', label: '寅时 (03:00-05:00)' },
-  { value: 'mao', label: '卯时 (05:00-07:00)' },
-  { value: 'chen', label: '辰时 (07:00-09:00)' },
-  { value: 'si', label: '巳时 (09:00-11:00)' },
-  { value: 'wu', label: '午时 (11:00-13:00)' },
-  { value: 'wei', label: '未时 (13:00-15:00)' },
-  { value: 'shen', label: '申时 (15:00-17:00)' },
-  { value: 'you', label: '酉时 (17:00-19:00)' },
-  { value: 'xu', label: '戌时 (19:00-21:00)' },
-  { value: 'hai', label: '亥时 (21:00-23:00)' },
-  { value: 'unknown', label: '不详' },
+// 分析模块
+export const ANALYSIS_MODULES = [
+  { id: 'bazi', name: '八字排盘', icon: '🔮' },
+  { id: 'daymaster', name: '日主分析', icon: '☯️' },
+  { id: 'personality', name: '性格解读', icon: '🎭' },
+  { id: 'career', name: '事业财运', icon: '💼' },
+  { id: 'marriage', name: '婚姻感情', icon: '💕' },
+  { id: 'health', name: '健康运势', icon: '🏥' },
+  { id: 'fortune', name: '人生曲线', icon: '📈' },
 ];
 
-export const HOUR_LABELS: Record<string, string> = {
-  zi: '子时',
-  chou: '丑时',
-  yin: '寅时',
-  mao: '卯时',
-  chen: '辰时',
-  si: '巳时',
-  wu: '午时',
-  wei: '未时',
-  shen: '申时',
-  you: '酉时',
-  xu: '戌时',
-  hai: '亥时',
-  unknown: '不详',
-};
+// 中国主要城市（按省份分组）
+export const CHINA_CITIES = [
+  // 直辖市
+  '北京市', '上海市', '天津市', '重庆市',
+  // 广东省
+  '广州市', '深圳市', '东莞市', '佛山市', '珠海市', '惠州市', '中山市', '汕头市', '江门市', '湛江市', '肇庆市', '茂名市', '揭阳市', '梅州市', '清远市', '阳江市', '韶关市', '河源市', '云浮市', '汕尾市', '潮州市',
+  // 江苏省
+  '南京市', '苏州市', '无锡市', '常州市', '南通市', '徐州市', '扬州市', '盐城市', '泰州市', '镇江市', '淮安市', '连云港市', '宿迁市',
+  // 浙江省
+  '杭州市', '宁波市', '温州市', '嘉兴市', '绍兴市', '金华市', '台州市', '湖州市', '丽水市', '衢州市', '舟山市',
+  // 山东省
+  '济南市', '青岛市', '烟台市', '潍坊市', '临沂市', '淄博市', '济宁市', '泰安市', '威海市', '日照市', '德州市', '聊城市', '滨州市', '菏泽市', '枣庄市', '东营市',
+  // 河南省
+  '郑州市', '洛阳市', '开封市', '南阳市', '新乡市', '安阳市', '许昌市', '商丘市', '信阳市', '周口市', '驻马店市', '平顶山市', '焦作市', '濮阳市', '漯河市', '三门峡市', '鹤壁市',
+  // 四川省
+  '成都市', '绵阳市', '德阳市', '南充市', '宜宾市', '自贡市', '乐山市', '泸州市', '达州市', '内江市', '遂宁市', '攀枝花市', '眉山市', '广安市', '资阳市', '广元市', '雅安市', '巴中市',
+  // 湖北省
+  '武汉市', '宜昌市', '襄阳市', '荆州市', '黄冈市', '十堰市', '孝感市', '荆门市', '咸宁市', '鄂州市', '随州市', '黄石市', '恩施市',
+  // 湖南省
+  '长沙市', '株洲市', '湘潭市', '衡阳市', '岳阳市', '常德市', '郴州市', '娄底市', '邵阳市', '益阳市', '永州市', '怀化市', '张家界市', '湘西州',
+  // 福建省
+  '福州市', '厦门市', '泉州市', '漳州市', '莆田市', '宁德市', '三明市', '南平市', '龙岩市',
+  // 安徽省
+  '合肥市', '芜湖市', '蚌埠市', '淮南市', '马鞍山市', '淮北市', '铜陵市', '安庆市', '黄山市', '阜阳市', '宿州市', '滁州市', '六安市', '宣城市', '池州市', '亳州市',
+  // 江西省
+  '南昌市', '赣州市', '九江市', '宜春市', '吉安市', '上饶市', '抚州市', '景德镇市', '萍乡市', '新余市', '鹰潭市',
+  // 河北省
+  '石家庄市', '唐山市', '保定市', '廊坊市', '邯郸市', '沧州市', '秦皇岛市', '张家口市', '邢台市', '承德市', '衡水市',
+  // 辽宁省
+  '沈阳市', '大连市', '鞍山市', '抚顺市', '本溪市', '丹东市', '锦州市', '营口市', '阜新市', '辽阳市', '盘锦市', '铁岭市', '朝阳市', '葫芦岛市',
+  // 陕西省
+  '西安市', '咸阳市', '宝鸡市', '渭南市', '汉中市', '安康市', '榆林市', '延安市', '商洛市', '铜川市',
+  // 山西省
+  '太原市', '大同市', '运城市', '长治市', '晋城市', '临汾市', '晋中市', '吕梁市', '忻州市', '阳泉市', '朔州市',
+  // 云南省
+  '昆明市', '曲靖市', '大理市', '玉溪市', '昭通市', '保山市', '丽江市', '普洱市', '临沧市', '红河州', '文山州', '西双版纳州',
+  // 贵州省
+  '贵阳市', '遵义市', '六盘水市', '安顺市', '毕节市', '铜仁市', '黔南州', '黔东南州', '黔西南州',
+  // 广西壮族自治区
+  '南宁市', '柳州市', '桂林市', '梧州市', '北海市', '玉林市', '钦州市', '百色市', '贵港市', '河池市', '来宾市', '崇左市', '防城港市', '贺州市',
+  // 黑龙江省
+  '哈尔滨市', '齐齐哈尔市', '大庆市', '牡丹江市', '佳木斯市', '鸡西市', '双鸭山市', '伊春市', '七台河市', '鹤岗市', '绥化市', '黑河市',
+  // 吉林省
+  '长春市', '吉林市', '四平市', '通化市', '白城市', '辽源市', '松原市', '白山市', '延边州',
+  // 甘肃省
+  '兰州市', '天水市', '白银市', '庆阳市', '平凉市', '酒泉市', '张掖市', '武威市', '定西市', '陇南市', '嘉峪关市', '金昌市',
+  // 内蒙古自治区
+  '呼和浩特市', '包头市', '鄂尔多斯市', '赤峰市', '通辽市', '呼伦贝尔市', '巴彦淖尔市', '乌兰察布市', '乌海市',
+  // 宁夏回族自治区
+  '银川市', '吴忠市', '石嘴山市', '固原市', '中卫市',
+  // 青海省
+  '西宁市', '海东市', '海西州', '海北州', '海南州', '黄南州', '果洛州', '玉树州',
+  // 新疆维吾尔自治区
+  '乌鲁木齐市', '克拉玛依市', '吐鲁番市', '哈密市', '阿克苏市', '喀什市', '和田市', '伊宁市', '塔城市', '阿勒泰市', '库尔勒市', '昌吉市', '博乐市', '阿图什市',
+  // 西藏自治区
+  '拉萨市', '日喀则市', '昌都市', '林芝市', '山南市', '那曲市', '阿里地区',
+  // 海南省
+  '海口市', '三亚市', '三沙市', '儋州市', '琼海市', '文昌市', '万宁市', '东方市',
+  // 港澳台
+  '香港', '澳门', '台北市', '高雄市', '台中市', '台南市', '新北市', '桃园市',
+];
+
+// 根据小时获取时辰
+export function getShichenFromHour(hour: number): string {
+  if (hour === 23 || hour === 0) return '子时';
+  if (hour >= 1 && hour < 3) return '丑时';
+  if (hour >= 3 && hour < 5) return '寅时';
+  if (hour >= 5 && hour < 7) return '卯时';
+  if (hour >= 7 && hour < 9) return '辰时';
+  if (hour >= 9 && hour < 11) return '巳时';
+  if (hour >= 11 && hour < 13) return '午时';
+  if (hour >= 13 && hour < 15) return '未时';
+  if (hour >= 15 && hour < 17) return '申时';
+  if (hour >= 17 && hour < 19) return '酉时';
+  if (hour >= 19 && hour < 21) return '戌时';
+  if (hour >= 21 && hour < 23) return '亥时';
+  return '不详';
+}
