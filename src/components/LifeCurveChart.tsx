@@ -84,7 +84,11 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
         const interpolatedScore = Math.round(cubicInterpolate(
           prevPoint.score, currentPoint.score, nextPoint.score, nextNextPoint.score, t
         ));
-        const score = Math.max(30, Math.min(95, interpolatedScore));
+
+        // 添加小波动 - 使用age作为随机种子保证一致性
+        const fluctuation = Math.sin(age * 0.7) * 2.5 + Math.cos(age * 1.3) * 1.5;
+        const scoreWithFluctuation = interpolatedScore + fluctuation;
+        const score = Math.max(30, Math.min(95, Math.round(scoreWithFluctuation)));
 
         // 生成该大运阶段的通用描述
         const daYunDescription = `${currentPoint.daYun}大运期间，${currentPoint.reason.slice(0, 15)}`;
@@ -359,20 +363,8 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
                     </>
                   )}
 
-                  {/* 关键点标记 */}
-                  {point.isKeyPoint && !isCurrent && (
-                    <circle
-                      cx={x}
-                      cy={y}
-                      r={isHovered ? 5 : 4}
-                      fill="#6366F1"
-                      stroke="white"
-                      strokeWidth="2"
-                    />
-                  )}
-
                   {/* Hover点 */}
-                  {isHovered && !isCurrent && !point.isKeyPoint && (
+                  {isHovered && !isCurrent && (
                     <circle cx={x} cy={y} r="5" fill="#8B5CF6" stroke="white" strokeWidth="2" />
                   )}
                 </g>

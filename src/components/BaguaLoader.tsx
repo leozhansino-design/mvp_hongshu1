@@ -155,22 +155,21 @@ export default function BaguaLoader({ message, queueCount = 0 }: BaguaLoaderProp
         .bai {
           position: absolute;
           top: 0;
-          left: 50%;
-          width: 50%;
+          left: 0;
+          width: 100%;
           height: 50%;
           background: #fff;
-          border-radius: 0 100% 100% 0 / 0 100% 100% 0;
-          transform: translateX(-50%);
+          border-radius: 100% 100% 0 0 / 50% 50% 0 0;
         }
 
         .bai::after {
           content: '';
           position: absolute;
           top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: 20%;
-          height: 20%;
+          left: 25%;
+          transform: translateY(-50%);
+          width: 25%;
+          height: 50%;
           background: #000;
           border-radius: 50%;
         }
@@ -178,22 +177,21 @@ export default function BaguaLoader({ message, queueCount = 0 }: BaguaLoaderProp
         .hei {
           position: absolute;
           bottom: 0;
-          left: 50%;
-          width: 50%;
+          left: 0;
+          width: 100%;
           height: 50%;
           background: #000;
-          border-radius: 0 100% 100% 0 / 0 100% 100% 0;
-          transform: translateX(-50%);
+          border-radius: 0 0 100% 100% / 0 0 50% 50%;
         }
 
         .hei::after {
           content: '';
           position: absolute;
           top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: 20%;
-          height: 20%;
+          right: 25%;
+          transform: translateY(-50%);
+          width: 25%;
+          height: 50%;
           background: #fff;
           border-radius: 50%;
         }
