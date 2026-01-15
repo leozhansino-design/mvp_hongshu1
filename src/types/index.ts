@@ -247,15 +247,16 @@ export const TYPE_ICONS: Record<string, string> = {
   general: '✨',
 };
 
-// 分析模块
+// 分析模块（8维详批）
 export const ANALYSIS_MODULES = [
-  { id: 'bazi', name: '八字排盘', icon: '🔮' },
-  { id: 'daymaster', name: '日主分析', icon: '☯️' },
-  { id: 'personality', name: '性格解读', icon: '🎭' },
-  { id: 'career', name: '事业财运', icon: '💼' },
-  { id: 'marriage', name: '婚姻感情', icon: '💕' },
-  { id: 'health', name: '健康运势', icon: '🏥' },
-  { id: 'fortune', name: '人生曲线', icon: '📈' },
+  { id: 'summary', name: '命理总评', icon: '○' },
+  { id: 'personality', name: '性格解读', icon: '○' },
+  { id: 'career', name: '事业运势', icon: '○' },
+  { id: 'wealth', name: '财运分析', icon: '○' },
+  { id: 'marriage', name: '婚姻感情', icon: '○' },
+  { id: 'health', name: '健康运势', icon: '○' },
+  { id: 'fengShui', name: '风水开运', icon: '○' },
+  { id: 'family', name: '六亲关系', icon: '○' },
 ];
 
 // 中国主要城市（按省份分组）
