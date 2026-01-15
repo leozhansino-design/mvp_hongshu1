@@ -6,3 +6,4 @@ export { default as Header } from './Header';
 export { default as BaziChartDisplay } from './BaziChartDisplay';
 export { default as AnalysisLoader } from './AnalysisLoader';
 export { default as DaYunTable } from './DaYunTable';
+export { default as FiveElementsDiagram } from './FiveElementsDiagram';

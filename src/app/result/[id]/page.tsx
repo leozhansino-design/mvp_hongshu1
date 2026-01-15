@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import html2canvas from 'html2canvas';
-import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable } from '@/components';
+import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagram } from '@/components';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult } from '@/services/api';
 import {
@@ -84,6 +84,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
+  const [showDaYun, setShowDaYun] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -207,6 +208,49 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           <div className="mystic-card mb-6">
             <h2 className="font-serif text-xl text-gold-400 mb-4">四柱八字</h2>
             <BaziChartDisplay chart={data.baziChart} showDetails={true} />
+
+            {/* 大运流年折叠按钮 */}
+            <button
+              onClick={() => setShowDaYun(!showDaYun)}
+              className="mt-4 w-full py-2 text-sm text-white border border-gray-700 rounded hover:bg-white/10 transition-colors"
+            >
+              {showDaYun ? '收起' : '查看'}大运流年
+            </button>
+
+            {/* 大运流年展开内容 */}
+            {showDaYun && (
+              <div className="mt-4 pt-4 border-t border-gray-700">
+                {isPaid && paidResult?.daYunList ? (
+                  // 付费版：显示详细大运表格
+                  <DaYunTable
+                    daYunList={paidResult.daYunList}
+                    chartPoints={paidResult.chartPoints}
+                    currentAge={currentAge}
+                    birthYear={birthInfo.year}
+                  />
+                ) : data?.chartPoints ? (
+                  // 免费版：显示简化大运列表
+                  <div>
+                    <h3 className="text-white font-serif mb-3">大运流年</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {data.chartPoints.filter((_, i) => i % 10 === 0).map((point, index) => (
+                        <div
+                          key={index}
+                          className="p-3 rounded bg-black/30 border border-gray-700 text-center"
+                        >
+                          <div className="text-white font-mono text-sm mb-1">
+                            {point.age}岁
+                          </div>
+                          <div className="text-gray-400 text-xs">
+                            {point.daYun}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
         )}
 
@@ -262,23 +306,14 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
         {/* 五行分布 */}
         {data?.fiveElements && (
           <div className="mystic-card mb-6">
-            <h2 className="font-serif text-xl text-gold-400 mb-4">五行分布</h2>
-            <div className="grid grid-cols-5 gap-4">
-              {[
-                { key: 'wood', label: '木', color: 'bg-green-500', textColor: 'text-green-400', value: data.fiveElements.wood },
-                { key: 'fire', label: '火', color: 'bg-red-500', textColor: 'text-red-400', value: data.fiveElements.fire },
-                { key: 'earth', label: '土', color: 'bg-yellow-500', textColor: 'text-yellow-400', value: data.fiveElements.earth },
-                { key: 'metal', label: '金', color: 'bg-gray-300', textColor: 'text-gray-300', value: data.fiveElements.metal },
-                { key: 'water', label: '水', color: 'bg-blue-500', textColor: 'text-blue-400', value: data.fiveElements.water },
-              ].map((el) => (
-                <div key={el.key} className="flex flex-col items-center">
-                  <div className={`w-12 h-12 rounded-full ${el.color} flex items-center justify-center text-white font-bold text-lg mb-2`}>
-                    {el.value}
-                  </div>
-                  <span className={`text-sm ${el.textColor}`}>{el.label}</span>
-                </div>
-              ))}
-            </div>
+            <h2 className="font-serif text-xl text-gold-400 mb-4">五行生克</h2>
+            <FiveElementsDiagram
+              wood={data.fiveElements.wood}
+              fire={data.fiveElements.fire}
+              earth={data.fiveElements.earth}
+              metal={data.fiveElements.metal}
+              water={data.fiveElements.water}
+            />
           </div>
         )}
 
