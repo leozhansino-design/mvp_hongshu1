@@ -336,6 +336,15 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
               metal={data.fiveElements.metal}
               water={data.fiveElements.water}
             />
+            {data.elementAnalysis && (
+              <div className="mt-6 p-4 rounded-lg bg-black/30 border border-gray-700">
+                <h3 className="text-gold-400 text-sm mb-2 flex items-center gap-2">
+                  <span>⚖️</span>
+                  <span>五行相克分析</span>
+                </h3>
+                <p className="text-text-primary text-sm leading-relaxed">{data.elementAnalysis}</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -379,6 +388,34 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                 <p className="text-2xl mb-2">💼</p>
                 <p className="text-xs text-text-secondary mb-1">适合行业</p>
                 <p className="text-purple-300 text-sm">{data.luckyInfo.industry}</p>
+              </div>
+            </div>
+            {data.luckyExplanation && (
+              <div className="mt-6 p-4 rounded-lg bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30">
+                <h3 className="text-gold-400 text-sm mb-3 flex items-center gap-2">
+                  <span>✨</span>
+                  <span>开运详解</span>
+                </h3>
+                <p className="text-text-primary text-sm leading-relaxed">{data.luckyExplanation}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 人生高光时刻 */}
+        {data?.highlightMoment && (
+          <div className="mystic-card-gold mb-6">
+            <div className="flex items-start gap-4">
+              <div className="text-5xl">🌟</div>
+              <div className="flex-1">
+                <h2 className="font-serif text-xl text-gold-400 mb-2">{data.highlightMoment.title}</h2>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="px-3 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
+                    {data.highlightMoment.age}岁
+                  </span>
+                  <span className="text-text-secondary text-sm">· 值得期待的人生节点</span>
+                </div>
+                <p className="text-text-primary leading-relaxed text-base">{data.highlightMoment.description}</p>
               </div>
             </div>
           </div>

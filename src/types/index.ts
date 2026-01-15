@@ -107,7 +107,10 @@ export interface FreeVersionResult {
   usefulGod: string;
   // 五行和开运
   fiveElements: FiveElements;
+  elementAnalysis?: string; // 五行相克分析
   luckyInfo: LuckyInfo;
+  luckyExplanation?: string; // 开运指南详解
+  highlightMoment?: { age: number; title: string; description: string }; // 人生高光时刻
   // 曲线数据
   chartPoints: ChartPoint[];
   // 高光和警示
@@ -178,7 +181,10 @@ export interface PaidVersionResult {
   tenGods?: TenGods;
   // 五行和开运
   fiveElements: FiveElements;
+  elementAnalysis?: string; // 五行相克分析
   luckyInfo: LuckyInfo;
+  luckyExplanation?: string; // 开运指南详解
+  highlightMoment?: { age: number; title: string; description: string }; // 人生高光时刻
   // 大运列表
   daYunList: DaYunInfo[];
   // 曲线数据（简化版）

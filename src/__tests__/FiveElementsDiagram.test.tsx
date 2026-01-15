@@ -100,12 +100,12 @@ describe('FiveElementsDiagram', () => {
     const fireElements = container.querySelectorAll('[stroke="#ef4444"]');
     expect(fireElements.length).toBeGreaterThan(0);
 
-    // Earth - yellow (#eab308)
-    const earthElements = container.querySelectorAll('[stroke="#eab308"]');
+    // Earth - brown (#A0522D)
+    const earthElements = container.querySelectorAll('[stroke="#A0522D"]');
     expect(earthElements.length).toBeGreaterThan(0);
 
-    // Metal - gray (#d1d5db)
-    const metalElements = container.querySelectorAll('[stroke="#d1d5db"]');
+    // Metal - gold (#D4AF37)
+    const metalElements = container.querySelectorAll('[stroke="#D4AF37"]');
     expect(metalElements.length).toBeGreaterThan(0);
 
     // Water - blue (#3b82f6)

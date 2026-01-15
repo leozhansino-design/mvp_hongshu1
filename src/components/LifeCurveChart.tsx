@@ -85,21 +85,28 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
           prevPoint.score, currentPoint.score, nextPoint.score, nextNextPoint.score, t
         ));
 
-        // 增强波动，模拟股票K线的趋势感
-        // 1. 基础三角波动 - 创造明显的上升下降段
-        const triangleWave = ((age % 7) - 3.5) * 3; // ±10.5的三角波
+        // 新算法：减少频繁震荡，增加整体趋势感
+        // 目标：大运10年内有1-2个小转折，整体跟随关键点趋势
 
-        // 2. 正弦波动 - 增加自然感
-        const sineWave = Math.sin(age * 0.5) * 5;
+        // 1. 大运内的缓慢波动（10年一个周期）
+        const daYunProgress = (age % 10) / 10; // 0-1，在大运中的进度
+        const daYunWave = Math.sin(daYunProgress * Math.PI * 2) * 2; // 大运内小起伏，±2分
 
-        // 3. 余弦波动 - 添加次级波动
-        const cosineWave = Math.cos(age * 0.3) * 3;
+        // 2. 趋势因子：强化从currentPoint到nextPoint的过渡
+        const scoreDiff = nextPoint.score - currentPoint.score;
+        const trendStrength = Math.abs(scoreDiff) > 15 ? 1.0 : 0.6;
+        const trendFactor = scoreDiff * t * trendStrength;
 
-        // 4. 趋势变化 - 根据当前位置与目标位置的差距
-        const trendFactor = (nextPoint.score - currentPoint.score) * t * 0.3;
+        // 3. 只在特定年份添加小转折（象征命运变化）
+        let microFluctuation = 0;
+        const yearInDaYun = age % 10;
+        if (yearInDaYun === 3 || yearInDaYun === 7) {
+          // 在大运的第3、7年添加小波动
+          microFluctuation = Math.sin(age * 1.7) * 2.5;
+        }
 
-        // 综合所有波动
-        const totalFluctuation = triangleWave + sineWave + cosineWave + trendFactor;
+        // 综合波动（控制在±6分以内，让趋势更明显）
+        const totalFluctuation = daYunWave + trendFactor + microFluctuation;
         const scoreWithFluctuation = interpolatedScore + totalFluctuation;
         const score = Math.max(30, Math.min(95, Math.round(scoreWithFluctuation)));
 

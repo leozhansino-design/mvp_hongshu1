@@ -90,7 +90,10 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
   "dayMaster": {"stem": "${bazi.dayPillar[0]}", "element": "X", "strength": "身旺/身弱/中和", "description": "日主（30字）"},
   "usefulGod": "用神喜忌（30字）",
   "fiveElements": {"wood": 2, "fire": 1, "earth": 2, "metal": 1, "water": 2},
+  "elementAnalysis": "五行相克分析（50字，针对此命格的五行相克特点及影响）",
   "luckyInfo": {"direction": "方位", "color": "颜色", "number": "数字", "industry": "行业"},
+  "luckyExplanation": "开运指南详解（80字，结合命局特点给出具体开运建议和注意事项）",
+  "highlightMoment": {"age": ${currentAge > 18 ? currentAge + 3 : 25}, "title": "${gender === 'male' ? '事业突破时刻' : '人生高光时刻'}", "description": "结合网络用语（80字，${gender === 'male' ? '侧重事业财运，如\"这波操作堪称教科书级别\"' : '侧重家庭子女，如\"人生赢家既视感\"'}），给用户想象空间，要幽默好玩有画面感"},
   "chartPoints": [
     {"age": 1, "score": 55, "daYun": "${daYunList[0]?.ganZhi || '童限'}", "ganZhi": "XX", "reason": "简述（10字）"}
   ],
@@ -156,7 +159,10 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
   "tenGods": {"正官": "详解40字", "七杀": "详解40字", "正印": "详解40字", "偏印": "详解40字", "比肩": "详解40字", "劫财": "详解40字", "食神": "详解40字", "伤官": "详解40字", "正财": "详解40字", "偏财": "详解40字"},
   "shenSha": {"吉神": ["天德贵人: 解释30字", "月德贵人: 解释30字"], "凶煞": ["羊刃: 解释30字", "劫煞: 解释30字"]},
   "fiveElements": {"wood": 2, "fire": 1, "earth": 2, "metal": 1, "water": 2},
+  "elementAnalysis": "五行相克分析（120字以上，详细说明此命格的五行生克制化关系、平衡状态、对运势的影响、调理方向）",
   "luckyInfo": {"direction": "详细方位解释", "color": "详细颜色解释", "number": "幸运数字解释", "industry": "详细行业分析", "partner": "合作对象详解", "travelDirection": "出行方位", "residence": "居住方位"},
+  "luckyExplanation": "开运指南详解（150字以上，结合命局特点、五行喜忌、大运流年，给出系统的开运建议、实施方法、注意事项）",
+  "highlightMoment": {"age": ${currentAge > 18 ? currentAge + 5 : 28}, "title": "${gender === 'male' ? '巅峰时刻·事业称霸' : '高光时刻·人生赢家'}", "description": "结合网络用语（150字以上，${gender === 'male' ? '侧重事业财运成就，如\"这波操作堪称教科书级别\"、\"财富密码已掌握\"' : '侧重家庭子女幸福，如\"人生赢家既视感\"、\"岁月静好，现世安稳\"'}），给用户画面感和想象空间，要幽默好玩接地气"},
   "improveAdvice": {
     "career": "事业改运建议（80字，具体可行的改运方法）",
     "wealth": "财运改运建议（80字，具体可行的改运方法）",

@@ -11,8 +11,8 @@ interface FiveElementsProps {
 export default function FiveElementsDiagram({ wood, fire, earth, metal, water }: FiveElementsProps) {
   const elements = [
     { key: 'fire', label: '火', value: fire, color: '#ef4444', textColor: '#fca5a5', angle: 0 },
-    { key: 'earth', label: '土', value: earth, color: '#eab308', textColor: '#fde047', angle: 72 },
-    { key: 'metal', label: '金', value: metal, color: '#d1d5db', textColor: '#f3f4f6', angle: 144 },
+    { key: 'earth', label: '土', value: earth, color: '#A0522D', textColor: '#D2691E', angle: 72 }, // 褐色
+    { key: 'metal', label: '金', value: metal, color: '#D4AF37', textColor: '#FFD700', angle: 144 }, // 金色
     { key: 'water', label: '水', value: water, color: '#3b82f6', textColor: '#93c5fd', angle: 216 },
     { key: 'wood', label: '木', value: wood, color: '#22c55e', textColor: '#86efac', angle: 288 },
   ];
