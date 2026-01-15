@@ -60,7 +60,7 @@ export const FREE_VERSION_PROMPT = (
   year: number,
   bazi: BaziForPrompt,
   daYunList: DaYunForPrompt[]
-) => `请基于以下已排好的八字和大运，进行命理分析。
+) => `请基于以下已排好的八字和大运，进行**简要**命理分析（免费版）。
 
 【命主信息】
 性别: ${gender === 'male' ? '乾造' : '坤造'}
@@ -75,40 +75,38 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
 
 请输出JSON格式（注意：下面的分数只是格式示例，请根据实际命局给出真实评分）：
 {
-  "summary": "命理总评（120字）",
+  "summary": "命理概述（80-100字，点到为止）",
   "summaryScore": 75,
-  "personality": "性格分析（80字）",
+  "personality": "性格简析（60字）",
   "personalityScore": 80,
-  "career": "事业分析（80字）",
+  "career": "事业简析（60字）",
   "careerScore": 72,
-  "wealth": "财运分析（80字）",
+  "wealth": "财运简析（60字）",
   "wealthScore": 68,
-  "marriage": "婚姻分析（80字）",
+  "marriage": "婚姻简析（60字）",
   "marriageScore": 75,
-  "health": "健康分析（60字）",
+  "health": "健康简析（40字）",
   "healthScore": 70,
-  "fengShui": "风水开运（60字）",
-  "fengShuiScore": 78,
-  "family": "六亲关系（60字）",
-  "familyScore": 72,
-  "dayMaster": {"stem": "${bazi.dayPillar[0]}", "element": "X", "strength": "身旺/身弱/中和", "description": "日主特质（50字）"},
-  "usefulGod": "用神喜忌（50字）",
+  "dayMaster": {"stem": "${bazi.dayPillar[0]}", "element": "X", "strength": "身旺/身弱/中和", "description": "日主（30字）"},
+  "usefulGod": "用神喜忌（30字）",
   "fiveElements": {"wood": 2, "fire": 1, "earth": 2, "metal": 1, "water": 2},
   "luckyInfo": {"direction": "方位", "color": "颜色", "number": "数字", "industry": "行业"},
   "chartPoints": [
-    {"age": 1, "score": 55, "daYun": "${daYunList[0]?.ganZhi || '童限'}", "ganZhi": "XX", "reason": "简述（15字）"}
+    {"age": 1, "score": 55, "daYun": "${daYunList[0]?.ganZhi || '童限'}", "ganZhi": "XX", "reason": "简述（10字）"}
   ],
-  "highlights": [{"age": 28, "year": ${year + 27}, "title": "标题", "description": "描述（40字）"}],
-  "warnings": [{"age": 35, "year": ${year + 34}, "title": "标题", "description": "描述", "advice": "建议（30字）"}],
+  "highlights": [{"age": 28, "year": ${year + 27}, "title": "标题", "description": "描述（30字）"}],
+  "warnings": [{"age": 35, "year": ${year + 34}, "title": "标题", "description": "描述（30字）", "advice": "建议（20字）"}],
   "currentPhase": "rising"
 }
 
 规则：
 1. 八字四柱直接使用上面给出的，不要自己推算
-2. chartPoints需10个点（1,10,20,30,40,50,60,70,80,90岁），daYun使用上面大运
+2. **chartPoints只需5个关键点**（1,20,40,60,80岁），daYun使用上面大运
 3. score范围30-95，必须有明显波动
-4. reason限15字内
-5. **重要**：所有评分必须根据实际命局分析得出，不要照抄示例中的75、80等数值`;
+4. reason限10字内
+5. **highlights和warnings各选1-2个**最关键的即可
+6. 内容简洁，点到为止，避免过度详细
+7. **重要**：所有评分必须根据实际命局分析得出，不要照抄示例中的75、80等数值`;
 
 export const PAID_VERSION_PROMPT = (
   gender: string,
@@ -116,7 +114,7 @@ export const PAID_VERSION_PROMPT = (
   bazi: BaziForPrompt,
   daYunList: DaYunForPrompt[],
   currentAge: number
-) => `请基于以下已排好的八字和大运，进行详细深入的命理分析。
+) => `请基于以下已排好的八字和大运，进行**极其详细深入**的命理分析（完整精批版）。
 
 【命主信息】
 性别: ${gender === 'male' ? '乾造' : '坤造'}
@@ -131,48 +129,72 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
 
 请输出JSON格式（注意：下面的分数只是格式示例，请根据实际命局给出真实评分）：
 {
-  "summary": "命理总评（200字以上，需包含：命局格局、日主强弱、用神忌神、总体运势走向、一生关键转折点）",
+  "summary": "命理总评（250字以上，需包含：命局格局、日主强弱、用神忌神、总体运势走向、一生关键转折点、命局特殊格局）",
   "summaryScore": 75,
-  "personality": "性格深度分析（150字以上，需包含：天性特点、处事风格、优势劣势、性格成因、人际交往特点、适合发展方向）",
+  "personality": "性格深度分析（200字以上，需包含：天性特点、处事风格、优势劣势、性格成因、人际交往特点、适合发展方向、性格弱点改进）",
   "personalityScore": 80,
-  "career": "事业详解（150字以上，需包含：事业格局、适合行业、职业发展路径、事业高峰期、需要注意的事业陷阱、成功关键因素）",
+  "career": "事业详解（200字以上，需包含：事业格局、适合行业、职业发展路径、事业高峰期、需要注意的事业陷阱、成功关键因素、职业转换建议、创业适合性）",
   "careerScore": 72,
-  "wealth": "财运详解（150字以上，需包含：财运格局、求财方式、财富积累时期、投资理财建议、破财风险提示、守财之道）",
+  "wealth": "财运详解（200字以上，需包含：财运格局、求财方式、财富积累时期、投资理财建议、破财风险提示、守财之道、适合投资领域、财运转折点）",
   "wealthScore": 68,
-  "marriage": "婚姻详解（150字以上，需包含：婚姻格局、配偶特点、姻缘时机、婚姻状态、感情经营建议、需要注意的婚姻问题）",
+  "marriage": "婚姻详解（200字以上，需包含：婚姻格局、配偶特点、姻缘时机、婚姻状态、感情经营建议、需要注意的婚姻问题、感情危机化解、夫妻相处之道）",
   "marriageScore": 75,
-  "health": "健康详解（120字以上，需包含：先天体质、易患疾病、健康薄弱期、养生建议、需要注意的健康隐患）",
+  "health": "健康详解（150字以上，需包含：先天体质、易患疾病、健康薄弱期、养生建议、需要注意的健康隐患、疾病预防、体质调理）",
   "healthScore": 70,
-  "fengShui": "风水开运（120字以上，需包含：居住环境选择、办公室布局、吉利方位、颜色运用、风水调理重点、开运物品推荐）",
+  "fengShui": "风水开运（150字以上，需包含：居住环境选择、办公室布局、吉利方位、颜色运用、风水调理重点、开运物品推荐、家居布置、办公位选择）",
   "fengShuiScore": 78,
-  "family": "六亲详解（120字以上，需包含：父母关系、兄弟姐妹、子女缘分、家庭责任、亲情互动建议、六亲对命主的影响）",
+  "family": "六亲详解（150字以上，需包含：父母关系、兄弟姐妹、子女缘分、家庭责任、亲情互动建议、六亲对命主的影响、长辈贵人、晚辈关系）",
   "familyScore": 72,
-  "dayMaster": {"stem": "${bazi.dayPillar[0]}", "element": "X", "strength": "身旺/身弱/中和", "description": "日主特质（100字以上，需详细解释日主的特性、强弱程度、对命局的影响）"},
-  "usefulGod": "用神喜忌详解（100字以上，需明确指出用神、喜神、忌神、仇神，并解释各自作用）",
-  "tenGods": {"正官": "详解30字", "七杀": "详解30字", "正印": "详解30字", "偏印": "详解30字", "比肩": "详解30字", "劫财": "详解30字", "食神": "详解30字", "伤官": "详解30字", "正财": "详解30字", "偏财": "详解30字"},
+  "children": "子女运详解（120字以上，需包含：子女数量倾向、子女性格特点、子女发展潜力、教育建议、亲子关系、子女对命主的帮扶）",
+  "childrenScore": 75,
+  "benefactor": "贵人运详解（120字以上，需包含：贵人方位、贵人属相、贵人特征、如何遇贵人、贵人助力时期、小人防范、人际网络建设）",
+  "benefactorScore": 70,
+  "education": "学业智慧（100字以上，需包含：学习能力、适合专业、考试运势、深造建议、技能发展、知识领域）",
+  "educationScore": 78,
+  "dayMaster": {"stem": "${bazi.dayPillar[0]}", "element": "X", "strength": "身旺/身弱/中和", "description": "日主特质（120字以上，需详细解释日主的特性、强弱程度、对命局的影响、日元特点）"},
+  "usefulGod": "用神喜忌详解（120字以上，需明确指出用神、喜神、忌神、仇神，并解释各自作用、如何运用）",
+  "tenGods": {"正官": "详解40字", "七杀": "详解40字", "正印": "详解40字", "偏印": "详解40字", "比肩": "详解40字", "劫财": "详解40字", "食神": "详解40字", "伤官": "详解40字", "正财": "详解40字", "偏财": "详解40字"},
+  "shenSha": {"吉神": ["天德贵人: 解释30字", "月德贵人: 解释30字"], "凶煞": ["羊刃: 解释30字", "劫煞: 解释30字"]},
   "fiveElements": {"wood": 2, "fire": 1, "earth": 2, "metal": 1, "water": 2},
-  "luckyInfo": {"direction": "具体方位", "color": "具体颜色", "number": "幸运数字", "industry": "具体行业", "partner": "合作对象类型"},
-  "daYunList": [${daYunList.map(d => `{"startAge": ${d.startAge}, "endAge": ${d.endAge}, "ganZhi": "${d.ganZhi}", "description": "此运详解（50字，需说明运势特点、机遇挑战、应对策略）"}`).join(', ')}],
+  "luckyInfo": {"direction": "详细方位解释", "color": "详细颜色解释", "number": "幸运数字解释", "industry": "详细行业分析", "partner": "合作对象详解", "travelDirection": "出行方位", "residence": "居住方位"},
+  "improveAdvice": {
+    "career": "事业改运建议（80字，具体可行的改运方法）",
+    "wealth": "财运改运建议（80字，具体可行的改运方法）",
+    "marriage": "婚姻改运建议（80字，具体可行的改运方法）",
+    "health": "健康改运建议（80字，具体可行的改运方法）",
+    "overall": "综合改运建议（100字，整体提升运势的方法）"
+  },
+  "daYunList": [${daYunList.map(d => `{"startAge": ${d.startAge}, "endAge": ${d.endAge}, "ganZhi": "${d.ganZhi}", "description": "此运详解（80字，需详细说明运势特点、机遇挑战、应对策略、关键事项）"}`).join(', ')}],
   "chartPoints": [
     {"age": 1, "year": ${year}, "daYun": "${daYunList[0]?.ganZhi || '童限'}", "ganZhi": "XX", "score": 55, "reason": "简述（15字）"}
   ],
-  "highlights": [{"age": 28, "year": ${year + 27}, "type": "career", "score": 88, "title": "标题", "ganZhi": "XX", "description": "描述（80字，需详细说明高光点的来龙去脉）", "advice": "建议（50字）"}],
-  "warnings": [{"age": 35, "year": ${year + 34}, "type": "health", "score": 42, "title": "标题", "ganZhi": "XX", "description": "描述（80字，需详细说明风险点）", "advice": "化解建议（60字，需给出具体可行的化解方法）"}],
+  "highlights": [{"age": 28, "year": ${year + 27}, "type": "career", "score": 88, "title": "标题", "ganZhi": "XX", "description": "描述（120字，需详细说明高光点的来龙去脉、机遇来源、如何把握）", "advice": "建议（80字，具体行动方案）"}],
+  "warnings": [{"age": 35, "year": ${year + 34}, "type": "health", "score": 42, "title": "标题", "ganZhi": "XX", "description": "描述（120字，需详细说明风险点、可能遇到的问题）", "advice": "化解建议（100字，需给出具体可行的化解方法、预防措施）"}],
+  "futureYears": [
+    {"year": ${new Date().getFullYear()}, "age": ${currentAge}, "ganZhi": "XX", "score": 72, "overview": "运势总评（80字）", "career": "事业（50字）", "wealth": "财运（50字）", "love": "感情（50字）", "health": "健康（50字）", "advice": "建议（60字）"}
+  ],
   "yearlyFortune": {
-    "thisYear": {"year": ${new Date().getFullYear()}, "ganZhi": "XX", "score": 72, "overview": "今年运势（120字，需全面分析）", "career": "事业运（60字）", "wealth": "财运（60字）", "love": "感情运（60字）", "health": "健康运（60字）", "advice": "建议（80字）"},
-    "nextYear": {"year": ${new Date().getFullYear() + 1}, "ganZhi": "XX", "score": 68, "overview": "明年运势（100字，需全面分析）"}
+    "thisYear": {"year": ${new Date().getFullYear()}, "ganZhi": "XX", "score": 72, "overview": "今年运势（150字，需全面分析）", "career": "事业运（80字）", "wealth": "财运（80字）", "love": "感情运（80字）", "health": "健康运（80字）", "advice": "建议（100字）"},
+    "nextYear": {"year": ${new Date().getFullYear() + 1}, "ganZhi": "XX", "score": 68, "overview": "明年运势（120字，需全面分析）", "advice": "明年建议（80字）"}
   },
+  "keyYears": [
+    {"age": 30, "year": ${year + 29}, "title": "关键年份标题", "type": "career", "description": "为什么重要（100字，详细说明该年份的特殊意义、机遇或挑战）", "advice": "应对策略（80字）"}
+  ],
   "currentPhase": "rising"
 }
 
 规则：
 1. 八字四柱、大运直接使用上面给出的，不要自己推算
 2. chartPoints需80个点（1-80岁，每年一条），只需score（30-95），reason限15字
-3. daYunList使用上面提供的大运，添加详细description（50字）
-4. highlights选5-8个关键年份，warnings选3-5个需要注意的年份
-5. tenGods每项需详解30字，说明该十神在命局中的作用
-6. **重要**：所有评分必须根据实际命局分析得出，不要照抄示例中的75、80等数值
-7. **内容充实**：所有文字描述必须达到或超过规定字数，内容要详实、专业、有针对性`;
+3. daYunList使用上面提供的大运，添加详细description（80字）
+4. highlights选8-12个关键年份，warnings选5-8个需要注意的年份
+5. tenGods每项需详解40字，说明该十神在命局中的作用和影响
+6. shenSha需列出该命局中的主要吉神和凶煞，各2-4个
+7. futureYears需列出从今年开始的连续5年运势详解
+8. keyYears需选出3-5个最关键的年份进行深度解析
+9. improveAdvice需针对各个维度给出切实可行的改运建议
+10. **重要**：所有评分必须根据实际命局分析得出，不要照抄示例中的75、80等数值
+11. **内容充实**：所有文字描述必须达到或超过规定字数，内容要详实、专业、有针对性、实用性强`;
 
 export const LOADING_MESSAGES = [
   '正在排演四柱八字...',
