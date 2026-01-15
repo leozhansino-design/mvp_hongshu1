@@ -63,10 +63,10 @@ export default function BaguaLoader({ message, queueCount = 0 }: BaguaLoaderProp
   return (
     <div className="flex flex-col items-center justify-center gap-8">
       {/* 太极图 */}
-      <div className="relative w-48 h-48">
-        <div className="taiji-container">
-          <div className="bai"></div>
-          <div className="hei"></div>
+      <div className="relative w-48 h-48 flex items-center justify-center">
+        <div className="taiji-circle">
+          <div className="yinyang"></div>
+          <div className="yinyang"></div>
         </div>
       </div>
 
@@ -131,69 +131,49 @@ export default function BaguaLoader({ message, queueCount = 0 }: BaguaLoaderProp
           }
         }
 
-        .taiji-container {
-          width: 200px;
+        .taiji-circle {
+          box-sizing: border-box;
           height: 200px;
+          width: 200px;
           border-radius: 50%;
-          background: #fff;
-          border: 2px solid #ffffff;
-          position: relative;
+          padding-left: 100px;
+          background-image: linear-gradient(to left, #fff, #fff 50%, #000 50%, #000);
           animation: rotate 4s linear infinite;
         }
 
-        .taiji-container::before {
+        .yinyang {
+          position: relative;
+          background-color: #fff;
+          height: 100px;
+          width: 100px;
+          border-radius: 50%;
+          background-image: linear-gradient(to left, #fff, #fff 50%, #000 50%, #000);
+        }
+
+        .yinyang::before {
           content: '';
           position: absolute;
           top: 0;
           left: 50%;
-          width: 50%;
-          height: 100%;
-          background: #000;
-          border-radius: 0 100% 100% 0 / 0 50% 50% 0;
-        }
-
-        .bai {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 50%;
+          transform: translateX(-50%);
           background: #fff;
-          border-radius: 100% 100% 0 0 / 50% 50% 0 0;
-        }
-
-        .bai::after {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 25%;
-          transform: translateY(-50%);
-          width: 25%;
-          height: 50%;
-          background: #000;
+          border: 18px solid #000;
           border-radius: 50%;
+          width: 14px;
+          height: 14px;
         }
 
-        .hei {
+        .yinyang::after {
+          content: '';
           position: absolute;
           bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 50%;
+          left: 50%;
+          transform: translateX(-50%);
           background: #000;
-          border-radius: 0 0 100% 100% / 0 0 50% 50%;
-        }
-
-        .hei::after {
-          content: '';
-          position: absolute;
-          top: 50%;
-          right: 25%;
-          transform: translateY(-50%);
-          width: 25%;
-          height: 50%;
-          background: #fff;
+          border: 18px solid #fff;
           border-radius: 50%;
+          width: 14px;
+          height: 14px;
         }
       `}</style>
     </div>
