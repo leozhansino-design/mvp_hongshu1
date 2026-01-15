@@ -72,7 +72,7 @@ export default function TestPage() {
     if (!baziForPrompt) return '八字计算失败，请检查出生信息';
 
     return version === 'free'
-      ? FREE_VERSION_PROMPT(birthInfo.gender, birthInfo.year, baziForPrompt, daYunForPrompt)
+      ? FREE_VERSION_PROMPT(birthInfo.gender, birthInfo.year, baziForPrompt, daYunForPrompt, currentAge)
       : PAID_VERSION_PROMPT(birthInfo.gender, birthInfo.year, baziForPrompt, daYunForPrompt, currentAge);
   }, [version, birthInfo.gender, birthInfo.year, baziForPrompt, daYunForPrompt, currentAge]);
 

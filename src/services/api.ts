@@ -157,11 +157,16 @@ export async function generateFreeResult(
   const baziForPrompt = toBaziForPrompt(baziResult);
   const daYunForPrompt = toDaYunForPrompt(daYunResult.daYunList);
 
+  // Calculate current age
+  const currentYear = new Date().getFullYear();
+  const currentAge = currentYear - birthInfo.year + 1;
+
   const userPrompt = FREE_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
     baziForPrompt,
-    daYunForPrompt
+    daYunForPrompt,
+    currentAge
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -327,11 +332,15 @@ export function getFreePrompt(birthInfo: BirthInfo): string {
     return '八字计算失败';
   }
 
+  const currentYear = new Date().getFullYear();
+  const currentAge = currentYear - birthInfo.year + 1;
+
   return FREE_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
     toBaziForPrompt(baziResult),
-    toDaYunForPrompt(daYunResult.daYunList)
+    toDaYunForPrompt(daYunResult.daYunList),
+    currentAge
   );
 }
 

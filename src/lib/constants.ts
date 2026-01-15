@@ -59,12 +59,13 @@ export const FREE_VERSION_PROMPT = (
   gender: string,
   year: number,
   bazi: BaziForPrompt,
-  daYunList: DaYunForPrompt[]
+  daYunList: DaYunForPrompt[],
+  currentAge: number
 ) => `请基于以下已排好的八字和大运，进行**简要**命理分析（免费版）。
 
 【命主信息】
 性别: ${gender === 'male' ? '乾造' : '坤造'}
-出生年: ${year}年
+出生年: ${year}年 | 当前虚岁: ${currentAge}岁
 
 【八字四柱】（已排好，请直接使用）
 年柱: ${bazi.yearPillar} | 月柱: ${bazi.monthPillar} | 日柱: ${bazi.dayPillar} | 时柱: ${bazi.hourPillar}
