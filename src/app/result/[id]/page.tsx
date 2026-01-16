@@ -202,7 +202,26 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           </button>
         </div>
 
-        {/* 人生曲线图 - 放在最上面 */}
+        {/* 人生高光时刻 - 最优先显示 */}
+        {data?.highlightMoment && (
+          <div className="mystic-card-gold mb-6">
+            <div className="flex items-start gap-4">
+              <div className="text-5xl">🌟</div>
+              <div className="flex-1">
+                <h2 className="font-serif text-xl text-gold-400 mb-2">人生高光时刻</h2>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="px-3 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
+                    {data.highlightMoment.age}岁
+                  </span>
+                  <span className="text-text-secondary text-sm">· {data.highlightMoment.title}</span>
+                </div>
+                <p className="text-text-primary leading-relaxed text-base">{data.highlightMoment.description}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 人生曲线图 */}
         {data?.chartPoints && data.chartPoints.length > 0 && (
           <div className="mb-6">
             <LifeCurveChart
@@ -399,25 +418,6 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                 <p className="text-text-primary text-sm leading-relaxed">{data.luckyExplanation}</p>
               </div>
             )}
-          </div>
-        )}
-
-        {/* 人生高光时刻 */}
-        {data?.highlightMoment && (
-          <div className="mystic-card-gold mb-6">
-            <div className="flex items-start gap-4">
-              <div className="text-5xl">🌟</div>
-              <div className="flex-1">
-                <h2 className="font-serif text-xl text-gold-400 mb-2">{data.highlightMoment.title}</h2>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="px-3 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
-                    {data.highlightMoment.age}岁
-                  </span>
-                  <span className="text-text-secondary text-sm">· 值得期待的人生节点</span>
-                </div>
-                <p className="text-text-primary leading-relaxed text-base">{data.highlightMoment.description}</p>
-              </div>
-            </div>
           </div>
         )}
 
