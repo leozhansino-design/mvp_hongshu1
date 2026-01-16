@@ -447,6 +447,15 @@ export async function generateWealthCurve(
 
   const aiResult = parseJSONWithRepair(content) as Partial<WealthCurveData>;
 
+  // Debug: 输出AI返回的财富数据
+  console.log('=== 财富曲线AI返回数据 ===');
+  console.log('财富类型:', aiResult.wealthType);
+  console.log('财富范围:', aiResult.wealthRange);
+  console.log('高光时刻:', aiResult.highlights);
+  console.log('数据点数量:', aiResult.dataPoints?.length);
+  console.log('数据点:', aiResult.dataPoints);
+  console.log('========================');
+
   if (!aiResult.dataPoints || !Array.isArray(aiResult.dataPoints)) {
     throw new Error('返回数据格式不正确');
   }

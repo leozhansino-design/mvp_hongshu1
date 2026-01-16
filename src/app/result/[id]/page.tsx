@@ -31,18 +31,14 @@ function WealthFunHighlights({
   wealthType: string;
   birthYear: number;
 }) {
-  // 格式化金额 - 更真实的显示
+  // 格式化金额 - 精确显示如1328万
   const formatWealth = (value: number) => {
     if (value >= 10000) {
+      // 超过1亿，显示如1.3亿
       return `${(value / 10000).toFixed(1)}亿`;
     }
-    if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)}千万`;
-    }
-    if (value >= 100) {
-      return `${value.toFixed(0)}万`;
-    }
-    return `${value.toFixed(1)}万`;
+    // 其他都精确显示万，如1328万、856万
+    return `${Math.round(value)}万`;
   };
 
   // 根据财富类型和年龄生成有趣的故事 - 好的更好，差的更有趣
@@ -559,10 +555,10 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                 {wealthResult.highlights.peakWealth >= 10000
                   ? `预计身价冲到${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿！"钱对我来说只是数字"的凡尔赛日子要来了~`
                   : wealthResult.highlights.peakWealth >= 1000
-                    ? `预计身价冲到${(wealthResult.highlights.peakWealth / 1000).toFixed(1)}千万，可以在朋友圈"不经意"炫一下了~`
+                    ? `预计身价冲到${Math.round(wealthResult.highlights.peakWealth)}万，可以在朋友圈"不经意"炫一下了~`
                     : wealthResult.highlights.peakWealth >= 300
-                      ? `预计攒到${wealthResult.highlights.peakWealth}万，虽然不多但够买个小房子！平凡也是一种幸福~`
-                      : `预计存款${wealthResult.highlights.peakWealth}万...虽然扎心，但至少不用担心"有钱人的烦恼"，比如买哪辆法拉利~`
+                      ? `预计攒到${Math.round(wealthResult.highlights.peakWealth)}万，虽然不多但够买个小房子！平凡也是一种幸福~`
+                      : `预计存款${Math.round(wealthResult.highlights.peakWealth)}万...虽然扎心，但至少不用担心"有钱人的烦恼"，比如买哪辆法拉利~`
                 }
               </p>
             </div>

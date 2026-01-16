@@ -119,8 +119,8 @@ export default function WealthChart({
     };
   }, [dataPoints, highlights, wealthRange, chartWidth, chartHeight]);
 
-  // 格式化金额
-  const formatWealth = (value: number) => {
+  // 格式化金额 - 用于坐标轴（简短）
+  const formatWealthAxis = (value: number) => {
     if (value >= 10000) {
       return `${(value / 10000).toFixed(0)}亿`;
     }
@@ -128,6 +128,14 @@ export default function WealthChart({
       return `${(value / 1000).toFixed(0)}千万`;
     }
     return `${value.toFixed(0)}万`;
+  };
+
+  // 格式化金额 - 用于tooltip（精确）
+  const formatWealth = (value: number) => {
+    if (value >= 10000) {
+      return `${(value / 10000).toFixed(1)}亿`;
+    }
+    return `${Math.round(value)}万`;
   };
 
   return (
@@ -209,7 +217,7 @@ export default function WealthChart({
               dominantBaseline="middle"
               className="text-xs fill-gray-400"
             >
-              {formatWealth(tick.value)}
+              {formatWealthAxis(tick.value)}
             </text>
           </g>
         ))}
