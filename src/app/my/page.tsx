@@ -4,25 +4,27 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { getAllResults, deleteResult } from '@/services/storage';
-import { StoredResult } from '@/types';
+import { StoredResult, PHASE_LABELS, HOUR_LABELS, PhaseType } from '@/types';
 
-export default function MyPage() {
+export default function MyReportsPage() {
   const [results, setResults] = useState<StoredResult[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setResults(getAllResults());
+    const storedResults = getAllResults();
+    setResults(storedResults);
+    setLoading(false);
   }, []);
 
   const handleDelete = (id: string) => {
-    if (confirm('确定要删除这个报告吗？')) {
+    if (confirm('确定要删除这份报告吗？')) {
       deleteResult(id);
-      setResults(getAllResults());
+      setResults(results.filter((r) => r.id !== id));
     }
   };
 
   const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
-    return date.toLocaleString('zh-CN', {
+    return new Date(timestamp).toLocaleString('zh-CN', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -39,55 +41,72 @@ export default function MyPage() {
           我的报告
         </h1>
 
-        {results.length === 0 ? (
+        {loading ? (
           <div className="text-center py-12">
-            <p className="text-text-secondary mb-4">还没有生成过报告</p>
-            <Link href="/" className="btn-gold inline-block">
-              立即生成
+            <p className="text-text-secondary">加载中...</p>
+          </div>
+        ) : results.length === 0 ? (
+          <div className="mystic-card text-center py-12">
+            <div className="text-6xl mb-4 opacity-30">✦</div>
+            <p className="text-text-secondary mb-4">暂无报告记录</p>
+            <Link href="/" className="btn-gold inline-block px-6 py-2">
+              开始测算
             </Link>
           </div>
         ) : (
           <div className="space-y-4">
-            {results.map((result) => (
-              <div
-                key={result.id}
-                className="mystic-card flex items-center justify-between"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-gold-400 font-serif">
-                      {result.birthInfo.name || '未命名'}
-                    </span>
-                    {result.isPaid && (
-                      <span className="px-2 py-0.5 text-xs rounded bg-gold-400/20 text-gold-400">
-                        完整版
-                      </span>
-                    )}
+            {results.map((result) => {
+              const { birthInfo, freeResult, isPaid, createdAt } = result;
+              const phase = (freeResult?.currentPhase || 'stable') as PhaseType;
+
+              return (
+                <div key={result.id} className="mystic-card hover:border-gold-400/40 transition-all">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-lg">
+                          {birthInfo.gender === 'male' ? '♂' : '♀'}
+                        </span>
+                        <span className="font-serif text-lg text-text-primary">
+                          {birthInfo.name || '匿名'}
+                        </span>
+                        {isPaid && (
+                          <span className="px-2 py-0.5 text-xs rounded bg-gold-400/20 text-gold-400">
+                            完整版
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-text-secondary space-y-1">
+                        <p>
+                          {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日 {HOUR_LABELS[birthInfo.hour]}
+                        </p>
+                        <p>
+                          当前运势：<span className="text-gold-400">{PHASE_LABELS[phase]}</span>
+                        </p>
+                        <p className="text-xs text-text-secondary/60">
+                          {formatDate(createdAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:flex-col sm:items-end">
+                      <Link
+                        href={`/result/${result.id}`}
+                        className="btn-outline px-4 py-1.5 text-sm"
+                      >
+                        查看详情
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(result.id)}
+                        className="px-4 py-1.5 text-sm text-kline-down/70 hover:text-kline-down transition-colors"
+                      >
+                        删除
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-text-secondary text-sm">
-                    {result.birthInfo.gender === 'male' ? '男' : '女'} ·
-                    {result.birthInfo.year}年{result.birthInfo.month}月{result.birthInfo.day}日
-                  </p>
-                  <p className="text-text-secondary text-xs mt-1">
-                    {formatDate(result.createdAt)}
-                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/result/${result.id}`}
-                    className="btn-outline text-sm"
-                  >
-                    查看
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(result.id)}
-                    className="px-3 py-1.5 text-sm text-red-400 hover:text-red-300 border border-red-500/30 hover:border-red-400 rounded transition-colors"
-                  >
-                    删除
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
