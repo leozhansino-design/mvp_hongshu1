@@ -49,7 +49,9 @@ export async function generateFreeResult(
     birthInfo.year,
     birthInfo.month,
     birthInfo.day,
-    hourLabel
+    hourLabel,
+    birthInfo.province,
+    birthInfo.city
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -110,7 +112,9 @@ export async function generatePaidResult(
     birthInfo.month,
     birthInfo.day,
     hourLabel,
-    currentAge
+    currentAge,
+    birthInfo.province,
+    birthInfo.city
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -168,7 +172,9 @@ export function getFreePrompt(birthInfo: BirthInfo): string {
     birthInfo.year,
     birthInfo.month,
     birthInfo.day,
-    hourLabel
+    hourLabel,
+    birthInfo.province,
+    birthInfo.city
   );
 }
 
@@ -182,6 +188,8 @@ export function getPaidPrompt(birthInfo: BirthInfo): string {
     birthInfo.month,
     birthInfo.day,
     hourLabel,
-    currentAge
+    currentAge,
+    birthInfo.province,
+    birthInfo.city
   );
 }

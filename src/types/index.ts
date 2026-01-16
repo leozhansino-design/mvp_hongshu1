@@ -68,6 +68,8 @@ export interface BirthInfo {
   hour: string;
   name?: string;
   calendarType?: CalendarType;
+  province?: string;  // 出生省份
+  city?: string;      // 出生城市
 }
 
 export interface StoredResult {
