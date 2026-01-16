@@ -35,12 +35,14 @@ export const FREE_VERSION_PROMPT = (
   year: number,
   month: number,
   day: number,
-  hour: string
+  hour: string,
+  province?: string,
+  city?: string
 ) => `请为此命主推演大运级别的人生运势。
 
 命主信息：
 - 性别: ${gender === 'male' ? '男' : '女'}
-- 生辰: ${year}年${month}月${day}日 ${hour}
+- 生辰: ${year}年${month}月${day}日 ${hour}${province && city ? `\n- 出生地: ${province}${city}` : province ? `\n- 出生地: ${province}` : ''}
 
 请输出JSON：
 {
@@ -75,13 +77,15 @@ export const PAID_VERSION_PROMPT = (
   month: number,
   day: number,
   hour: string,
-  currentAge: number
+  currentAge: number,
+  province?: string,
+  city?: string
 ) => `请为此命主推演流年级别的详细人生运势。
 
 命主信息：
 - 性别: ${gender === 'male' ? '男' : '女'}
 - 生辰: ${year}年${month}月${day}日 ${hour}
-- 当前年龄: ${currentAge}岁
+- 当前年龄: ${currentAge}岁${province && city ? `\n- 出生地: ${province}${city}` : province ? `\n- 出生地: ${province}` : ''}
 
 请输出JSON：
 {

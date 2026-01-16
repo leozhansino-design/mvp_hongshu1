@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Gender, BirthInfo, HOUR_OPTIONS, CalendarType } from '@/types';
+import { CHINA_PROVINCES, getCityNamesByProvince } from '@/data/chinaCities';
 
 interface BirthFormProps {
   onSubmit: (birthInfo: BirthInfo) => void;
@@ -17,6 +18,8 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
   const [month, setMonth] = useState<number | ''>('');
   const [day, setDay] = useState<number | ''>('');
   const [hour, setHour] = useState<string>('');
+  const [province, setProvince] = useState<string>('');
+  const [city, setCity] = useState<string>('');
 
   const currentYear = new Date().getFullYear();
   const years = useMemo(() =>
@@ -36,6 +39,18 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
     [daysInMonth]
   );
 
+  // 根据选中的省份获取城市列表
+  const cities = useMemo(() => {
+    if (!province) return [];
+    return getCityNamesByProvince(province);
+  }, [province]);
+
+  // 当省份改变时，重置城市选择
+  const handleProvinceChange = (newProvince: string) => {
+    setProvince(newProvince);
+    setCity('');
+  };
+
   const isValid = gender && year && month && day && hour;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -50,6 +65,8 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
       hour,
       name: name || undefined,
       calendarType,
+      province: province || undefined,
+      city: city || undefined,
     });
   };
 
@@ -183,6 +200,41 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
             </option>
           ))}
         </select>
+      </div>
+
+      {/* 出生地点 */}
+      <div>
+        <label className="block text-sm text-text-secondary mb-2">
+          出生地点 <span className="text-text-secondary/50">(选填，可提高准确度)</span>
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <select
+            value={province}
+            onChange={(e) => handleProvinceChange(e.target.value)}
+            className="select-mystic"
+          >
+            <option value="">省份/直辖市</option>
+            {CHINA_PROVINCES.map((p) => (
+              <option key={p.name} value={p.name}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            className="select-mystic"
+            disabled={!province}
+          >
+            <option value="">城市</option>
+            {cities.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <button
