@@ -214,6 +214,8 @@ export interface BirthInfo {
   name?: string;
   calendarType?: CalendarType;
   birthPlace?: string;
+  province?: string;  // 出生省份
+  city?: string;      // 出生城市
 }
 
 export interface StoredResult {

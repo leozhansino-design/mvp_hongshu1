@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Gender, BirthInfo, CalendarType, CHINA_CITIES } from '@/types';
+import { Gender, BirthInfo, CalendarType } from '@/types';
 import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
+import { CHINA_PROVINCES, getCityNamesByProvince } from '@/data/chinaCities';
 
 interface BirthFormProps {
   onSubmit: (birthInfo: BirthInfo, isPaid?: boolean) => void;
@@ -34,8 +35,8 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
   const [month, setMonth] = useState<number | ''>('');
   const [day, setDay] = useState<number | ''>('');
   const [shiChen, setShiChen] = useState<number | ''>('');
-  const [birthPlace, setBirthPlace] = useState<string>('');
-  const [showCities, setShowCities] = useState(false);
+  const [province, setProvince] = useState<string>('');
+  const [city, setCity] = useState<string>('');
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
   const [daYunResult, setDaYunResult] = useState<{ startInfo: string; daYunList: DaYunItem[] } | null>(null);
 
@@ -62,10 +63,17 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
     [daysInMonth]
   );
 
-  const filteredCities = useMemo(() => {
-    if (!birthPlace) return CHINA_CITIES.slice(0, 50);
-    return CHINA_CITIES.filter(city => city.includes(birthPlace));
-  }, [birthPlace]);
+  // 根据选中的省份获取城市列表
+  const cities = useMemo(() => {
+    if (!province) return [];
+    return getCityNamesByProvince(province);
+  }, [province]);
+
+  // 当省份改变时，重置城市选择
+  const handleProvinceChange = (newProvince: string) => {
+    setProvince(newProvince);
+    setCity('');
+  };
 
   const isValid = gender && year && month && day && shiChen !== '';
 
@@ -116,7 +124,8 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
       minute: 0,
       name: name || undefined,
       calendarType,
-      birthPlace: birthPlace || undefined,
+      province: province || undefined,
+      city: city || undefined,
     });
   };
 
@@ -297,51 +306,38 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
         </select>
       </div>
 
-      {/* 出生地 */}
-      <div className="relative">
+      {/* 出生地 - 省/市选择 */}
+      <div>
         <label className="block text-sm text-text-secondary mb-2">
           出生地 <span className="text-text-secondary/50">(选填，用于计算真太阳时)</span>
         </label>
-        <div className="relative">
-          <input
-            type="text"
-            value={birthPlace}
-            onChange={(e) => {
-              setBirthPlace(e.target.value);
-              setShowCities(true);
-            }}
-            onFocus={() => setShowCities(true)}
-            onBlur={() => setTimeout(() => setShowCities(false), 200)}
-            placeholder="请选择或输入城市"
-            className="input-mystic pr-8"
-          />
-          {birthPlace && (
-            <button
-              type="button"
-              onClick={() => setBirthPlace('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
-            >
-              ×
-            </button>
-          )}
-        </div>
-        {showCities && filteredCities.length > 0 && (
-          <div className="absolute z-10 w-full mt-1 max-h-48 overflow-y-auto bg-black/95 border border-gray-700 rounded-lg shadow-lg">
-            {filteredCities.slice(0, 20).map((city) => (
-              <button
-                key={city}
-                type="button"
-                onClick={() => {
-                  setBirthPlace(city);
-                  setShowCities(false);
-                }}
-                className="w-full px-3 py-2 text-left text-sm text-text-secondary hover:bg-white/10 hover:text-text-primary"
-              >
-                {city}
-              </button>
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            value={province}
+            onChange={(e) => handleProvinceChange(e.target.value)}
+            className="select-mystic"
+          >
+            <option value="">省份/直辖市</option>
+            {CHINA_PROVINCES.map((p) => (
+              <option key={p.name} value={p.name}>
+                {p.name}
+              </option>
             ))}
-          </div>
-        )}
+          </select>
+          <select
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            className="select-mystic"
+            disabled={!province}
+          >
+            <option value="">城市</option>
+            {cities.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* 八字预览 */}
@@ -416,7 +412,8 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
               day: day as number,
               hour: shiChen as number,
               minute: 0,
-              birthPlace: birthPlace || undefined,
+              province: province || undefined,
+              city: city || undefined,
             };
             onSubmit(birthInfo, false);
           }}
@@ -438,7 +435,8 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
               day: day as number,
               hour: shiChen as number,
               minute: 0,
-              birthPlace: birthPlace || undefined,
+              province: province || undefined,
+              city: city || undefined,
             };
             onSubmit(birthInfo, true);
           }}
