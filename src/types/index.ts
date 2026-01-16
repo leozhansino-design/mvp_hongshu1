@@ -225,6 +225,9 @@ export interface StoredResult {
   paidResult?: PaidVersionResult;
   isPaid: boolean;
   createdAt: number;
+  // 财富曲线相关
+  curveMode?: CurveMode;
+  wealthResult?: WealthCurveData;
 }
 
 export type PhaseType = 'rising' | 'peak' | 'stable' | 'declining' | 'valley';

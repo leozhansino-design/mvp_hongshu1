@@ -45,7 +45,6 @@ export default function HomePage() {
           birthInfo,
           isPaid,
           createdAt: Date.now(),
-          // @ts-expect-error - 扩展存储类型
           wealthResult,
           curveMode: 'wealth',
         };
@@ -143,16 +142,6 @@ export default function HomePage() {
         <p className="mt-6 md:mt-8 text-xs md:text-sm text-text-secondary">
           已有 <span className="text-gold-400 font-mono">{totalGenerated.toLocaleString()}</span> 人生成过命盘报告
         </p>
-
-        {/* 模式切换提示 */}
-        <div className="mt-4 text-center">
-          <button
-            onClick={() => setCurveMode(curveMode === 'life' ? 'wealth' : 'life')}
-            className="text-xs text-text-secondary hover:text-gold-400 transition-colors"
-          >
-            切换到{curveMode === 'life' ? '财富曲线' : '人生曲线'} →
-          </button>
-        </div>
       </div>
     </div>
   );

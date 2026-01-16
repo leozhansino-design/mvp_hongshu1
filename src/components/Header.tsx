@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CurveMode, CURVE_MODE_LABELS } from '@/types';
@@ -13,8 +13,6 @@ interface HeaderProps {
 
 export default function Header({ curveMode = 'life', onModeChange, showModeSelector = false }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   const navItems = [
@@ -22,73 +20,42 @@ export default function Header({ curveMode = 'life', onModeChange, showModeSelec
     { href: '/my', label: '我的报告' },
   ];
 
-  // 点击外部关闭下拉菜单
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const handleModeChange = (mode: CurveMode) => {
     onModeChange?.(mode);
-    setDropdownOpen(false);
   };
 
   return (
     <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-sm border-b border-gray-800">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-14">
-          {/* Logo with Dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          {/* Logo with Tab Switcher */}
+          <div className="flex items-center gap-1">
             {showModeSelector ? (
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 font-serif text-lg text-white hover:text-gold-400 transition-colors"
-              >
-                <span>{CURVE_MODE_LABELS[curveMode]}</span>
-                <svg
-                  className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            ) : (
-              <Link href="/" className="flex items-center gap-2">
-                <span className="font-serif text-lg text-white">人生曲线</span>
-              </Link>
-            )}
-
-            {/* Dropdown Menu */}
-            {showModeSelector && dropdownOpen && (
-              <div className="absolute top-full left-0 mt-2 w-40 bg-black/95 border border-gray-700 rounded-lg shadow-xl overflow-hidden">
+              // 水平标签切换器
+              <div className="flex items-center bg-gray-900/50 rounded-lg p-1">
                 {(Object.keys(CURVE_MODE_LABELS) as CurveMode[]).map((mode) => (
                   <button
                     key={mode}
                     onClick={() => handleModeChange(mode)}
-                    className={`w-full px-4 py-3 text-left text-sm transition-colors ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                       curveMode === mode
-                        ? 'bg-gold-400/20 text-gold-400'
-                        : 'text-text-secondary hover:bg-white/10 hover:text-text-primary'
+                        ? mode === 'wealth'
+                          ? 'bg-gradient-to-r from-gold-400/30 to-amber-500/30 text-gold-400 shadow-sm'
+                          : 'bg-purple-500/20 text-purple-300 shadow-sm'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
                     }`}
                   >
-                    <span className="flex items-center gap-2">
-                      {mode === 'life' ? (
-                        <span className="text-purple-400">☯</span>
-                      ) : (
-                        <span className="text-gold-400">💰</span>
-                      )}
-                      {CURVE_MODE_LABELS[mode]}
+                    <span className={curveMode === mode ? '' : 'opacity-60'}>
+                      {mode === 'life' ? '☯' : '💰'}
                     </span>
+                    <span>{CURVE_MODE_LABELS[mode]}</span>
                   </button>
                 ))}
               </div>
+            ) : (
+              <Link href="/" className="flex items-center gap-2">
+                <span className="font-serif text-lg text-white">人生曲线</span>
+              </Link>
             )}
           </div>
 
