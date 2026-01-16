@@ -85,27 +85,27 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
           prevPoint.score, currentPoint.score, nextPoint.score, nextNextPoint.score, t
         ));
 
-        // 新算法：减少频繁震荡，增加整体趋势感
-        // 目标：大运10年内有1-2个小转折，整体跟随关键点趋势
+        // 优化算法：最小化波动，突出整体趋势
+        // 目标：平滑过渡，让用户能清楚看到整体走势（低开高走、高开低走等）
 
-        // 1. 大运内的缓慢波动（10年一个周期）
+        // 1. 极小的大运内波动（10年一个周期）- 进一步减小
         const daYunProgress = (age % 10) / 10; // 0-1，在大运中的进度
-        const daYunWave = Math.sin(daYunProgress * Math.PI * 2) * 2; // 大运内小起伏，±2分
+        const daYunWave = Math.sin(daYunProgress * Math.PI * 2) * 1; // 大运内小起伏，±1分（减半）
 
-        // 2. 趋势因子：强化从currentPoint到nextPoint的过渡
+        // 2. 趋势因子：强化从currentPoint到nextPoint的平滑过渡
         const scoreDiff = nextPoint.score - currentPoint.score;
-        const trendStrength = Math.abs(scoreDiff) > 15 ? 1.0 : 0.6;
+        const trendStrength = Math.abs(scoreDiff) > 15 ? 1.0 : 0.7;
         const trendFactor = scoreDiff * t * trendStrength;
 
-        // 3. 只在特定年份添加小转折（象征命运变化）
+        // 3. 只在特定年份添加微小转折（象征流年变化）- 进一步减小幅度
         let microFluctuation = 0;
         const yearInDaYun = age % 10;
         if (yearInDaYun === 3 || yearInDaYun === 7) {
-          // 在大运的第3、7年添加小波动
-          microFluctuation = Math.sin(age * 1.7) * 2.5;
+          // 在大运的第3、7年添加极小波动
+          microFluctuation = Math.sin(age * 1.7) * 1.5; // 从2.5减到1.5
         }
 
-        // 综合波动（控制在±6分以内，让趋势更明显）
+        // 综合波动（控制在±3分以内，让整体趋势更明显）
         const totalFluctuation = daYunWave + trendFactor + microFluctuation;
         const scoreWithFluctuation = interpolatedScore + totalFluctuation;
         const score = Math.max(30, Math.min(95, Math.round(scoreWithFluctuation)));
@@ -153,7 +153,7 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
   const config = useMemo(() => {
     const padding = { top: 50, right: 35, bottom: 50, left: 45 };
     const width = 1100;
-    const height = 320;
+    const height = 450; // 增加高度，让曲线更清晰易读
     return {
       padding,
       width,
