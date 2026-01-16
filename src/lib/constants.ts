@@ -225,3 +225,85 @@ export const LOADING_MESSAGES = [
   '生成命理报告...',
   'AI深度解读中...',
 ];
+
+// 财富曲线专用提示词
+export const WEALTH_CURVE_PROMPT = (
+  gender: string,
+  year: number,
+  bazi: BaziForPrompt,
+  daYunList: DaYunForPrompt[],
+  isPaid: boolean
+) => `你是一位精通八字命理的财运分析师。请根据以下八字信息，生成此人18-80岁的累计财富曲线数据。
+
+【命主信息】
+性别: ${gender === 'male' ? '乾造' : '坤造'}
+出生年: ${year}年
+
+【八字四柱】（已排好，请直接使用）
+年柱: ${bazi.yearPillar} | 月柱: ${bazi.monthPillar} | 日柱: ${bazi.dayPillar} | 时柱: ${bazi.hourPillar}
+生肖: ${bazi.zodiac} | 农历: ${bazi.lunarDate}
+
+【大运】（已排好，请直接使用）
+${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
+
+分析要求：
+1. 基于八字中的财星（正财、偏财）、食伤生财、官杀护财等格局分析
+2. 结合大运流年的财运变化
+3. 诚实分析，不为讨好用户而美化结果
+4. 有的人财运一般就如实显示，不是每个人都能大富大贵
+5. 曲线是累计财富，会有上升也会有下降（消费、亏损、投资失败等）
+6. 下降幅度要合理，不要出现断崖式暴跌
+
+请返回以下JSON格式：
+{
+  "wealthRange": {
+    "min": 0,
+    "max": 2000,
+    "unit": "万"
+  },
+  "wealthType": "大器晚成型",
+  "highlights": {
+    "peakAge": 52,
+    "peakWealth": 1200,
+    "maxGrowthAge": 38,
+    "maxGrowthAmount": 180,
+    "maxLossAge": 45,
+    "maxLossAmount": 90
+  },
+  "dataPoints": [
+    ${isPaid
+      ? '{"age": 18, "wealth": 0}, {"age": 19, "wealth": 5}, ... (共63个点，18-80岁每年一个)'
+      : '{"age": 18, "wealth": 0}, {"age": 24, "wealth": 30}, {"age": 30, "wealth": 80}, {"age": 36, "wealth": 150}, {"age": 42, "wealth": 280}, {"age": 48, "wealth": 450}, {"age": 54, "wealth": 680}, {"age": 60, "wealth": 850}, {"age": 66, "wealth": 920}, {"age": 72, "wealth": 900}, {"age": 78, "wealth": 850} (共11个点)'
+    }
+  ],
+  "analysis": {
+    "summary": "您的八字财星分析总结（100字以上）...",
+    "earlyYears": "18-30岁财运分析（80字以上）...",
+    "middleYears": "30-50岁财运分析（80字以上）...",
+    "lateYears": "50岁后财运分析（80字以上）...",
+    "advice": "理财建议（100字以上）..."
+  }
+}
+
+重要规则：
+1. dataPoints必须有${isPaid ? '63' : '11'}个点（${isPaid ? '18-80岁每年一个' : '每6年一个点：18,24,30,36,42,48,54,60,66,72,78岁'}）
+2. wealth单位是万元，表示累计资产
+3. 曲线要符合命理逻辑，不是随机数
+4. wealthType必须是以下之一：早期暴富型、大器晚成型、稳步上升型、过山车型、平稳一生型、先扬后抑型
+5. wealthRange.max根据命局格局设定：
+   - 普通格局：300-800万
+   - 中等格局：800-2000万
+   - 大财格局：2000-5000万+
+6. 如果八字财运一般，峰值可能只有100-500万，这很正常，不要虚高
+7. 曲线可以下降（表示消费、亏损、投资失败导致资产减少），但下降要合理
+8. highlights中的数值要与dataPoints中的数据对应一致`;
+
+export const WEALTH_LOADING_MESSAGES = [
+  '解析财星格局...',
+  '分析正财偏财...',
+  '推算财运周期...',
+  '计算大运财运...',
+  '演算流年财运...',
+  '生成财富曲线...',
+  'AI深度分析中...',
+];
