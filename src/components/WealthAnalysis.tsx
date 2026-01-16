@@ -8,85 +8,106 @@ interface WealthAnalysisProps {
 }
 
 export default function WealthAnalysis({ analysis, isPaid = false }: WealthAnalysisProps) {
+  // 截取内容的函数 - 免费版显示部分内容
+  const truncateContent = (content: string, maxLength: number = 80) => {
+    if (content.length <= maxLength) return content;
+    return content.slice(0, maxLength) + '...';
+  };
+
   const sections = [
     {
       title: '总体财运',
       content: analysis.summary,
-      icon: '💰',
+      freePreview: true, // 免费版完整显示
     },
     {
       title: '早年财运（18-30岁）',
       content: analysis.earlyYears,
-      icon: '🌱',
+      freePreview: true, // 免费版完整显示
     },
     {
       title: '中年财运（30-50岁）',
       content: analysis.middleYears,
-      icon: '🌳',
+      freePreview: false, // 免费版截断显示
     },
     {
       title: '晚年财运（50岁后）',
       content: analysis.lateYears,
-      icon: '🍂',
+      freePreview: false, // 免费版截断显示
     },
     {
       title: '理财建议',
       content: analysis.advice,
-      icon: '💡',
+      freePreview: false, // 免费版截断显示
     },
   ];
 
   return (
     <div className="space-y-4">
-      <h3 className="font-serif text-lg text-gold-400 flex items-center gap-2">
-        <span>📊</span>
-        <span>财运详解</span>
-      </h3>
+      <h3 className="font-serif text-lg text-gold-400">财运详解</h3>
 
       <div className="space-y-3">
         {sections.map((section, index) => {
-          // 免费版只显示前两个section，其他模糊处理
-          const isLocked = !isPaid && index > 1;
+          // 决定显示的内容
+          const displayContent = isPaid || section.freePreview
+            ? section.content
+            : truncateContent(section.content, 60);
+
+          const isPartial = !isPaid && !section.freePreview;
 
           return (
             <div
               key={index}
-              className={`p-4 rounded-xl bg-black/40 border border-gray-800 ${
-                isLocked ? 'relative overflow-hidden' : ''
-              }`}
+              className="p-4 rounded-lg bg-black/30 border border-gray-800"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">{section.icon}</span>
-                <h4 className="font-medium text-text-primary">{section.title}</h4>
-              </div>
-
-              <p
-                className={`text-sm text-text-secondary leading-relaxed ${
-                  isLocked ? 'blur-sm select-none' : ''
-                }`}
-              >
-                {section.content}
+              <h4 className="font-medium text-text-primary mb-2">{section.title}</h4>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                {displayContent}
+                {isPartial && (
+                  <span className="text-gold-400/60 ml-1">（完整版可查看详细分析）</span>
+                )}
               </p>
-
-              {isLocked && (
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/50 to-black/80 flex items-end justify-center pb-4">
-                  <span className="text-xs text-gold-400 bg-black/60 px-3 py-1 rounded-full border border-gold-400/30">
-                    🔒 解锁完整版查看
-                  </span>
-                </div>
-              )}
             </div>
           );
         })}
       </div>
 
+      {/* 增运指南 - 只在付费版显示完整 */}
+      <div className="p-4 rounded-lg bg-gradient-to-br from-gold-400/5 to-amber-500/5 border border-gold-400/20">
+        <h4 className="font-medium text-gold-400 mb-3">增运秘诀</h4>
+        {isPaid ? (
+          <div className="space-y-3 text-sm text-text-secondary">
+            <div>
+              <span className="text-gold-400/80">【方位催财】</span>
+              <p className="mt-1">根据你的命盘，建议办公桌朝向或床头方位设在财位方向，可借助方位之力增强财运。</p>
+            </div>
+            <div>
+              <span className="text-gold-400/80">【行业选择】</span>
+              <p className="mt-1">从事与自身五行相生的行业，事半功倍。适合的行业能让财运事半功倍。</p>
+            </div>
+            <div>
+              <span className="text-gold-400/80">【投资时机】</span>
+              <p className="mt-1">每年的财运有高低起伏，建议在财运旺盛的年份加大投资力度，财运低迷时保守为主。</p>
+            </div>
+            <div>
+              <span className="text-gold-400/80">【人脉助运】</span>
+              <p className="mt-1">结交贵人是提升财运的关键。命中财星与官星相配，贵人相助事业更顺。</p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-text-secondary">
+            根据你的八字命盘，有针对性的增运方法包括：方位催财、行业选择、投资时机把握...
+            <span className="text-gold-400/60">（付费版查看完整增运秘诀）</span>
+          </p>
+        )}
+      </div>
+
       {/* 免责声明 */}
-      <div className="mt-6 p-4 rounded-xl bg-gray-900/50 border border-gray-800">
-        <p className="text-xs text-text-secondary/70 leading-relaxed">
-          <span className="text-gold-400/70">免责声明：</span>
+      <div className="mt-4 p-3 rounded-lg bg-gray-900/30 border border-gray-800/50">
+        <p className="text-xs text-text-secondary/60 leading-relaxed">
+          <span className="text-gold-400/50">免责声明：</span>
           本曲线基于传统八字命理理论推演，仅供娱乐参考。
-          财富受个人努力、机遇、选择、经济环境等多重因素影响。
-          不构成任何投资或人生决策建议。
+          财富受个人努力、机遇、选择、经济环境等多重因素影响，不构成任何投资建议。
         </p>
       </div>
     </div>

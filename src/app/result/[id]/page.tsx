@@ -30,148 +30,162 @@ function WealthFunHighlights({
   wealthType: string;
   birthYear: number;
 }) {
-  // 格式化金额
+  // 格式化金额 - 更真实的显示
   const formatWealth = (value: number) => {
     if (value >= 10000) {
       return `${(value / 10000).toFixed(1)}亿`;
     }
     if (value >= 1000) {
-      return `${(value / 1000).toFixed(0)}千万`;
+      return `${(value / 1000).toFixed(1)}千万`;
     }
-    return `${value.toFixed(0)}万`;
+    if (value >= 100) {
+      return `${value.toFixed(0)}万`;
+    }
+    return `${value.toFixed(1)}万`;
   };
 
-  // 根据年龄生成有趣的标题和描述
-  const getFunTitle = (age: number, type: 'peak' | 'growth' | 'loss') => {
-    const year = birthYear + age;
+  // 根据财富类型和年龄生成有趣的故事
+  const generateStory = () => {
+    const peakYear = birthYear + highlights.peakAge;
+    const growthYear = birthYear + highlights.maxGrowthAge;
+    const lossYear = birthYear + highlights.maxLossAge;
 
-    if (type === 'peak') {
-      const titles = [
-        { title: '人生财富巅峰', desc: `${year}年，你将登上人生财富的珠穆朗玛峰！记得在山顶拍张照。` },
-        { title: '财神附体时刻', desc: `${year}年，财神爷将在你家门口蹲守一整年！` },
-        { title: '躺赢人生', desc: `${year}年，你的钱包将达到它这辈子最膨胀的时刻！` },
-        { title: '钞能力觉醒', desc: `${year}年，恭喜你解锁"钞能力"成就！可以稍微飘一下了。` },
-      ];
-      return titles[age % titles.length];
-    }
-
-    if (type === 'growth') {
-      const titles = [
-        { title: '财运爆发', desc: `${year}年，你的财运将像坐了火箭一样往上窜！系好安全带！` },
-        { title: '锦鲤附身', desc: `${year}年，你就是那条被选中的锦鲤，转发自己就能发财！` },
-        { title: '暴富元年', desc: `${year}年，命里注定要让你体验一把暴富的快感！` },
-        { title: '财神点名', desc: `${year}年，财神爷点名要给你发红包，不收不行！` },
-      ];
-      return titles[age % titles.length];
-    }
-
-    // loss type
-    const titles = [
-      { title: '钱包减肥期', desc: `${year}年，你的钱包决定开始瘦身计划...不要太伤心，瘦了更健康嘛！` },
-      { title: '散财童子附体', desc: `${year}年，你将化身散财童子，记住：失去的都是命中注定要走的！` },
-      { title: '财务过山车', desc: `${year}年，你的财务状况将体验一把过山车的刺激，肾上腺素飙升！` },
-      { title: '钱去哪了', desc: `${year}年，你可能会经常问自己：我的钱都去哪了？答：该去的地方。` },
+    // 八字专业术语
+    const baziTerms = [
+      '食伤生财',
+      '财官双美',
+      '偏财入库',
+      '正财透干',
+      '劫财夺财',
+      '比劫帮身',
+      '印星护身',
+      '官印相生',
     ];
-    return titles[age % titles.length];
+
+    // 根据不同阶段生成故事
+    const stories = [];
+
+    // 财富巅峰故事
+    const peakStories = [
+      `${highlights.peakAge}岁的你，命盘走到${baziTerms[highlights.peakAge % 4]}大运，财库大开！可能是创业成功套现、股票翻倍、或者拆迁暴富，总之这一年你的银行卡余额会让你怀疑人生——"这真的是我的钱？"预计身价冲到${formatWealth(highlights.peakWealth)}，建议提前想好怎么低调炫富~`,
+      `${highlights.peakAge}岁，${baziTerms[(highlights.peakAge + 1) % 4]}格局形成，你的财运将达到人生巅峰！这一年不管是投资、副业还是主业，感觉钱就像是追着你跑。朋友圈可能会出现"不经意间"晒出的${formatWealth(highlights.peakWealth)}资产截图，评论区一片酸柠檬~`,
+      `${highlights.peakAge}岁的某一天，你可能会收到一笔让你手抖的转账，或者签下一份改变人生的合同。${baziTerms[(highlights.peakAge + 2) % 4]}的命理加持下，财富积累到${formatWealth(highlights.peakWealth)}，这一年的你，终于可以说出那句："钱对我来说只是数字"`,
+    ];
+    stories.push({
+      type: 'peak',
+      age: highlights.peakAge,
+      year: peakYear,
+      content: peakStories[highlights.peakAge % peakStories.length],
+    });
+
+    // 最大增长故事
+    const growthStories = [
+      `${highlights.maxGrowthAge}岁，${baziTerms[(highlights.maxGrowthAge + 3) % 4]}运势爆发！这一年你的财富将暴涨${formatWealth(highlights.maxGrowthAmount)}，平均每天躺赚${Math.floor(highlights.maxGrowthAmount * 10000 / 365)}块！可能是踩中了风口、投资押对了宝、或者天降横财。总之，请提前准备好收钱的姿势~`,
+      `${highlights.maxGrowthAge}岁迎来${baziTerms[(highlights.maxGrowthAge + 4) % 4]}年份，财运起飞！一年狂赚${formatWealth(highlights.maxGrowthAmount)}，相当于每个月进账${Math.floor(highlights.maxGrowthAmount / 12)}万。这种赚钱速度，建议录个vlog记录一下，以后可以拍成励志电影~`,
+    ];
+    stories.push({
+      type: 'growth',
+      age: highlights.maxGrowthAge,
+      year: growthYear,
+      content: growthStories[highlights.maxGrowthAge % growthStories.length],
+    });
+
+    // 最大回撤故事（如果有的话）
+    if (highlights.maxLossAmount > 0) {
+      const lossStories = [
+        `${highlights.maxLossAge}岁，命理显示${baziTerms[(highlights.maxLossAge + 5) % 4]}受冲，钱包要经历一次"瘦身"，预计缩水${formatWealth(highlights.maxLossAmount)}。可能是冲动消费、投资踩雷、或者被朋友坑了。不过别慌！破财消灾，失去的都是身外之物，留下的才是真正属于你的~`,
+        `${highlights.maxLossAge}岁遇到${baziTerms[(highlights.maxLossAge + 6) % 4]}逆转，财运小坎坷，可能会"散财"${formatWealth(highlights.maxLossAmount)}。但命理学讲究"舍得"，舍了才能得！把这笔钱当作给未来的投资吧，毕竟后面还有翻盘的机会~`,
+      ];
+      stories.push({
+        type: 'loss',
+        age: highlights.maxLossAge,
+        year: lossYear,
+        content: lossStories[highlights.maxLossAge % lossStories.length],
+      });
+    }
+
+    return stories;
   };
+
+  const stories = generateStory();
 
   // 获取财富类型的有趣解读
-  const getTypeComment = (type: string) => {
-    const comments: Record<string, string> = {
-      '早期暴富型': '年少有为，实名羡慕！别人还在苦哈哈打工的时候，你已经财务自由了。不过记得：早起的鸟儿有虫吃，但第二只老鼠才有奶酪吃~',
-      '大器晚成型': '别急别急，好饭不怕晚！前半生积累经验值，后半生疯狂爆金币。你的人生是一部逆袭爽文，只是前面的铺垫有点长。',
-      '稳步上升型': '稳如老狗！你就是那个龟兔赛跑里最后赢的乌龟。虽然不会暴富，但也不会暴穷，简直是财务界的中流砥柱！',
-      '过山车型': '人生如戏，财运似剧！今天是首富，明天是首负，后天又是首富...刺激！建议常备速效救心丸。',
-      '平稳一生型': '平平淡淡才是真！不用担心暴富后如何花钱，也不用担心破产后如何还债。心态稳了，财运自然稳！',
-      '先扬后抑型': '前半生有多风光，后半生就要多低调。趁年轻赶紧浪，存够养老钱！',
+  const getTypeComment = () => {
+    const comments: Record<string, { summary: string; suggestion: string }> = {
+      '早期暴富型': {
+        summary: '你的命盘显示"少年得志"格局，财星早透，25-35岁就能积累可观财富。',
+        suggestion: '建议趁年轻多学理财知识，别让钱躺在银行贬值。早期暴富容易飘，记得稳住心态！',
+      },
+      '大器晚成型': {
+        summary: '命盘呈"厚积薄发"之象，前半生财运平平，但45岁后财库大开。',
+        suggestion: '前期别着急，好好积累人脉和技能。你的黄金期在后面，耐心等待属于你的时代！',
+      },
+      '稳步上升型': {
+        summary: '八字呈"细水长流"格局，财运稳健，适合长期投资和稳定收入。',
+        suggestion: '你不适合高风险投资，定投、基金、房产才是你的菜。稳扎稳打，最后赢的是你！',
+      },
+      '过山车型': {
+        summary: '命盘财星忽明忽暗，正财偏财交替出现，一生财运跌宕起伏。',
+        suggestion: '高峰期要存钱！低谷期别气馁！建议设置"应急基金"，随时准备应对财务过山车~',
+      },
+      '平稳一生型': {
+        summary: '八字财星平和，无大起大落，属于"小康之命"。',
+        suggestion: '虽然不会暴富，但也不会破产，心态放平，知足常乐才是真正的富有！',
+      },
+      '先扬后抑型': {
+        summary: '命盘显示"少年财旺、晚年财弱"，中年是财富分水岭。',
+        suggestion: '趁年轻赶紧赚钱存钱！买好保险、规划养老金，别等老了才后悔没早准备！',
+      },
     };
-    return comments[type] || '你的财富曲线独一无二，连命理大师都要好好研究一下！';
+    return comments[wealthType] || {
+      summary: '你的财富曲线独特，需要具体分析。',
+      suggestion: '建议结合八字详批，制定专属理财方案。'
+    };
   };
 
-  const peakFun = getFunTitle(highlights.peakAge, 'peak');
-  const growthFun = getFunTitle(highlights.maxGrowthAge, 'growth');
-  const lossFun = getFunTitle(highlights.maxLossAge, 'loss');
+  const typeComment = getTypeComment();
 
   return (
-    <div className="mystic-card-gold mb-6">
-      <h3 className="font-serif text-xl text-gold-400 mb-4 flex items-center gap-2">
-        <span>🎯</span>
-        <span>财富高光时刻</span>
-      </h3>
+    <div className="mystic-card mb-6">
+      <h3 className="font-serif text-xl text-gold-400 mb-4">财富高光时刻</h3>
 
       <div className="space-y-4">
-        {/* 财富巅峰 */}
-        <div className="p-4 rounded-xl bg-gradient-to-r from-gold-400/10 to-amber-500/10 border border-gold-400/30">
-          <div className="flex items-start gap-3">
-            <span className="text-3xl">🏆</span>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-medium text-gold-400">{peakFun.title}</span>
-                <span className="px-2 py-0.5 rounded-full bg-gold-400/20 text-gold-400 text-xs font-mono">
-                  {highlights.peakAge}岁
-                </span>
-              </div>
-              <p className="text-sm text-text-primary mb-2">{peakFun.desc}</p>
-              <p className="text-xs text-gold-400/80">
-                预计峰值：<span className="font-mono">{formatWealth(highlights.peakWealth)}</span>
-              </p>
+        {stories.map((story, index) => (
+          <div
+            key={index}
+            className={`p-4 rounded-lg border ${
+              story.type === 'peak'
+                ? 'bg-gold-400/5 border-gold-400/30'
+                : story.type === 'growth'
+                  ? 'bg-green-500/5 border-green-500/30'
+                  : 'bg-red-500/5 border-red-500/30'
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                story.type === 'peak'
+                  ? 'bg-gold-400/20 text-gold-400'
+                  : story.type === 'growth'
+                    ? 'bg-green-500/20 text-green-400'
+                    : 'bg-red-500/20 text-red-400'
+              }`}>
+                {story.type === 'peak' ? '财富巅峰' : story.type === 'growth' ? '暴富之年' : '破财预警'}
+              </span>
+              <span className="text-text-secondary text-xs">{story.year}年</span>
             </div>
+            <p className="text-sm text-text-primary leading-relaxed">{story.content}</p>
           </div>
-        </div>
+        ))}
+      </div>
 
-        {/* 最大年增长 */}
-        <div className="p-4 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30">
-          <div className="flex items-start gap-3">
-            <span className="text-3xl">🚀</span>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-medium text-green-400">{growthFun.title}</span>
-                <span className="px-2 py-0.5 rounded-full bg-green-400/20 text-green-400 text-xs font-mono">
-                  {highlights.maxGrowthAge}岁
-                </span>
-              </div>
-              <p className="text-sm text-text-primary mb-2">{growthFun.desc}</p>
-              <p className="text-xs text-green-400/80">
-                年增长：<span className="font-mono">+{formatWealth(highlights.maxGrowthAmount)}</span>
-              </p>
-            </div>
-          </div>
+      {/* 财富类型总结 */}
+      <div className="mt-4 p-4 rounded-lg bg-purple-500/5 border border-purple-500/30">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-sm font-medium text-purple-400">你的财富类型</span>
+          <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">{wealthType}</span>
         </div>
-
-        {/* 最大年回撤 */}
-        <div className="p-4 rounded-xl bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/30">
-          <div className="flex items-start gap-3">
-            <span className="text-3xl">🎢</span>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-medium text-red-400">{lossFun.title}</span>
-                <span className="px-2 py-0.5 rounded-full bg-red-400/20 text-red-400 text-xs font-mono">
-                  {highlights.maxLossAge}岁
-                </span>
-              </div>
-              <p className="text-sm text-text-primary mb-2">{lossFun.desc}</p>
-              <p className="text-xs text-red-400/80">
-                年回撤：<span className="font-mono">-{formatWealth(highlights.maxLossAmount)}</span>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 财富类型解读 */}
-        <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30">
-          <div className="flex items-start gap-3">
-            <span className="text-3xl">🔮</span>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-medium text-purple-400">财富类型</span>
-                <span className="px-2 py-0.5 rounded-full bg-purple-400/20 text-purple-400 text-xs">
-                  {wealthType}
-                </span>
-              </div>
-              <p className="text-sm text-text-primary">{getTypeComment(wealthType)}</p>
-            </div>
-          </div>
-        </div>
+        <p className="text-sm text-text-primary mb-2">{typeComment.summary}</p>
+        <p className="text-xs text-text-secondary">{typeComment.suggestion}</p>
       </div>
     </div>
   );
@@ -384,7 +398,6 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           {/* 财富曲线图 */}
           <div className="mystic-card-gold mb-6">
             <h2 className="font-serif text-xl text-gold-400 mb-4 flex items-center gap-2">
-              <span>💰</span>
               <span>财富曲线</span>
               <span className="text-xs px-2 py-0.5 rounded-full bg-gold-400/20 text-gold-400/80 font-normal">
                 {wealthResult.wealthType}
@@ -410,31 +423,64 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             <WealthAnalysis analysis={wealthResult.analysis} isPaid={isPaid} />
           </div>
 
-          {/* 升级提示 */}
+          {/* 升级提示 - 详细财富走势 */}
           {!isPaid && (
-            <div className="mystic-card-gold text-center">
-              <h2 className="font-serif text-xl text-gold-400 mb-2">解锁完整财富预测？</h2>
-              <p className="text-text-secondary mb-6">获取每年详细财富走势 · ¥19.9</p>
-              <ul className="text-left mb-6 space-y-2 max-w-xs mx-auto">
-                <li className="flex items-center gap-2 text-text-primary">
-                  <span className="text-gold-400">✦</span> 62年逐年财富预测
-                </li>
-                <li className="flex items-center gap-2 text-text-primary">
-                  <span className="text-gold-400">✦</span> 财富转折点详解
-                </li>
-                <li className="flex items-center gap-2 text-text-primary">
-                  <span className="text-gold-400">✦</span> 专属理财建议
-                </li>
-                <li className="flex items-center gap-2 text-text-primary">
-                  <span className="text-gold-400">✦</span> 破财年份预警
-                </li>
-              </ul>
-              <button onClick={handleUpgrade} className="btn-gold px-8 py-3">
-                解锁完整版
-              </button>
-              <p className="text-xs text-text-secondary mt-3">
-                （MVP演示版 - 点击直接体验付费版效果）
-              </p>
+            <div className="mystic-card-gold">
+              <div className="text-center mb-6">
+                <h2 className="font-serif text-xl text-gold-400 mb-2">解锁详细财富走势</h2>
+                <p className="text-text-secondary text-sm">看清每一年的财富起落，把握最佳投资时机</p>
+              </div>
+
+              {/* 对比展示 */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-4 rounded-lg bg-gray-800/50 border border-gray-700">
+                  <p className="text-xs text-text-secondary mb-2">免费版</p>
+                  <p className="text-2xl font-mono text-text-primary">11个</p>
+                  <p className="text-xs text-text-secondary">数据点（每6年）</p>
+                </div>
+                <div className="p-4 rounded-lg bg-gold-400/10 border border-gold-400/30">
+                  <p className="text-xs text-gold-400 mb-2">完整版</p>
+                  <p className="text-2xl font-mono text-gold-400">63个</p>
+                  <p className="text-xs text-gold-400/80">数据点（逐年）</p>
+                </div>
+              </div>
+
+              {/* 价值点 */}
+              <div className="space-y-3 mb-6">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
+                  <span className="text-gold-400 text-sm mt-0.5">▸</span>
+                  <div>
+                    <p className="text-sm text-text-primary">精准定位每年财运走势</p>
+                    <p className="text-xs text-text-secondary">知道哪年该冲、哪年该稳，不再盲目投资</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
+                  <span className="text-gold-400 text-sm mt-0.5">▸</span>
+                  <div>
+                    <p className="text-sm text-text-primary">提前预警破财年份</p>
+                    <p className="text-xs text-text-secondary">避开财运低谷，减少不必要的损失</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
+                  <span className="text-gold-400 text-sm mt-0.5">▸</span>
+                  <div>
+                    <p className="text-sm text-text-primary">专属增运方案</p>
+                    <p className="text-xs text-text-secondary">根据你的命盘定制财运提升策略</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <button onClick={handleUpgrade} className="btn-gold px-10 py-3 text-lg">
+                  ¥19.9 解锁完整版
+                </button>
+                <p className="text-xs text-text-secondary mt-3">
+                  一次购买，永久查看 · 支持多次生成
+                </p>
+                <p className="text-xs text-gold-400/50 mt-2">
+                  （MVP演示版 - 点击直接体验）
+                </p>
+              </div>
             </div>
           )}
 
