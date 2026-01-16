@@ -37,7 +37,7 @@ export default function Header({ curveMode = 'life', onModeChange, showModeSelec
                   <button
                     key={mode}
                     onClick={() => handleModeChange(mode)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
                       curveMode === mode
                         ? mode === 'wealth'
                           ? 'bg-gradient-to-r from-gold-400/30 to-amber-500/30 text-gold-400 shadow-sm'
@@ -45,10 +45,7 @@ export default function Header({ curveMode = 'life', onModeChange, showModeSelec
                         : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
                     }`}
                   >
-                    <span className={curveMode === mode ? '' : 'opacity-60'}>
-                      {mode === 'life' ? '☯' : '💰'}
-                    </span>
-                    <span>{CURVE_MODE_LABELS[mode]}</span>
+                    {CURVE_MODE_LABELS[mode]}
                   </button>
                 ))}
               </div>

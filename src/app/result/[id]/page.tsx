@@ -14,6 +14,7 @@ import {
   TYPE_LABELS,
   PhaseType,
   WealthHighlights as WealthHighlightsType,
+  CurveMode,
 } from '@/types';
 
 interface PageParams {
@@ -44,64 +45,72 @@ function WealthFunHighlights({
     return `${value.toFixed(1)}万`;
   };
 
-  // 根据财富类型和年龄生成有趣的故事
+  // 根据财富类型和年龄生成有趣的故事 - 好的更好，差的更有趣
   const generateStory = () => {
     const peakYear = birthYear + highlights.peakAge;
     const growthYear = birthYear + highlights.maxGrowthAge;
     const lossYear = birthYear + highlights.maxLossAge;
+    const peakWealth = highlights.peakWealth;
 
-    // 八字专业术语
-    const baziTerms = [
-      '食伤生财',
-      '财官双美',
-      '偏财入库',
-      '正财透干',
-      '劫财夺财',
-      '比劫帮身',
-      '印星护身',
-      '官印相生',
-    ];
+    // 八字专业术语 - 好的和差的
+    const goodBaziTerms = ['食伤生财', '财官双美', '偏财入库', '正财透干', '财星得禄'];
+    const badBaziTerms = ['比劫夺财', '劫财见财', '枭印夺食', '财星被克', '财库逢冲'];
 
-    // 根据不同阶段生成故事
+    // 判断财运等级
+    const isExcellent = peakWealth >= 5000; // 5000万+
+    const isGood = peakWealth >= 1000; // 1000万+
+    const isAverage = peakWealth >= 300; // 300万+
+    // 低于300万视为财运较弱
+
     const stories = [];
 
-    // 财富巅峰故事
-    const peakStories = [
-      `${highlights.peakAge}岁的你，命盘走到${baziTerms[highlights.peakAge % 4]}大运，财库大开！可能是创业成功套现、股票翻倍、或者拆迁暴富，总之这一年你的银行卡余额会让你怀疑人生——"这真的是我的钱？"预计身价冲到${formatWealth(highlights.peakWealth)}，建议提前想好怎么低调炫富~`,
-      `${highlights.peakAge}岁，${baziTerms[(highlights.peakAge + 1) % 4]}格局形成，你的财运将达到人生巅峰！这一年不管是投资、副业还是主业，感觉钱就像是追着你跑。朋友圈可能会出现"不经意间"晒出的${formatWealth(highlights.peakWealth)}资产截图，评论区一片酸柠檬~`,
-      `${highlights.peakAge}岁的某一天，你可能会收到一笔让你手抖的转账，或者签下一份改变人生的合同。${baziTerms[(highlights.peakAge + 2) % 4]}的命理加持下，财富积累到${formatWealth(highlights.peakWealth)}，这一年的你，终于可以说出那句："钱对我来说只是数字"`,
-    ];
-    stories.push({
-      type: 'peak',
-      age: highlights.peakAge,
-      year: peakYear,
-      content: peakStories[highlights.peakAge % peakStories.length],
-    });
+    // 根据财富水平生成不同风格的巅峰故事
+    let peakContent = '';
+    if (isExcellent) {
+      // 大富大贵
+      const term = goodBaziTerms[highlights.peakAge % goodBaziTerms.length];
+      peakContent = `${highlights.peakAge}岁，${term}大运驾临！这一年你将见证什么叫"命中带财"。预计身价冲到${formatWealth(peakWealth)}，可能是创业套现、投资翻倍、或者祖坟冒青烟。建议提前学习如何低调炫富，以及如何回复亲戚的借钱短信~`;
+    } else if (isGood) {
+      // 小有成就
+      const term = goodBaziTerms[(highlights.peakAge + 1) % goodBaziTerms.length];
+      peakContent = `${highlights.peakAge}岁，${term}格局形成！虽然不至于富可敌国，但${formatWealth(peakWealth)}的身家足够让你在朋友圈里"不经意"晒一晒。至少房贷不用愁，想买的东西不用等双十一~`;
+    } else if (isAverage) {
+      // 普通人的巅峰
+      const term = badBaziTerms[highlights.peakAge % badBaziTerms.length];
+      peakContent = `${highlights.peakAge}岁，${term}的命格注定你不是大富大贵的料，但${formatWealth(peakWealth)}也够你在三线城市买个小房子了！人生巅峰可能就是某天发现：诶？卡里的钱够付首付了！虽然不多，但胜在踏实~`;
+    } else {
+      // 财运较弱的有趣描述
+      const term = badBaziTerms[(highlights.peakAge + 1) % badBaziTerms.length];
+      peakContent = `${highlights.peakAge}岁，${term}的命格说实话有点拉跨... 人生财富巅峰${formatWealth(peakWealth)}，可能就是存折上第一次出现6位数那天。但换个角度想，你永远不用担心"有钱人的烦恼"，比如该买哪个颜色的法拉利~`;
+    }
+    stories.push({ type: 'peak', age: highlights.peakAge, year: peakYear, content: peakContent });
 
-    // 最大增长故事
-    const growthStories = [
-      `${highlights.maxGrowthAge}岁，${baziTerms[(highlights.maxGrowthAge + 3) % 4]}运势爆发！这一年你的财富将暴涨${formatWealth(highlights.maxGrowthAmount)}，平均每天躺赚${Math.floor(highlights.maxGrowthAmount * 10000 / 365)}块！可能是踩中了风口、投资押对了宝、或者天降横财。总之，请提前准备好收钱的姿势~`,
-      `${highlights.maxGrowthAge}岁迎来${baziTerms[(highlights.maxGrowthAge + 4) % 4]}年份，财运起飞！一年狂赚${formatWealth(highlights.maxGrowthAmount)}，相当于每个月进账${Math.floor(highlights.maxGrowthAmount / 12)}万。这种赚钱速度，建议录个vlog记录一下，以后可以拍成励志电影~`,
-    ];
-    stories.push({
-      type: 'growth',
-      age: highlights.maxGrowthAge,
-      year: growthYear,
-      content: growthStories[highlights.maxGrowthAge % growthStories.length],
-    });
+    // 最大增长故事 - 根据实际增长额度调整语气
+    const growthAmount = highlights.maxGrowthAmount;
+    let growthContent = '';
+    if (growthAmount >= 500) {
+      growthContent = `${highlights.maxGrowthAge}岁是你的"暴富元年"！一年狂赚${formatWealth(growthAmount)}，平均每天进账${Math.floor(growthAmount * 10000 / 365)}块！这种赚钱速度，建议录个vlog，以后可以拍成励志电影《穷小子的逆袭》~`;
+    } else if (growthAmount >= 100) {
+      growthContent = `${highlights.maxGrowthAge}岁，财运小爆发！这一年进账${formatWealth(growthAmount)}，相当于每月多赚${Math.floor(growthAmount / 12 * 10000)}块。虽然不至于财务自由，但至少可以换个新手机不用看价格了~`;
+    } else if (growthAmount >= 30) {
+      growthContent = `${highlights.maxGrowthAge}岁，财运有点小意思~年入增加${formatWealth(growthAmount)}，约等于每月多了${Math.floor(growthAmount / 12 * 10000)}块钱。买杯奶茶不用犹豫，吃顿火锅可以加个肥牛！小确幸也是幸~`;
+    } else {
+      growthContent = `${highlights.maxGrowthAge}岁，财运波动约${formatWealth(growthAmount)}...好消息是：你不用担心暴富后朋友变多！坏消息是：你也不用担心。但hey，钱少有钱少的快乐，比如排队不用去VIP窗口~`;
+    }
+    stories.push({ type: 'growth', age: highlights.maxGrowthAge, year: growthYear, content: growthContent });
 
-    // 最大回撤故事（如果有的话）
+    // 最大回撤故事
     if (highlights.maxLossAmount > 0) {
-      const lossStories = [
-        `${highlights.maxLossAge}岁，命理显示${baziTerms[(highlights.maxLossAge + 5) % 4]}受冲，钱包要经历一次"瘦身"，预计缩水${formatWealth(highlights.maxLossAmount)}。可能是冲动消费、投资踩雷、或者被朋友坑了。不过别慌！破财消灾，失去的都是身外之物，留下的才是真正属于你的~`,
-        `${highlights.maxLossAge}岁遇到${baziTerms[(highlights.maxLossAge + 6) % 4]}逆转，财运小坎坷，可能会"散财"${formatWealth(highlights.maxLossAmount)}。但命理学讲究"舍得"，舍了才能得！把这笔钱当作给未来的投资吧，毕竟后面还有翻盘的机会~`,
-      ];
-      stories.push({
-        type: 'loss',
-        age: highlights.maxLossAge,
-        year: lossYear,
-        content: lossStories[highlights.maxLossAge % lossStories.length],
-      });
+      const lossAmount = highlights.maxLossAmount;
+      let lossContent = '';
+      if (lossAmount >= 500) {
+        lossContent = `${highlights.maxLossAge}岁，血亏警告！可能会"散财"${formatWealth(lossAmount)}，感觉像是钱包被人开了闸门。但命理学讲"破财消灾"，权当给未来交学费了。建议这一年：管住手、捂好钱包、远离亲戚的创业项目~`;
+      } else if (lossAmount >= 100) {
+        lossContent = `${highlights.maxLossAge}岁，钱包要经历一次"瘦身"，预计缩水${formatWealth(lossAmount)}。可能是冲动消费、投资踩雷、或者被所谓的"好机会"坑了。记住：天上不会掉馅饼，掉的通常是陷阱~`;
+      } else {
+        lossContent = `${highlights.maxLossAge}岁，小破财${formatWealth(lossAmount)}。可能是手机掉厕所、车被蹭、或者借钱被"忘还"。钱不多但心塞，就当是给命运交点保护费吧~`;
+      }
+      stories.push({ type: 'loss', age: highlights.maxLossAge, year: lossYear, content: lossContent });
     }
 
     return stories;
@@ -264,11 +273,14 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const [unlockComplete, setUnlockComplete] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [showDaYun, setShowDaYun] = useState(false);
+  const [curveMode, setCurveMode] = useState<CurveMode>('life');
+  const [modeLoading, setModeLoading] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
   const wealthShareRef = useRef<HTMLDivElement>(null);
 
-  // 检测是否为财富曲线模式
-  const isWealthMode = searchParams.get('mode') === 'wealth';
+  // 从URL检测初始模式
+  const urlMode = searchParams.get('mode') as CurveMode | null;
+  const isWealthMode = curveMode === 'wealth';
 
   useEffect(() => {
     const storedResult = getResult(resolvedParams.id);
@@ -278,7 +290,47 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     }
     setResult(storedResult);
     setLoading(false);
-  }, [resolvedParams.id, router]);
+    // 从URL设置初始模式
+    if (urlMode === 'wealth') {
+      setCurveMode('wealth');
+    }
+  }, [resolvedParams.id, router, urlMode]);
+
+  // 处理模式切换
+  const handleModeChange = async (newMode: CurveMode) => {
+    if (newMode === curveMode) return;
+
+    // 切换到财富曲线模式
+    if (newMode === 'wealth') {
+      if (result && !result.wealthResult) {
+        // 需要生成财富曲线
+        setModeLoading(true);
+        try {
+          const wealthResult = await generateWealthCurve(result.birthInfo, false);
+          const updatedResult: StoredResult = {
+            ...result,
+            wealthResult,
+            curveMode: 'wealth',
+          };
+          saveResult(updatedResult);
+          setResult(updatedResult);
+        } catch (error) {
+          console.error('生成财富曲线失败:', error);
+          alert('生成财富曲线失败，请稍后重试');
+          setModeLoading(false);
+          return;
+        }
+        setModeLoading(false);
+      }
+    }
+
+    setCurveMode(newMode);
+    // 更新URL但不刷新页面
+    const newUrl = newMode === 'wealth'
+      ? `/result/${resolvedParams.id}?mode=wealth`
+      : `/result/${resolvedParams.id}`;
+    window.history.replaceState({}, '', newUrl);
+  };
 
   const handleUpgrade = async () => {
     if (!result) return;
@@ -345,12 +397,14 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     }
   };
 
-  if (loading) {
+  if (loading || modeLoading) {
     return (
       <div className="min-h-screen">
         <Header />
         <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
-          <div className="text-gold-400 animate-pulse">加载中...</div>
+          <div className="text-gold-400 animate-pulse">
+            {modeLoading ? '正在生成财富曲线...' : '加载中...'}
+          </div>
         </div>
       </div>
     );
@@ -377,7 +431,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   if (isWealthMode && wealthResult) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
-        <Header />
+        <Header showModeSelector curveMode={curveMode} onModeChange={handleModeChange} />
         <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
           {/* 顶部信息 */}
           <div className="flex items-center justify-between mb-6">
@@ -491,17 +545,24 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
               <p className="text-text-secondary text-lg">{birthInfo.name ? `${birthInfo.name}` : ''} {birthInfo.year}年生</p>
             </div>
 
-            {/* 有趣的高光文案 */}
+            {/* 有趣的高光文案 - 根据财富水平不同调整语气 */}
             <div className="bg-gold-400/10 border border-gold-400/30 rounded-2xl p-6 mb-6">
               <p className="text-gold-400 text-xl font-medium mb-2">
-                {wealthResult.highlights.peakAge}岁，命中注定的财富巅峰！
+                {wealthResult.highlights.peakWealth >= 1000
+                  ? `${wealthResult.highlights.peakAge}岁，命中注定的财富巅峰！`
+                  : wealthResult.highlights.peakWealth >= 300
+                    ? `${wealthResult.highlights.peakAge}岁，我的小确幸巅峰~`
+                    : `${wealthResult.highlights.peakAge}岁，我的"巅峰"... 好吧也就那样`
+                }
               </p>
               <p className="text-text-primary text-lg leading-relaxed">
                 {wealthResult.highlights.peakWealth >= 10000
-                  ? `预计身价冲到${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿，"钱对我来说只是数字"的日子要来了！`
+                  ? `预计身价冲到${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿！"钱对我来说只是数字"的凡尔赛日子要来了~`
                   : wealthResult.highlights.peakWealth >= 1000
-                    ? `预计身价冲到${(wealthResult.highlights.peakWealth / 1000).toFixed(1)}千万，可以稍微飘一下了~`
-                    : `预计身价冲到${wealthResult.highlights.peakWealth}万，稳扎稳打也是一种幸福！`
+                    ? `预计身价冲到${(wealthResult.highlights.peakWealth / 1000).toFixed(1)}千万，可以在朋友圈"不经意"炫一下了~`
+                    : wealthResult.highlights.peakWealth >= 300
+                      ? `预计攒到${wealthResult.highlights.peakWealth}万，虽然不多但够买个小房子！平凡也是一种幸福~`
+                      : `预计存款${wealthResult.highlights.peakWealth}万...虽然扎心，但至少不用担心"有钱人的烦恼"，比如买哪辆法拉利~`
                 }
               </p>
             </div>
@@ -529,7 +590,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
   return (
     <div className="min-h-screen">
-      <Header />
+      <Header showModeSelector curveMode={curveMode} onModeChange={handleModeChange} />
       <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
         {/* 顶部信息 */}
         <div className="flex items-center justify-between mb-6">
