@@ -270,7 +270,6 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const [shareLoading, setShareLoading] = useState(false);
   const [showDaYun, setShowDaYun] = useState(false);
   const [curveMode, setCurveMode] = useState<CurveMode>('life');
-  const [modeLoading, setModeLoading] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
   const wealthShareRef = useRef<HTMLDivElement>(null);
 
@@ -292,40 +291,11 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     }
   }, [resolvedParams.id, router, urlMode]);
 
-  // 处理模式切换
-  const handleModeChange = async (newMode: CurveMode) => {
+  // 处理模式切换 - 返回首页重新输入（因为免费次数是分开计算的）
+  const handleModeChange = (newMode: CurveMode) => {
     if (newMode === curveMode) return;
-
-    // 切换到财富曲线模式
-    if (newMode === 'wealth') {
-      if (result && !result.wealthResult) {
-        // 需要生成财富曲线
-        setModeLoading(true);
-        try {
-          const wealthResult = await generateWealthCurve(result.birthInfo, false);
-          const updatedResult: StoredResult = {
-            ...result,
-            wealthResult,
-            curveMode: 'wealth',
-          };
-          saveResult(updatedResult);
-          setResult(updatedResult);
-        } catch (error) {
-          console.error('生成财富曲线失败:', error);
-          alert('生成财富曲线失败，请稍后重试');
-          setModeLoading(false);
-          return;
-        }
-        setModeLoading(false);
-      }
-    }
-
-    setCurveMode(newMode);
-    // 更新URL但不刷新页面
-    const newUrl = newMode === 'wealth'
-      ? `/result/${resolvedParams.id}?mode=wealth`
-      : `/result/${resolvedParams.id}`;
-    window.history.replaceState({}, '', newUrl);
+    // 切换模式需要回到首页重新输入
+    router.push(`/?mode=${newMode}`);
   };
 
   const handleUpgrade = async () => {
@@ -393,14 +363,12 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     }
   };
 
-  if (loading || modeLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen">
         <Header />
         <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
-          <div className="text-gold-400 animate-pulse">
-            {modeLoading ? '正在生成财富曲线...' : '加载中...'}
-          </div>
+          <div className="text-gold-400 animate-pulse">加载中...</div>
         </div>
       </div>
     );
@@ -468,30 +436,43 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             birthYear={birthInfo.year}
           />
 
-          {/* 财富详细分析 */}
-          <div className="mystic-card mb-6">
-            <WealthAnalysis analysis={wealthResult.analysis} isPaid={isPaid} />
-          </div>
+          {/* 财富详细分析 - 仅付费版显示 */}
+          {isPaid && (
+            <div className="mystic-card mb-6">
+              <WealthAnalysis analysis={wealthResult.analysis} isPaid={isPaid} />
+            </div>
+          )}
 
           {/* 升级提示 - 详细财富走势 */}
           {!isPaid && (
             <div className="mystic-card-gold">
               <div className="text-center mb-6">
-                <h2 className="font-serif text-xl text-gold-400 mb-2">解锁详细财富走势</h2>
-                <p className="text-text-secondary text-sm">看清每一年的财富起落，把握最佳投资时机</p>
+                <h2 className="font-serif text-xl text-gold-400 mb-2">解锁完整财富报告</h2>
+                <p className="text-text-secondary text-sm">查看详细财运分析和增运秘诀</p>
               </div>
 
-              {/* 对比展示 */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="p-4 rounded-lg bg-gray-800/50 border border-gray-700">
-                  <p className="text-xs text-text-secondary mb-2">免费版</p>
-                  <p className="text-2xl font-mono text-text-primary">11个</p>
-                  <p className="text-xs text-text-secondary">数据点（每6年）</p>
+              {/* 价值点 */}
+              <div className="space-y-3 mb-6">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
+                  <span className="text-gold-400 text-sm mt-0.5">▸</span>
+                  <div>
+                    <p className="text-sm text-text-primary">63个逐年财富数据点</p>
+                    <p className="text-xs text-text-secondary">精准定位每年财运走势，不再盲目投资</p>
+                  </div>
                 </div>
-                <div className="p-4 rounded-lg bg-gold-400/10 border border-gold-400/30">
-                  <p className="text-xs text-gold-400 mb-2">完整版</p>
-                  <p className="text-2xl font-mono text-gold-400">63个</p>
-                  <p className="text-xs text-gold-400/80">数据点（逐年）</p>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
+                  <span className="text-gold-400 text-sm mt-0.5">▸</span>
+                  <div>
+                    <p className="text-sm text-text-primary">专业财运详解</p>
+                    <p className="text-xs text-text-secondary">深度分析八字财星格局，解读财富密码</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
+                  <span className="text-gold-400 text-sm mt-0.5">▸</span>
+                  <div>
+                    <p className="text-sm text-text-primary">增运秘诀</p>
+                    <p className="text-xs text-text-secondary">根据命盘定制专属财运提升方案</p>
+                  </div>
                 </div>
               </div>
 
