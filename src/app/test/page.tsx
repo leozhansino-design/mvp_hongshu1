@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT, BaziForPrompt, DaYunForPrompt } from '@/lib/constants';
-import { BirthInfo, CHINA_CITIES } from '@/types';
-import { calculateBazi, calculateDaYun } from '@/lib/bazi';
+import { useState } from 'react';
+import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT } from '@/lib/constants';
+import { BirthInfo, HOUR_OPTIONS, HOUR_LABELS } from '@/types';
 import Header from '@/components/Header';
 
 export default function TestPage() {
@@ -18,10 +17,8 @@ export default function TestPage() {
     year: 1990,
     month: 6,
     day: 15,
-    hour: 12,
-    minute: 0,
+    hour: 'wu',
     calendarType: 'solar',
-    birthPlace: '',
   });
 
   const [version, setVersion] = useState<'free' | 'paid'>('free');
@@ -32,49 +29,12 @@ export default function TestPage() {
 
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
-
-  // 预计算八字和大运
-  const { baziForPrompt, daYunForPrompt } = useMemo(() => {
-    const isLunar = birthInfo.calendarType === 'lunar';
-    const baziResult = calculateBazi(
-      birthInfo.year, birthInfo.month, birthInfo.day,
-      birthInfo.hour, birthInfo.minute, isLunar
-    );
-    const daYunResult = calculateDaYun(
-      birthInfo.year, birthInfo.month, birthInfo.day,
-      birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
-    );
-
-    if (!baziResult || !daYunResult) {
-      return { baziForPrompt: null, daYunForPrompt: [] };
-    }
-
-    const bazi: BaziForPrompt = {
-      yearPillar: baziResult.chart.yearPillar.fullName,
-      monthPillar: baziResult.chart.monthPillar.fullName,
-      dayPillar: baziResult.chart.dayPillar.fullName,
-      hourPillar: baziResult.chart.hourPillar.fullName,
-      zodiac: baziResult.chart.zodiac,
-      lunarDate: baziResult.chart.lunarDate,
-    };
-
-    const daYun: DaYunForPrompt[] = daYunResult.daYunList.map(d => ({
-      ganZhi: d.ganZhi,
-      startAge: d.startAge,
-      endAge: d.endAge,
-    }));
-
-    return { baziForPrompt: bazi, daYunForPrompt: daYun };
-  }, [birthInfo]);
+  const hourLabel = HOUR_LABELS[birthInfo.hour] || birthInfo.hour;
 
   const systemPrompt = SYSTEM_PROMPT;
-  const userPrompt = useMemo(() => {
-    if (!baziForPrompt) return '八字计算失败，请检查出生信息';
-
-    return version === 'free'
-      ? FREE_VERSION_PROMPT(birthInfo.gender, birthInfo.year, baziForPrompt, daYunForPrompt, currentAge)
-      : PAID_VERSION_PROMPT(birthInfo.gender, birthInfo.year, baziForPrompt, daYunForPrompt, currentAge);
-  }, [version, birthInfo.gender, birthInfo.year, baziForPrompt, daYunForPrompt, currentAge]);
+  const userPrompt = version === 'free'
+    ? FREE_VERSION_PROMPT(birthInfo.gender, birthInfo.year, birthInfo.month, birthInfo.day, hourLabel)
+    : PAID_VERSION_PROMPT(birthInfo.gender, birthInfo.year, birthInfo.month, birthInfo.day, hourLabel, currentAge);
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -96,7 +56,7 @@ export default function TestPage() {
             { role: 'user', content: userPrompt }
           ],
           temperature: 0.7,
-          max_tokens: version === 'free' ? 8000 : 16000,
+          max_tokens: version === 'free' ? 4000 : 8000,
         }),
       });
 
@@ -221,42 +181,16 @@ export default function TestPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">时</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="23"
+                  <label className="block text-sm text-gray-400 mb-1">时辰</label>
+                  <select
                     value={birthInfo.hour}
-                    onChange={(e) => setBirthInfo({ ...birthInfo, hour: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => setBirthInfo({ ...birthInfo, hour: e.target.value })}
                     className="w-full px-3 py-2 bg-gray-700 rounded border border-gray-600 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">分</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="59"
-                    value={birthInfo.minute}
-                    onChange={(e) => setBirthInfo({ ...birthInfo, minute: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 bg-gray-700 rounded border border-gray-600 text-sm"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-sm text-gray-400 mb-1">出生地（选填）</label>
-                  <input
-                    type="text"
-                    value={birthInfo.birthPlace || ''}
-                    onChange={(e) => setBirthInfo({ ...birthInfo, birthPlace: e.target.value })}
-                    placeholder="如：北京市、上海市"
-                    className="w-full px-3 py-2 bg-gray-700 rounded border border-gray-600 text-sm"
-                    list="cities"
-                  />
-                  <datalist id="cities">
-                    {CHINA_CITIES.map((city) => (
-                      <option key={city} value={city} />
+                  >
+                    {HOUR_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
-                  </datalist>
+                  </select>
                 </div>
               </div>
 

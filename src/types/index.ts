@@ -209,11 +209,9 @@ export interface BirthInfo {
   year: number;
   month: number;
   day: number;
-  hour: number;
-  minute: number;
+  hour: string;
   name?: string;
   calendarType?: CalendarType;
-  birthPlace?: string;
   province?: string;  // 出生省份
   city?: string;      // 出生城市
 }

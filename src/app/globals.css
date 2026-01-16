@@ -5,16 +5,16 @@
 @tailwind utilities;
 
 :root {
-  --mystic-900: #0D0221;
-  --mystic-800: #1A0A2E;
-  --mystic-700: #16213E;
-  --gold-400: #FFD700;
-  --gold-500: #D4AF37;
-  --purple-400: #9D4EDD;
-  --purple-500: #7B2CBF;
-  --kline-up: #22D3EE;
-  --kline-down: #F43F5E;
-  --accent-blue: #00D9FF;
+  --mystic-900: #0D0D1A;
+  --mystic-800: #1A1A2E;
+  --mystic-700: #252536;
+  --gold-400: #C9A961;
+  --gold-500: #B89B5F;
+  --purple-400: #8B7AB8;
+  --purple-500: #6B5B95;
+  --kline-up: #6BA5C6;
+  --kline-down: #C66B6B;
+  --accent-blue: #7AA8C7;
   --text-primary: #E8E6E3;
   --text-secondary: #9CA3AF;
 }
@@ -40,29 +40,29 @@ body {
 
 @layer components {
   .mystic-card {
-    @apply relative rounded-lg p-6;
-    background: rgba(10, 10, 10, 0.8);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    box-shadow: 0 0 40px rgba(50, 50, 50, 0.3);
+    @apply relative rounded-xl p-6;
+    background: rgba(26, 26, 46, 0.3);
+    backdrop-filter: blur(30px) saturate(150%);
+    border: 1px solid rgba(201, 169, 97, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .mystic-card-gold {
     @apply mystic-card;
-    border-color: rgba(212, 175, 55, 0.4);
-    box-shadow: 0 0 40px rgba(212, 175, 55, 0.1);
+    border-color: rgba(201, 169, 97, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .btn-gold {
     @apply relative px-8 py-3 font-medium rounded-lg overflow-hidden transition-all duration-300;
     background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);
-    color: var(--mystic-900);
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+    color: #0D0D1A;
+    box-shadow: 0 4px 20px rgba(201, 169, 97, 0.25);
   }
 
   .btn-gold:hover {
-    box-shadow: 0 0 50px rgba(212, 175, 55, 0.6);
-    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(201, 169, 97, 0.35);
+    transform: translateY(-1px);
   }
 
   .btn-gold:disabled {
@@ -73,33 +73,36 @@ body {
 
   .btn-outline {
     @apply px-6 py-2 rounded-lg border transition-all duration-300;
-    border-color: rgba(212, 175, 55, 0.4);
+    border-color: rgba(201, 169, 97, 0.3);
     color: var(--gold-400);
+    backdrop-filter: blur(10px);
   }
 
   .btn-outline:hover {
-    background: rgba(212, 175, 55, 0.1);
+    background: rgba(201, 169, 97, 0.08);
     border-color: var(--gold-400);
   }
 
   .input-mystic {
     @apply w-full px-4 py-3 rounded-lg transition-all duration-300 outline-none;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(100, 100, 100, 0.5);
+    background: rgba(13, 13, 26, 0.4);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(139, 122, 184, 0.2);
     color: var(--text-primary);
   }
 
   .input-mystic:focus {
     border-color: var(--gold-400);
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+    box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1);
   }
 
   .select-mystic {
     @apply w-full px-4 py-3 rounded-lg transition-all duration-300 outline-none appearance-none cursor-pointer;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(100, 100, 100, 0.5);
+    background: rgba(13, 13, 26, 0.4);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(139, 122, 184, 0.2);
     color: var(--text-primary);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238B7AB8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 20px;
@@ -108,7 +111,7 @@ body {
 
   .select-mystic:focus {
     border-color: var(--gold-400);
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+    box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1);
   }
 
   .select-mystic option {
@@ -118,8 +121,9 @@ body {
 
   .gender-btn {
     @apply flex-1 py-4 rounded-lg font-serif text-lg transition-all duration-300 cursor-pointer;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(100, 100, 100, 0.5);
+    background: rgba(13, 13, 26, 0.3);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(139, 122, 184, 0.2);
     color: var(--text-secondary);
   }
 
@@ -130,8 +134,8 @@ body {
   .gender-btn.active {
     border-color: var(--gold-400);
     color: var(--gold-400);
-    background: rgba(212, 175, 55, 0.1);
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+    background: rgba(201, 169, 97, 0.08);
+    box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1);
   }
 
   .text-gold {

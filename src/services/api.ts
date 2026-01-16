@@ -164,9 +164,11 @@ export async function generateFreeResult(
   const userPrompt = FREE_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
-    baziForPrompt,
-    daYunForPrompt,
-    currentAge
+    birthInfo.month,
+    birthInfo.day,
+    hourLabel,
+    birthInfo.province,
+    birthInfo.city
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -255,9 +257,12 @@ export async function generatePaidResult(
   const userPrompt = PAID_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
-    baziForPrompt,
-    daYunForPrompt,
-    currentAge
+    birthInfo.month,
+    birthInfo.day,
+    hourLabel,
+    currentAge,
+    birthInfo.province,
+    birthInfo.city
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -338,9 +343,11 @@ export function getFreePrompt(birthInfo: BirthInfo): string {
   return FREE_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
-    toBaziForPrompt(baziResult),
-    toDaYunForPrompt(daYunResult.daYunList),
-    currentAge
+    birthInfo.month,
+    birthInfo.day,
+    hourLabel,
+    birthInfo.province,
+    birthInfo.city
   );
 }
 
@@ -364,8 +371,11 @@ export function getPaidPrompt(birthInfo: BirthInfo): string {
   return PAID_VERSION_PROMPT(
     birthInfo.gender,
     birthInfo.year,
-    toBaziForPrompt(baziResult),
-    toDaYunForPrompt(daYunResult.daYunList),
-    currentAge
+    birthInfo.month,
+    birthInfo.day,
+    hourLabel,
+    currentAge,
+    birthInfo.province,
+    birthInfo.city
   );
 }

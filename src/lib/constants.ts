@@ -58,18 +58,16 @@ export interface DaYunForPrompt {
 export const FREE_VERSION_PROMPT = (
   gender: string,
   year: number,
-  bazi: BaziForPrompt,
-  daYunList: DaYunForPrompt[],
-  currentAge: number
-) => `请基于以下已排好的八字和大运，进行**简要**命理分析（免费版）。
+  month: number,
+  day: number,
+  hour: string,
+  province?: string,
+  city?: string
+) => `请为此命主推演大运级别的人生运势。
 
-【命主信息】
-性别: ${gender === 'male' ? '乾造' : '坤造'}
-出生年: ${year}年 | 当前虚岁: ${currentAge}岁
-
-【八字四柱】（已排好，请直接使用）
-年柱: ${bazi.yearPillar} | 月柱: ${bazi.monthPillar} | 日柱: ${bazi.dayPillar} | 时柱: ${bazi.hourPillar}
-生肖: ${bazi.zodiac} | 农历: ${bazi.lunarDate}
+命主信息：
+- 性别: ${gender === 'male' ? '男' : '女'}
+- 生辰: ${year}年${month}月${day}日 ${hour}${province && city ? `\n- 出生地: ${province}${city}` : province ? `\n- 出生地: ${province}` : ''}
 
 【大运】（已排好，请直接使用）
 ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
@@ -120,21 +118,18 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
 export const PAID_VERSION_PROMPT = (
   gender: string,
   year: number,
-  bazi: BaziForPrompt,
-  daYunList: DaYunForPrompt[],
-  currentAge: number
-) => `请基于以下已排好的八字和大运，进行**极其详细深入**的命理分析（完整精批版）。
+  month: number,
+  day: number,
+  hour: string,
+  currentAge: number,
+  province?: string,
+  city?: string
+) => `请为此命主推演流年级别的详细人生运势。
 
-【命主信息】
-性别: ${gender === 'male' ? '乾造' : '坤造'}
-出生年: ${year}年 | 当前虚岁: ${currentAge}岁
-
-【八字四柱】（已排好，请直接使用）
-年柱: ${bazi.yearPillar} | 月柱: ${bazi.monthPillar} | 日柱: ${bazi.dayPillar} | 时柱: ${bazi.hourPillar}
-生肖: ${bazi.zodiac} | 农历: ${bazi.lunarDate}
-
-【大运】（已排好，请直接使用）
-${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
+命主信息：
+- 性别: ${gender === 'male' ? '男' : '女'}
+- 生辰: ${year}年${month}月${day}日 ${hour}
+- 当前年龄: ${currentAge}岁${province && city ? `\n- 出生地: ${province}${city}` : province ? `\n- 出生地: ${province}` : ''}
 
 请输出JSON格式（注意：下面的分数只是格式示例，请根据实际命局给出真实评分）：
 {

@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { Gender, BirthInfo, CalendarType } from '@/types';
-import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
+import { useState, useMemo } from 'react';
+import { Gender, BirthInfo, HOUR_OPTIONS, CalendarType } from '@/types';
 import { CHINA_PROVINCES, getCityNamesByProvince } from '@/data/chinaCities';
 
 interface BirthFormProps {
@@ -34,11 +33,9 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
   const [year, setYear] = useState<number | ''>('');
   const [month, setMonth] = useState<number | ''>('');
   const [day, setDay] = useState<number | ''>('');
-  const [shiChen, setShiChen] = useState<number | ''>('');
+  const [hour, setHour] = useState<string>('');
   const [province, setProvince] = useState<string>('');
   const [city, setCity] = useState<string>('');
-  const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
-  const [daYunResult, setDaYunResult] = useState<{ startInfo: string; daYunList: DaYunItem[] } | null>(null);
 
   const currentYear = new Date().getFullYear();
 
@@ -75,41 +72,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
     setCity('');
   };
 
-  const isValid = gender && year && month && day && shiChen !== '';
-
-  // 自动计算八字
-  useEffect(() => {
-    if (year && month && day && shiChen !== '') {
-      const bazi = calculateBazi(
-        year as number,
-        month as number,
-        day as number,
-        shiChen as number,
-        0,
-        calendarType === 'lunar'
-      );
-      setBaziResult(bazi);
-
-      // 如果有性别，计算大运
-      if (gender && bazi) {
-        const daYun = calculateDaYun(
-          year as number,
-          month as number,
-          day as number,
-          shiChen as number,
-          0,
-          gender,
-          calendarType === 'lunar'
-        );
-        setDaYunResult(daYun);
-      } else {
-        setDaYunResult(null);
-      }
-    } else {
-      setBaziResult(null);
-      setDaYunResult(null);
-    }
-  }, [year, month, day, shiChen, gender, calendarType]);
+  const isValid = gender && year && month && day && hour;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,8 +83,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
       year: year as number,
       month: month as number,
       day: day as number,
-      hour: shiChen as number,
-      minute: 0,
+      hour,
       name: name || undefined,
       calendarType,
       province: province || undefined,
@@ -152,144 +114,41 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* 姓名和性别 */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm text-text-secondary mb-2">
-            姓名 <span className="text-text-secondary/50">(选填)</span>
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="请输入姓名"
-            className="input-mystic"
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-text-secondary mb-2">
-            性别 <span className="text-kline-down">*</span>
-          </label>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1 border ${
-                gender === 'male'
-                  ? 'bg-white/10 border-white text-white'
-                  : 'bg-black/50 border-gray-700 text-text-secondary hover:border-gray-500'
-              }`}
-              onClick={() => setGender('male')}
-            >
-              乾造 (男)
-            </button>
-            <button
-              type="button"
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1 border ${
-                gender === 'female'
-                  ? 'bg-white/10 border-white text-white'
-                  : 'bg-black/50 border-gray-700 text-text-secondary hover:border-gray-500'
-              }`}
-              onClick={() => setGender('female')}
-            >
-              坤造 (女)
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 历法选择 */}
+      {/* 姓名（可选） */}
       <div>
         <label className="block text-sm text-text-secondary mb-2">
-          历法 <span className="text-kline-down">*</span>
+          姓名 <span className="text-text-secondary/50">(选填)</span>
         </label>
-        <div className="flex gap-3">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="calendar"
-              checked={calendarType === 'solar'}
-              onChange={() => setCalendarType('solar')}
-              className="w-4 h-4 accent-white bg-black border-gray-700"
-            />
-            <span className={calendarType === 'solar' ? 'text-white' : 'text-text-secondary'}>
-              公历
-            </span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="calendar"
-              checked={calendarType === 'lunar'}
-              onChange={() => setCalendarType('lunar')}
-              className="w-4 h-4 accent-white bg-black border-gray-700"
-            />
-            <span className={calendarType === 'lunar' ? 'text-white' : 'text-text-secondary'}>
-              农历
-            </span>
-          </label>
-        </div>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="请输入姓名"
+          className="input-mystic"
+        />
       </div>
 
-      {/* 出生日期 - 全部下拉选择 */}
+      {/* 性别 */}
       <div>
         <label className="block text-sm text-text-secondary mb-2">
-          出生日期 <span className="text-kline-down">*</span>
+          性别 <span className="text-kline-down">*</span>
         </label>
-        <div className="grid grid-cols-3 gap-2">
-          <div className="flex items-center gap-1">
-            <select
-              value={year}
-              onChange={(e) => setYear(e.target.value ? parseInt(e.target.value) : '')}
-              className="select-mystic"
-            >
-              <option value="">年</option>
-              {years.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <span className="text-text-secondary">年</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <select
-              value={month}
-              onChange={(e) => setMonth(e.target.value ? parseInt(e.target.value) : '')}
-              className="select-mystic"
-            >
-              <option value="">月</option>
-              {months.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-            <span className="text-text-secondary">月</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <select
-              value={day}
-              onChange={(e) => setDay(e.target.value ? parseInt(e.target.value) : '')}
-              className="select-mystic"
-            >
-              <option value="">日</option>
-              {days.map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
-            <span className="text-text-secondary">日</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 出生时辰 - 12时辰选择 */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm text-text-secondary">
-            出生时辰 <span className="text-kline-down">*</span>
-          </label>
+        <div className="flex gap-4">
+          <button
+            type="button"
+            className={`gender-btn ${gender === 'male' ? 'active' : ''}`}
+            onClick={() => setGender('male')}
+          >
+            <span className="text-xl">♂</span>
+            <span className="block mt-1">男</span>
+          </button>
           <button
             type="button"
             onClick={setCurrentTime}
             className="text-xs text-white hover:text-gray-300 px-2 py-1 rounded border border-gray-700 hover:border-gray-500 bg-black/50"
           >
-            当前时间
+            <span className="text-xl">♀</span>
+            <span className="block mt-1">女</span>
           </button>
         </div>
         <select
@@ -306,10 +165,41 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
         </select>
       </div>
 
-      {/* 出生地 - 省/市选择 */}
+      {/* 历法选择 */}
       <div>
         <label className="block text-sm text-text-secondary mb-2">
-          出生地 <span className="text-text-secondary/50">(选填，用于计算真太阳时)</span>
+          历法 <span className="text-kline-down">*</span>
+        </label>
+        <div className="flex gap-4">
+          <button
+            type="button"
+            className={`flex-1 py-2.5 rounded-lg text-sm transition-all ${
+              calendarType === 'solar'
+                ? 'bg-gold-400/20 border border-gold-400 text-gold-400'
+                : 'bg-mystic-900/50 border border-purple-500/30 text-text-secondary hover:border-purple-400'
+            }`}
+            onClick={() => setCalendarType('solar')}
+          >
+            阳历(公历)
+          </button>
+          <button
+            type="button"
+            className={`flex-1 py-2.5 rounded-lg text-sm transition-all ${
+              calendarType === 'lunar'
+                ? 'bg-gold-400/20 border border-gold-400 text-gold-400'
+                : 'bg-mystic-900/50 border border-purple-500/30 text-text-secondary hover:border-purple-400'
+            }`}
+            onClick={() => setCalendarType('lunar')}
+          >
+            阴历(农历)
+          </button>
+        </div>
+      </div>
+
+      {/* 生辰 */}
+      <div>
+        <label className="block text-sm text-text-secondary mb-2">
+          出生日期 <span className="text-kline-down">*</span>
         </label>
         <div className="grid grid-cols-2 gap-2">
           <select
@@ -396,28 +286,15 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
         </div>
       )}
 
-      {/* 两个按钮选项 */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          disabled={!isValid || disabled}
-          onClick={() => {
-            if (!isValid || disabled) return;
-            const birthInfo: BirthInfo = {
-              name: name || undefined,
-              gender: gender!,
-              calendarType,
-              year: year as number,
-              month: month as number,
-              day: day as number,
-              hour: shiChen as number,
-              minute: 0,
-              province: province || undefined,
-              city: city || undefined,
-            };
-            onSubmit(birthInfo, false);
-          }}
-          className="btn-outline py-3 text-base font-serif"
+      {/* 时辰 */}
+      <div>
+        <label className="block text-sm text-text-secondary mb-2">
+          出生时辰 <span className="text-kline-down">*</span>
+        </label>
+        <select
+          value={hour}
+          onChange={(e) => setHour(e.target.value)}
+          className="select-mystic"
         >
           免费概览
         </button>
@@ -446,10 +323,54 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
         </button>
       </div>
 
-      {/* TODO: 测试完成后恢复次数显示 */}
-      <p className="text-center text-sm text-text-secondary mt-3">
-        测试模式 · <span className="text-yellow-400">无限次数</span>
-      </p>
+      {/* 出生地点 */}
+      <div>
+        <label className="block text-sm text-text-secondary mb-2">
+          出生地点 <span className="text-text-secondary/50">(选填，可提高准确度)</span>
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <select
+            value={province}
+            onChange={(e) => handleProvinceChange(e.target.value)}
+            className="select-mystic"
+          >
+            <option value="">省份/直辖市</option>
+            {CHINA_PROVINCES.map((p) => (
+              <option key={p.name} value={p.name}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            className="select-mystic"
+            disabled={!province}
+          >
+            <option value="">城市</option>
+            {cities.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        disabled={!isValid || disabled || remainingUsage <= 0}
+        className="btn-gold w-full py-4 text-lg font-serif"
+      >
+        {remainingUsage <= 0 ? '免费次数已用尽' : '开启命盘'}
+      </button>
+
+      {remainingUsage > 0 && (
+        <p className="text-center text-sm text-text-secondary">
+          免费体验 · 剩余 <span className="text-gold-400">{remainingUsage}/3</span> 次
+        </p>
+      )}
     </form>
   );
 }

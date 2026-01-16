@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { BirthForm, AnalysisLoader } from '@/components';
+import { BirthForm, BaguaLoader } from '@/components';
 import Header from '@/components/Header';
-import { generateFreeResult, generatePaidResult } from '@/services/api';
+import { generateFreeResult } from '@/services/api';
 import {
   getRemainingUsage,
   incrementUsage,
@@ -81,8 +81,8 @@ export default function HomePage() {
     return (
       <div className="min-h-screen">
         <Header />
-        <div className="flex flex-col items-center justify-center px-4 py-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
-          <AnalysisLoader />
+        <div className="flex flex-col items-center justify-center px-4" style={{ minHeight: 'calc(100vh - 56px)' }}>
+          <BaguaLoader />
         </div>
       </div>
     );
@@ -96,8 +96,8 @@ export default function HomePage() {
           <h1 className="font-serif text-3xl md:text-5xl text-gold-gradient mb-2 md:mb-3">
             人生曲线
           </h1>
-          <p className="text-text-secondary text-sm md:text-base">
-            探索命运轨迹 · 把握人生节奏
+          <p className="text-text-secondary text-base md:text-lg">
+            探索命运轨迹，把握人生节奏
           </p>
         </div>
 
