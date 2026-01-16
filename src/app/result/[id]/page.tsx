@@ -484,24 +484,42 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             </div>
           )}
 
-          {/* 财富分享图隐藏区域 */}
+          {/* 财富分享图隐藏区域 - 带有趣文案利于传播 */}
           <div ref={wealthShareRef} className="fixed -left-[9999px] w-[1080px] p-12 bg-gradient-to-b from-black via-gray-900 to-black">
-            <div className="text-center mb-8">
-              <p className="text-gold-400 text-3xl mb-2">💰 财富曲线 💰</p>
-              <p className="text-text-secondary">{birthInfo.name || '财富报告'}</p>
+            <div className="text-center mb-6">
+              <p className="text-gold-400 text-4xl font-bold mb-2">我的财富曲线</p>
+              <p className="text-text-secondary text-lg">{birthInfo.name ? `${birthInfo.name}` : ''} {birthInfo.year}年生</p>
             </div>
-            <div className="text-center mb-8">
-              <p className="text-gold-400 text-2xl">财富类型：{wealthResult.wealthType}</p>
-              <p className="text-text-primary text-xl mt-4">
-                巅峰年龄：{wealthResult.highlights.peakAge}岁
+
+            {/* 有趣的高光文案 */}
+            <div className="bg-gold-400/10 border border-gold-400/30 rounded-2xl p-6 mb-6">
+              <p className="text-gold-400 text-xl font-medium mb-2">
+                {wealthResult.highlights.peakAge}岁，命中注定的财富巅峰！
+              </p>
+              <p className="text-text-primary text-lg leading-relaxed">
+                {wealthResult.highlights.peakWealth >= 10000
+                  ? `预计身价冲到${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿，"钱对我来说只是数字"的日子要来了！`
+                  : wealthResult.highlights.peakWealth >= 1000
+                    ? `预计身价冲到${(wealthResult.highlights.peakWealth / 1000).toFixed(1)}千万，可以稍微飘一下了~`
+                    : `预计身价冲到${wealthResult.highlights.peakWealth}万，稳扎稳打也是一种幸福！`
+                }
               </p>
             </div>
-            <div className="border-t border-gold-400/30 pt-8 text-center">
-              <p className="text-text-secondary mb-4">扫码探寻你的财富密码</p>
+
+            {/* 财富类型标签 */}
+            <div className="text-center mb-6">
+              <span className="inline-block px-6 py-3 bg-gold-400/20 rounded-full text-gold-400 text-xl">
+                {wealthResult.wealthType}
+              </span>
+            </div>
+
+            {/* 扫码区域 */}
+            <div className="border-t border-gold-400/30 pt-6 text-center">
+              <p className="text-text-secondary mb-4">扫码测测你的财富曲线</p>
               <div className="w-32 h-32 bg-white mx-auto rounded-lg flex items-center justify-center">
                 <span className="text-black text-xs">二维码</span>
               </div>
-              <p className="text-gold-400 mt-4">lifecurve.app</p>
+              <p className="text-gold-400 mt-4 text-xl">lifecurve.cn</p>
             </div>
           </div>
         </div>
@@ -845,7 +863,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             <div className="w-32 h-32 bg-white mx-auto rounded-lg flex items-center justify-center">
               <span className="text-mystic-900 text-xs">二维码</span>
             </div>
-            <p className="text-gold-400 mt-4">lifecurve.app</p>
+            <p className="text-gold-400 mt-4">lifecurve.cn</p>
           </div>
         </div>
       </div>

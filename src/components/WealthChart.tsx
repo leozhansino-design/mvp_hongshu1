@@ -29,27 +29,47 @@ export default function WealthChart({
 
   // 计算坐标
   const { path, areaPath, points, peakPoint, yTicks, xTicks } = useMemo(() => {
+    // 验证数据
     if (!dataPoints || dataPoints.length === 0) {
+      return { path: '', areaPath: '', points: [], peakPoint: null, yTicks: [], xTicks: [] };
+    }
+
+    // 过滤无效数据点
+    const validDataPoints = dataPoints.filter(d =>
+      d && typeof d.age === 'number' && typeof d.wealth === 'number' &&
+      !isNaN(d.age) && !isNaN(d.wealth)
+    );
+
+    if (validDataPoints.length === 0) {
       return { path: '', areaPath: '', points: [], peakPoint: null, yTicks: [], xTicks: [] };
     }
 
     const minAge = 18;
     const maxAge = 80;
-    const minWealth = wealthRange.min;
-    const maxWealth = wealthRange.max;
+    const minWealth = wealthRange?.min ?? 0;
+    // 确保 maxWealth 有效且大于 minWealth
+    let maxWealth = wealthRange?.max ?? 1000;
+    if (isNaN(maxWealth) || maxWealth <= minWealth) {
+      // 从数据点中计算最大值
+      maxWealth = Math.max(...validDataPoints.map(d => d.wealth), 1000);
+    }
 
     // X 坐标转换
     const xScale = (age: number) => {
-      return padding.left + ((age - minAge) / (maxAge - minAge)) * chartWidth;
+      const val = padding.left + ((age - minAge) / (maxAge - minAge)) * chartWidth;
+      return isNaN(val) ? padding.left : val;
     };
 
     // Y 坐标转换
     const yScale = (wealth: number) => {
-      return padding.top + chartHeight - ((wealth - minWealth) / (maxWealth - minWealth)) * chartHeight;
+      const range = maxWealth - minWealth;
+      if (range <= 0) return padding.top + chartHeight / 2;
+      const val = padding.top + chartHeight - ((wealth - minWealth) / range) * chartHeight;
+      return isNaN(val) ? padding.top + chartHeight : val;
     };
 
-    // 生成平滑曲线路径
-    const pts = dataPoints.map((d) => ({
+    // 生成平滑曲线路径 - 使用验证过的数据点
+    const pts = validDataPoints.map((d) => ({
       x: xScale(d.age),
       y: yScale(d.wealth),
       age: d.age,
