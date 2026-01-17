@@ -12,6 +12,7 @@ export const STORAGE_KEYS = {
   usage: 'lc_usage',
   device: 'lc_device',
   resultPrefix: 'lc_result_',
+  analyticsPrefix: 'lc_analytics_',
 };
 
 export const SYSTEM_PROMPT = `你是一位精通八字命理的AI大师，融合传统命理学与现代数据可视化技术。

@@ -433,3 +433,52 @@ export const CURVE_MODE_LABELS: Record<CurveMode, string> = {
   life: '人生曲线',
   wealth: '财富曲线',
 };
+
+// ========== 用户分析数据类型 ==========
+
+// 用户行为事件类型
+export type UserEventType =
+  | 'view_report'      // 查看报告
+  | 'click_share'      // 点击分享
+  | 'share_success'    // 分享成功
+  | 'click_unlock'     // 点击解锁
+  | 'unlock_success'   // 解锁成功
+  | 'mode_switch';     // 模式切换
+
+// 用户事件
+export interface UserEvent {
+  type: UserEventType;
+  timestamp: number;
+  metadata?: {
+    curveMode?: CurveMode;
+    isPaid?: boolean;
+    fromMode?: CurveMode;
+    toMode?: CurveMode;
+  };
+}
+
+// 用户分析记录
+export interface UserAnalytics {
+  id: string;                    // 报告ID
+  deviceId: string;              // 设备ID
+  createdAt: number;             // 创建时间
+  // 用户信息
+  name?: string;                 // 姓名
+  gender: Gender;                // 性别
+  birthYear: number;             // 出生年份
+  birthMonth: number;            // 出生月份
+  birthDay: number;              // 出生日期
+  province?: string;             // 省份
+  city?: string;                 // 城市
+  // 报告类型
+  curveMode: CurveMode;          // 曲线类型
+  // 行为记录
+  events: UserEvent[];           // 事件列表
+  // 汇总状态
+  hasViewed: boolean;            // 是否查看
+  hasClickedShare: boolean;      // 是否点击分享
+  hasShared: boolean;            // 是否分享成功
+  hasClickedUnlock: boolean;     // 是否点击解锁
+  hasUnlocked: boolean;          // 是否解锁成功
+  unlockContext?: string;        // 解锁场景描述
+}

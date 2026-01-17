@@ -8,6 +8,7 @@ import UnlockLoader from '@/components/UnlockLoader';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult, generateWealthCurve } from '@/services/api';
 import { calculateDaYun } from '@/lib/bazi';
+import { getOrCreateAnalytics, trackEvent } from '@/services/analytics';
 import {
   StoredResult,
   PHASE_LABELS,
@@ -286,9 +287,13 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     setResult(storedResult);
     setLoading(false);
     // 从URL设置初始模式
+    const mode = urlMode === 'wealth' ? 'wealth' : 'life';
     if (urlMode === 'wealth') {
       setCurveMode('wealth');
     }
+    // 初始化分析记录并追踪查看事件
+    getOrCreateAnalytics(resolvedParams.id, storedResult.birthInfo, mode);
+    trackEvent(resolvedParams.id, 'view_report', { curveMode: mode, isPaid: storedResult.isPaid });
   }, [resolvedParams.id, router, urlMode]);
 
   // 处理模式切换 - 返回首页重新输入（因为免费次数是分开计算的）
@@ -300,6 +305,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
   const handleUpgrade = async () => {
     if (!result) return;
+    // 追踪点击解锁事件
+    trackEvent(resolvedParams.id, 'click_unlock', { curveMode, isPaid: false });
     setUpgrading(true);
     setUnlockComplete(false);
   };
@@ -338,6 +345,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
         saveResult(updatedResult);
         setResult(updatedResult);
       }
+      // 追踪解锁成功事件
+      trackEvent(resolvedParams.id, 'unlock_success', { curveMode, isPaid: true });
       setUnlockComplete(true);
       // 延迟一下再关闭upgrading，让用户看到完成状态
       setTimeout(() => {
@@ -353,6 +362,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const handleShare = async () => {
     const ref = isWealthMode ? wealthShareRef.current : shareRef.current;
     if (!ref) return;
+    // 追踪点击分享事件
+    trackEvent(resolvedParams.id, 'click_share', { curveMode, isPaid: result?.isPaid });
     setShareLoading(true);
     try {
       const canvas = await html2canvas(ref, {
@@ -364,6 +375,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
       link.download = `${isWealthMode ? 'wealth' : 'life'}-curve-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
+      // 追踪分享成功事件
+      trackEvent(resolvedParams.id, 'share_success', { curveMode, isPaid: result?.isPaid });
     } catch (error) {
       console.error('生成分享图失败:', error);
       alert('生成分享图失败');
