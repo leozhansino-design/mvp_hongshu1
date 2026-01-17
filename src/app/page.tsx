@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { BirthForm, AnalysisLoader } from '@/components';
 import Header from '@/components/Header';
@@ -15,13 +15,25 @@ import {
 import { BirthInfo, StoredResult, CurveMode, CURVE_MODE_LABELS } from '@/types';
 import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
 
-export default function HomePage() {
+// 主页面内容组件
+function HomePageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [remainingUsage, setRemainingUsage] = useState(3);
   const [totalGenerated, setTotalGenerated] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [curveMode, setCurveMode] = useState<CurveMode>('life');
+
+  // 从 URL 读取模式参数
+  useEffect(() => {
+    const modeParam = searchParams.get('mode');
+    if (modeParam === 'wealth') {
+      setCurveMode('wealth');
+    } else if (modeParam === 'life') {
+      setCurveMode('life');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     setRemainingUsage(getRemainingUsage());
@@ -144,5 +156,18 @@ export default function HomePage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// 导出包装组件，使用 Suspense 包裹
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gold-400 animate-pulse">加载中...</div>
+      </div>
+    }>
+      <HomePageContent />
+    </Suspense>
   );
 }
