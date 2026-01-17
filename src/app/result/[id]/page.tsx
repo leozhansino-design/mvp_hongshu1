@@ -308,19 +308,28 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     if (!result) return;
     try {
       if (isWealthMode) {
-        // 财富曲线升级
-        const wealthResult = await generateWealthCurve(result.birthInfo, true);
+        // 财富曲线升级 - 传入现有数据以保持一致性
+        const newWealthResult = await generateWealthCurve(
+          result.birthInfo,
+          true,
+          undefined,
+          result.wealthResult // 传入现有的免费版数据
+        );
         const updatedResult: StoredResult = {
           ...result,
-          wealthResult,
+          wealthResult: newWealthResult,
           isPaid: true,
           curveMode: 'wealth',
         };
         saveResult(updatedResult);
         setResult(updatedResult);
       } else {
-        // 人生曲线升级
-        const paidResult = await generatePaidResult(result.birthInfo);
+        // 人生曲线升级 - 传入现有数据以保持一致性
+        const paidResult = await generatePaidResult(
+          result.birthInfo,
+          undefined,
+          result.freeResult // 传入现有的免费版数据
+        );
         const updatedResult: StoredResult = {
           ...result,
           paidResult,

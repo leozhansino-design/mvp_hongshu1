@@ -223,7 +223,8 @@ export async function generateFreeResult(
 
 export async function generatePaidResult(
   birthInfo: BirthInfo,
-  config: APIConfig = API_CONFIG
+  config: APIConfig = API_CONFIG,
+  existingFreeResult?: FreeVersionResult // 升级时传入现有数据以保持一致性
 ): Promise<PaidVersionResult> {
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
@@ -257,7 +258,8 @@ export async function generatePaidResult(
     birthInfo.year,
     baziForPrompt,
     daYunForPrompt,
-    currentAge
+    currentAge,
+    existingFreeResult // 传入现有数据
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -374,7 +376,8 @@ export function getPaidPrompt(birthInfo: BirthInfo): string {
 export async function generateWealthCurve(
   birthInfo: BirthInfo,
   isPaid: boolean = false,
-  config: APIConfig = API_CONFIG
+  config: APIConfig = API_CONFIG,
+  existingData?: WealthCurveData // 升级时传入现有数据以保持一致性
 ): Promise<WealthCurveData> {
   // 预计算八字
   const isLunar = birthInfo.calendarType === 'lunar';
@@ -405,7 +408,8 @@ export async function generateWealthCurve(
     birthInfo.year,
     baziForPrompt,
     daYunForPrompt,
-    isPaid
+    isPaid,
+    existingData // 传入现有数据
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
