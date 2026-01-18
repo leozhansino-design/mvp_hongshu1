@@ -5,9 +5,14 @@ import { ANALYSIS_MODULES } from '@/types';
 
 interface AnalysisLoaderProps {
   onComplete?: () => void;
+  messages?: string[];
 }
 
-export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
+export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderProps) {
+  // 使用自定义消息或默认模块
+  const displayModules = messages
+    ? messages.map((msg, i) => ({ id: `msg-${i}`, name: msg, icon: '○' }))
+    : ANALYSIS_MODULES;
   const [progress, setProgress] = useState(0);
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
   const [queuePosition, setQueuePosition] = useState(() => Math.floor(Math.random() * 5) + 1);
@@ -38,8 +43,8 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
         const increment = Math.random() * 8 + 2;
         const newProgress = Math.min(prev + increment, 99);
 
-        const moduleIndex = Math.floor((newProgress / 99) * ANALYSIS_MODULES.length);
-        setCurrentModuleIndex(Math.min(moduleIndex, ANALYSIS_MODULES.length - 1));
+        const moduleIndex = Math.floor((newProgress / 99) * displayModules.length);
+        setCurrentModuleIndex(Math.min(moduleIndex, displayModules.length - 1));
 
         if (newProgress >= 99) {
           clearInterval(progressTimer);
@@ -53,7 +58,7 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
     }, 800);
 
     return () => clearInterval(progressTimer);
-  }, [queuePosition, onComplete]);
+  }, [queuePosition, onComplete, displayModules.length]);
 
   // 估计剩余时间
   const estimatedTime = useMemo(() => {
@@ -86,7 +91,7 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
         ) : (
           <>
             <p className="font-serif text-lg text-white">
-              {ANALYSIS_MODULES[currentModuleIndex]?.icon} {ANALYSIS_MODULES[currentModuleIndex]?.name}
+              {displayModules[currentModuleIndex]?.icon} {displayModules[currentModuleIndex]?.name}
             </p>
             <div className="text-gray-400 text-sm">
               AI 深度解析中...
@@ -110,7 +115,7 @@ export default function AnalysisLoader({ onComplete }: AnalysisLoaderProps) {
         {/* 模块进度列表 */}
         {queuePosition === 0 && (
           <div className="grid grid-cols-4 gap-2 mt-4">
-            {ANALYSIS_MODULES.map((module, index) => {
+            {displayModules.map((module, index) => {
               const isCompleted = index < currentModuleIndex;
               const isCurrent = index === currentModuleIndex;
 

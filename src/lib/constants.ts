@@ -1,3 +1,5 @@
+import { WealthCurveData, FreeVersionResult } from '@/types';
+
 export const API_CONFIG = {
   baseUrl: 'https://api.bltcy.ai/v1',
   apiKey: 'sk-z4a6qvhXCbfboOyBwL33BR66mJdHTKj5NO4pfIUSkLBm2jGF',
@@ -10,6 +12,7 @@ export const STORAGE_KEYS = {
   usage: 'lc_usage',
   device: 'lc_device',
   resultPrefix: 'lc_result_',
+  analyticsPrefix: 'lc_analytics_',
 };
 
 export const SYSTEM_PROMPT = `你是一位精通八字命理的AI大师，融合传统命理学与现代数据可视化技术。
@@ -122,8 +125,32 @@ export const PAID_VERSION_PROMPT = (
   year: number,
   bazi: BaziForPrompt,
   daYunList: DaYunForPrompt[],
-  currentAge: number
-) => `请基于以下已排好的八字和大运，进行**极其详细深入**的命理分析（完整精批版）。
+  currentAge: number,
+  existingFreeResult?: FreeVersionResult // 升级时传入现有数据以保持一致性
+) => {
+  // 如果有现有数据（升级场景），要求保持数据一致性
+  const consistencyNote = existingFreeResult ? `
+⚠️【最重要 - 数据一致性要求】⚠️
+用户已有免费版报告，升级时必须保持以下数据完全一致：
+- summaryScore: ${existingFreeResult.summaryScore}
+- personalityScore: ${existingFreeResult.personalityScore}
+- careerScore: ${existingFreeResult.careerScore}
+- wealthScore: ${existingFreeResult.wealthScore}
+- marriageScore: ${existingFreeResult.marriageScore}
+- healthScore: ${existingFreeResult.healthScore}
+- fengShuiScore: ${existingFreeResult.fengShuiScore}
+- familyScore: ${existingFreeResult.familyScore}
+- highlightMoment: ${existingFreeResult.highlightMoment ? JSON.stringify(existingFreeResult.highlightMoment) : '无'}
+- chartPoints趋势必须与免费版一致，只是更详细
+
+免费版chartPoints数据（必须经过这些点）:
+${existingFreeResult.chartPoints.map(p => `${p.age}岁: ${p.score}分`).join(' → ')}
+
+请在此基础上补充更多年份的数据点，但关键年份的分数必须保持一致！
+
+` : '';
+
+  return `${consistencyNote}请基于以下已排好的八字和大运，进行**极其详细深入**的命理分析（完整精批版）。
 
 【命主信息】
 性别: ${gender === 'male' ? '乾造' : '坤造'}
@@ -214,6 +241,7 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
 9. improveAdvice需针对各个维度给出切实可行的改运建议
 10. **重要**：所有评分必须根据实际命局分析得出，不要照抄示例中的75、80等数值
 11. **内容充实**：所有文字描述必须达到或超过规定字数，内容要详实、专业、有针对性、实用性强`;
+};
 
 export const LOADING_MESSAGES = [
   '正在排演四柱八字...',
@@ -224,4 +252,141 @@ export const LOADING_MESSAGES = [
   '演算吉凶走势...',
   '生成命理报告...',
   'AI深度解读中...',
+];
+
+// 财富曲线专用提示词
+export const WEALTH_CURVE_PROMPT = (
+  gender: string,
+  year: number,
+  bazi: BaziForPrompt,
+  daYunList: DaYunForPrompt[],
+  isPaid: boolean,
+  existingData?: WealthCurveData // 升级时传入现有数据以保持一致性
+) => {
+  // 如果有现有数据（升级场景），要求保持数据一致性
+  if (existingData && isPaid) {
+    return `你是一位精通八字命理的财运分析师。用户已有免费版财富曲线数据，现在需要升级到详细版。
+
+⚠️【最重要】必须保持以下数据完全不变：
+- wealthType: "${existingData.wealthType}"
+- wealthRange: {"min": ${existingData.wealthRange.min}, "max": ${existingData.wealthRange.max}, "unit": "${existingData.wealthRange.unit}"}
+- highlights: ${JSON.stringify(existingData.highlights)}
+
+【现有的11个数据点（必须经过这些点）】
+${existingData.dataPoints.map(d => `${d.age}岁: ${d.wealth}万`).join(' → ')}
+
+【任务】
+基于现有的11个数据点，生成63个完整的逐年数据点（18-80岁）。新数据点必须：
+1. 在现有的11个点上保持完全一致的数值
+2. 中间年份的数据要平滑过渡，符合趋势
+3. 保持曲线形状和走势与原来一致
+
+【命主信息】
+性别: ${gender === 'male' ? '乾造' : '坤造'}
+出生年: ${year}年
+
+【八字四柱】
+年柱: ${bazi.yearPillar} | 月柱: ${bazi.monthPillar} | 日柱: ${bazi.dayPillar} | 时柱: ${bazi.hourPillar}
+
+请返回以下JSON格式：
+{
+  "wealthRange": ${JSON.stringify(existingData.wealthRange)},
+  "wealthType": "${existingData.wealthType}",
+  "highlights": ${JSON.stringify(existingData.highlights)},
+  "dataPoints": [
+    生成63个数据点，从{"age": 18, "wealth": ${existingData.dataPoints[0]?.wealth || 0}}开始，
+    必须经过现有的11个点，中间平滑插值，一直到{"age": 80, "wealth": 数字}
+  ],
+  "analysis": {
+    "summary": "您的八字财星分析总结（150字以上，包含专业术语如正财偏财、食伤生财等）...",
+    "earlyYears": "18-30岁财运分析（100字以上，具体分析这个阶段的大运财运）...",
+    "middleYears": "30-50岁财运分析（100字以上，结合大运详细分析）...",
+    "lateYears": "50岁后财运分析（100字以上）...",
+    "advice": "理财建议（120字以上，包含具体可操作的建议）..."
+  }
+}
+
+重要：
+1. wealthType、wealthRange、highlights必须与上面给出的完全一致！
+2. dataPoints必须有63个点，且必须经过现有的11个数据点
+3. 只需要生成详细的analysis分析内容`;
+  }
+
+  // 全新生成（非升级场景）
+  return `你是一位精通八字命理的财运分析师。请根据以下八字信息，生成此人18-80岁的累计财富曲线数据。
+
+【命主信息】
+性别: ${gender === 'male' ? '乾造' : '坤造'}
+出生年: ${year}年
+
+【八字四柱】（已排好，请直接使用）
+年柱: ${bazi.yearPillar} | 月柱: ${bazi.monthPillar} | 日柱: ${bazi.dayPillar} | 时柱: ${bazi.hourPillar}
+生肖: ${bazi.zodiac} | 农历: ${bazi.lunarDate}
+
+【大运】（已排好，请直接使用）
+${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
+
+【分析要点 - 根据实际八字格局判断，不设限制】
+1. 仔细分析八字中的财星（正财、偏财）强弱
+2. 判断是否有食伤生财、财官双美、从财格等大财格局
+3. 看是否有比劫夺财、枭印夺食等破财格局
+4. 结合大运流年判断财运高低期
+5. 好的命盘就给高财富，差的命盘就给低财富，如实反映八字格局
+6. 曲线是累计财富，可以有上升也有下降（消费、亏损等），但下降要合理
+7. 财富数值要精确，如873万、1256万、2847万，不要总是整千整万如1000万
+8. 财富没有上限！大财格局可以到数亿甚至更多
+
+【重要】你必须返回完整的JSON数据，包括dataPoints数组！不能省略或跳过数据生成。
+请返回以下JSON格式（必须严格遵守）：
+{
+  "wealthRange": {
+    "min": 0,
+    "max": 数字（根据命局设定合适的Y轴最大值，如峰值800万则max设为1000）,
+    "unit": "万"
+  },
+  "wealthType": "对应的类型",
+  "highlights": {
+    "peakAge": 数字（巅峰年龄，18-80之间）,
+    "peakWealth": 数字（巅峰财富，单位万，必须是正整数）,
+    "maxGrowthAge": 数字（最大增长年龄）,
+    "maxGrowthAmount": 数字（最大年增长金额，单位万，必须是正整数）,
+    "maxLossAge": 数字（最大回撤年龄，如无回撤设为峰值年龄）,
+    "maxLossAmount": 数字（最大年回撤金额，如无回撤设为0）
+  },
+  "dataPoints": [
+    ${isPaid
+      ? '必须生成63个完整的数据点！格式：{"age": 18, "wealth": 0}, {"age": 19, "wealth": 5}, {"age": 20, "wealth": 12}, ... 一直到 {"age": 80, "wealth": 数字}'
+      : '必须生成11个完整的数据点！格式：{"age": 18, "wealth": 0}, {"age": 24, "wealth": 数字}, {"age": 30, "wealth": 数字}, {"age": 36, "wealth": 数字}, {"age": 42, "wealth": 数字}, {"age": 48, "wealth": 数字}, {"age": 54, "wealth": 数字}, {"age": 60, "wealth": 数字}, {"age": 66, "wealth": 数字}, {"age": 72, "wealth": 数字}, {"age": 78, "wealth": 数字}'
+    }
+  ],
+  "analysis": {
+    "summary": "您的八字财星分析总结（150字以上，包含专业术语如正财偏财、食伤生财等）...",
+    "earlyYears": "18-30岁财运分析（100字以上，具体分析这个阶段的大运财运）...",
+    "middleYears": "30-50岁财运分析（100字以上，结合大运详细分析）...",
+    "lateYears": "50岁后财运分析（100字以上）...",
+    "advice": "理财建议（120字以上，包含具体可操作的建议）..."
+  }
+}
+
+重要规则：
+1. dataPoints必须有${isPaid ? '63' : '11'}个完整的数据点，每个点都要有age和wealth字段，wealth必须是数字！
+2. wealth单位是万元，表示累计资产，所有wealth值必须是正整数或0
+3. 曲线要符合命理逻辑，与八字格局匹配
+4. wealthType必须是以下之一：早期暴富型、大器晚成型、稳步上升型、过山车型、平稳一生型、先扬后抑型
+5. 财富数值要真实反映命盘格局，好命就高、差命就低，没有限制！
+6. 曲线可以下降（消费、亏损等），但要合理
+7. highlights数值要与dataPoints数据一致
+8. 不同的八字必须给出差异化的财富曲线，绝不能雷同！
+9. 财富数值要精确，如peakWealth应该是873、1256、2847这样的数字，不要总是整千整万如1000、2000
+10. 绝对不能省略dataPoints数组，必须生成完整的数据！`;
+};
+
+export const WEALTH_LOADING_MESSAGES = [
+  '解析财星格局...',
+  '分析正财偏财...',
+  '推算财运周期...',
+  '计算大运财运...',
+  '演算流年财运...',
+  '生成财富曲线...',
+  'AI深度分析中...',
 ];

@@ -8,3 +8,7 @@ export { default as AnalysisLoader } from './AnalysisLoader';
 export { default as DaYunTable } from './DaYunTable';
 export { default as FiveElementsDiagram } from './FiveElementsDiagram';
 export { default as DetailedDaYunTable } from './DetailedDaYunTable';
+// 财富曲线组件
+export { default as WealthChart } from './WealthChart';
+export { default as WealthHighlights } from './WealthHighlights';
+export { default as WealthAnalysis } from './WealthAnalysis';

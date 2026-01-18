@@ -225,6 +225,9 @@ export interface StoredResult {
   paidResult?: PaidVersionResult;
   isPaid: boolean;
   createdAt: number;
+  // 财富曲线相关
+  curveMode?: CurveMode;
+  wealthResult?: WealthCurveData;
 }
 
 export type PhaseType = 'rising' | 'peak' | 'stable' | 'declining' | 'valley';
@@ -344,4 +347,138 @@ export function getShichenFromHour(hour: number): string {
   if (hour >= 19 && hour < 21) return '戌时';
   if (hour >= 21 && hour < 23) return '亥时';
   return '不详';
+}
+
+// ========== 财富曲线相关类型 ==========
+
+// 财富数据点
+export interface WealthDataPoint {
+  age: number;      // 18-80
+  wealth: number;   // 累计财富（万元）
+}
+
+// 财富高光时刻
+export interface WealthHighlights {
+  peakAge: number;           // 财富巅峰年龄
+  peakWealth: number;        // 财富巅峰金额
+  maxGrowthAge: number;      // 最大年增长年龄
+  maxGrowthAmount: number;   // 最大年增长金额
+  maxLossAge: number;        // 最大年回撤年龄
+  maxLossAmount: number;     // 最大年回撤金额
+}
+
+// 财富范围
+export interface WealthRange {
+  min: number;
+  max: number;
+  unit: string;
+}
+
+// 财富分析
+export interface WealthAnalysis {
+  summary: string;      // 总结
+  earlyYears: string;   // 18-30岁分析
+  middleYears: string;  // 30-50岁分析
+  lateYears: string;    // 50岁后分析
+  advice: string;       // 理财建议
+}
+
+// 财富类型
+export type WealthType =
+  | '早期暴富型'
+  | '大器晚成型'
+  | '稳步上升型'
+  | '过山车型'
+  | '平稳一生型'
+  | '先扬后抑型';
+
+// 财富类型描述
+export const WEALTH_TYPE_DESCRIPTIONS: Record<WealthType, string> = {
+  '早期暴富型': '年轻时就到达巅峰，25-35岁到顶，之后平稳或下降',
+  '大器晚成型': '前半生积累，后半生收获，前30年平缓，45岁后起飞',
+  '稳步上升型': '细水长流，一直缓慢上升',
+  '过山车型': '大起大落，多个峰值和谷值',
+  '平稳一生型': '没有大起大落，整体平缓，小幅波动',
+  '先扬后抑型': '前期辉煌，后期消耗，中年到顶，之后下降',
+};
+
+// 财富曲线完整数据
+export interface WealthCurveData {
+  wealthRange: WealthRange;
+  wealthType: WealthType;
+  highlights: WealthHighlights;
+  dataPoints: WealthDataPoint[];
+  analysis: WealthAnalysis;
+}
+
+// 财富曲线结果（免费版）
+export interface FreeWealthResult {
+  baziChart: BaziChart;
+  wealthCurve: WealthCurveData;
+  // 免费版只有10个数据点
+}
+
+// 财富曲线结果（付费版）
+export interface PaidWealthResult {
+  baziChart: BaziChart;
+  wealthCurve: WealthCurveData;
+  // 付费版有62个数据点（18-80岁每年一个）
+}
+
+// 曲线模式类型
+export type CurveMode = 'life' | 'wealth';
+
+// 曲线模式标签
+export const CURVE_MODE_LABELS: Record<CurveMode, string> = {
+  life: '人生曲线',
+  wealth: '财富曲线',
+};
+
+// ========== 用户分析数据类型 ==========
+
+// 用户行为事件类型
+export type UserEventType =
+  | 'view_report'      // 查看报告
+  | 'click_share'      // 点击分享
+  | 'share_success'    // 分享成功
+  | 'click_unlock'     // 点击解锁
+  | 'unlock_success'   // 解锁成功
+  | 'mode_switch';     // 模式切换
+
+// 用户事件
+export interface UserEvent {
+  type: UserEventType;
+  timestamp: number;
+  metadata?: {
+    curveMode?: CurveMode;
+    isPaid?: boolean;
+    fromMode?: CurveMode;
+    toMode?: CurveMode;
+  };
+}
+
+// 用户分析记录
+export interface UserAnalytics {
+  id: string;                    // 报告ID
+  deviceId: string;              // 设备ID
+  createdAt: number;             // 创建时间
+  // 用户信息
+  name?: string;                 // 姓名
+  gender: Gender;                // 性别
+  birthYear: number;             // 出生年份
+  birthMonth: number;            // 出生月份
+  birthDay: number;              // 出生日期
+  province?: string;             // 省份
+  city?: string;                 // 城市
+  // 报告类型
+  curveMode: CurveMode;          // 曲线类型
+  // 行为记录
+  events: UserEvent[];           // 事件列表
+  // 汇总状态
+  hasViewed: boolean;            // 是否查看
+  hasClickedShare: boolean;      // 是否点击分享
+  hasShared: boolean;            // 是否分享成功
+  hasClickedUnlock: boolean;     // 是否点击解锁
+  hasUnlocked: boolean;          // 是否解锁成功
+  unlockContext?: string;        // 解锁场景描述
 }

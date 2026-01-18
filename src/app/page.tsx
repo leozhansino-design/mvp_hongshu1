@@ -1,26 +1,39 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { BirthForm, AnalysisLoader } from '@/components';
 import Header from '@/components/Header';
-import { generateFreeResult, generatePaidResult } from '@/services/api';
+import { generateFreeResult, generatePaidResult, generateWealthCurve } from '@/services/api';
 import {
   getRemainingUsage,
   incrementUsage,
   saveResult,
   getTotalGeneratedCount,
-  canUseFreeTrial,
 } from '@/services/storage';
-import { BirthInfo, StoredResult } from '@/types';
+import { BirthInfo, StoredResult, CurveMode, CURVE_MODE_LABELS } from '@/types';
+import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
 
-export default function HomePage() {
+// 主页面内容组件
+function HomePageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [remainingUsage, setRemainingUsage] = useState(3);
   const [totalGenerated, setTotalGenerated] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [curveMode, setCurveMode] = useState<CurveMode>('life');
+
+  // 从 URL 读取模式参数
+  useEffect(() => {
+    const modeParam = searchParams.get('mode');
+    if (modeParam === 'wealth') {
+      setCurveMode('wealth');
+    } else if (modeParam === 'life') {
+      setCurveMode('life');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     setRemainingUsage(getRemainingUsage());
@@ -28,61 +41,73 @@ export default function HomePage() {
   }, []);
 
   const handleSubmit = useCallback(async (birthInfo: BirthInfo, isPaid: boolean = false) => {
-    // TODO: 测试完成后恢复次数限制
-    // if (!canUseFreeTrial()) {
-    //   setError('免费次数已用尽，请解锁完整版');
-    //   return;
-    // }
-
     setIsLoading(true);
     setError(null);
 
     try {
       const resultId = uuidv4();
-      let storedResult: StoredResult;
 
-      if (isPaid) {
-        // 精批详解 - 调用付费版API
-        const paidResult = await generatePaidResult(birthInfo);
-        storedResult = {
+      if (curveMode === 'wealth') {
+        // 财富曲线模式
+        const wealthResult = await generateWealthCurve(birthInfo, isPaid);
+
+        // 存储财富曲线结果
+        const storedResult: StoredResult = {
           id: resultId,
           birthInfo,
-          freeResult: paidResult, // 付费结果也存到freeResult字段用于显示
-          paidResult,
-          isPaid: true,
+          isPaid,
           createdAt: Date.now(),
+          wealthResult,
+          curveMode: 'wealth',
         };
+
+        saveResult(storedResult);
+        router.push(`/result/${resultId}?mode=wealth`);
       } else {
-        // 免费概览
-        const freeResult = await generateFreeResult(birthInfo);
-        storedResult = {
-          id: resultId,
-          birthInfo,
-          freeResult,
-          isPaid: false,
-          createdAt: Date.now(),
-        };
+        // 人生曲线模式（原有逻辑）
+        let storedResult: StoredResult;
+
+        if (isPaid) {
+          const paidResult = await generatePaidResult(birthInfo);
+          storedResult = {
+            id: resultId,
+            birthInfo,
+            freeResult: paidResult,
+            paidResult,
+            isPaid: true,
+            createdAt: Date.now(),
+          };
+        } else {
+          const freeResult = await generateFreeResult(birthInfo);
+          storedResult = {
+            id: resultId,
+            birthInfo,
+            freeResult,
+            isPaid: false,
+            createdAt: Date.now(),
+          };
+        }
+
+        incrementUsage();
+        setRemainingUsage(getRemainingUsage());
+        saveResult(storedResult);
+        router.push(`/result/${resultId}`);
       }
-
-      incrementUsage();
-      setRemainingUsage(getRemainingUsage());
-      saveResult(storedResult);
-
-      // 跳转后不再设置 loading 为 false，保持 loading 状态直到页面切换
-      router.push(`/result/${resultId}`);
     } catch (err) {
       console.error('生成失败:', err);
       setError(err instanceof Error ? err.message : '天机运算失败，请稍后再试');
       setIsLoading(false);
     }
-  }, [router]);
+  }, [router, curveMode]);
 
   if (isLoading) {
     return (
       <div className="min-h-screen">
-        <Header />
+        <Header curveMode={curveMode} showModeSelector={false} />
         <div className="flex flex-col items-center justify-center px-4 py-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
-          <AnalysisLoader />
+          <AnalysisLoader
+            messages={curveMode === 'wealth' ? WEALTH_LOADING_MESSAGES : undefined}
+          />
         </div>
       </div>
     );
@@ -90,18 +115,29 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
+      <Header
+        curveMode={curveMode}
+        onModeChange={setCurveMode}
+        showModeSelector={true}
+      />
       <div className="flex flex-col items-center justify-center px-4 py-8 md:py-12" style={{ minHeight: 'calc(100vh - 56px)' }}>
         <div className="text-center mb-6 md:mb-8">
-          <h1 className="font-serif text-3xl md:text-5xl text-gold-gradient mb-2 md:mb-3">
-            人生曲线
+          <h1 className={`font-serif text-3xl md:text-5xl mb-2 md:mb-3 ${
+            curveMode === 'wealth' ? 'text-gold-gradient' : 'text-gold-gradient'
+          }`}>
+            {CURVE_MODE_LABELS[curveMode]}
           </h1>
           <p className="text-text-secondary text-sm md:text-base">
-            探索命运轨迹 · 把握人生节奏
+            {curveMode === 'life'
+              ? '探索命运轨迹 · 把握人生节奏'
+              : '解析财富密码 · 掌握财运周期'
+            }
           </p>
         </div>
 
-        <div className="mystic-card-gold w-full max-w-md">
+        <div className={`mystic-card-gold w-full max-w-md ${
+          curveMode === 'wealth' ? 'border-gold-400/30' : ''
+        }`}>
           <BirthForm
             onSubmit={handleSubmit}
             disabled={isLoading}
@@ -120,5 +156,18 @@ export default function HomePage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// 导出包装组件，使用 Suspense 包裹
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gold-400 animate-pulse">加载中...</div>
+      </div>
+    }>
+      <HomePageContent />
+    </Suspense>
   );
 }

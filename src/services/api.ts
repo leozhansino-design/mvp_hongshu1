@@ -1,5 +1,5 @@
-import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT, BaziForPrompt, DaYunForPrompt } from '@/lib/constants';
-import { FreeVersionResult, PaidVersionResult, BirthInfo, BaziChart } from '@/types';
+import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT, WEALTH_CURVE_PROMPT, BaziForPrompt, DaYunForPrompt } from '@/lib/constants';
+import { FreeVersionResult, PaidVersionResult, BirthInfo, WealthCurveData } from '@/types';
 import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
 
 // 将计算结果转换为prompt格式
@@ -223,7 +223,8 @@ export async function generateFreeResult(
 
 export async function generatePaidResult(
   birthInfo: BirthInfo,
-  config: APIConfig = API_CONFIG
+  config: APIConfig = API_CONFIG,
+  existingFreeResult?: FreeVersionResult // 升级时传入现有数据以保持一致性
 ): Promise<PaidVersionResult> {
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthInfo.year + 1;
@@ -257,7 +258,8 @@ export async function generatePaidResult(
     birthInfo.year,
     baziForPrompt,
     daYunForPrompt,
-    currentAge
+    currentAge,
+    existingFreeResult // 传入现有数据
   );
 
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -368,4 +370,99 @@ export function getPaidPrompt(birthInfo: BirthInfo): string {
     toDaYunForPrompt(daYunResult.daYunList),
     currentAge
   );
+}
+
+// 生成财富曲线
+export async function generateWealthCurve(
+  birthInfo: BirthInfo,
+  isPaid: boolean = false,
+  config: APIConfig = API_CONFIG,
+  existingData?: WealthCurveData // 升级时传入现有数据以保持一致性
+): Promise<WealthCurveData> {
+  // 预计算八字
+  const isLunar = birthInfo.calendarType === 'lunar';
+  const baziResult = calculateBazi(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, isLunar
+  );
+
+  if (!baziResult) {
+    throw new Error('八字计算失败，请检查出生信息');
+  }
+
+  // 预计算大运
+  const daYunResult = calculateDaYun(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+  );
+
+  if (!daYunResult) {
+    throw new Error('大运计算失败，请检查出生信息');
+  }
+
+  const baziForPrompt = toBaziForPrompt(baziResult);
+  const daYunForPrompt = toDaYunForPrompt(daYunResult.daYunList);
+
+  const userPrompt = WEALTH_CURVE_PROMPT(
+    birthInfo.gender,
+    birthInfo.year,
+    baziForPrompt,
+    daYunForPrompt,
+    isPaid,
+    existingData // 传入现有数据
+  );
+
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 20000,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`API错误: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+
+  // 检查是否因长度被截断
+  const finishReason = data.choices[0]?.finish_reason;
+  if (finishReason === 'length') {
+    console.error('响应被截断:', data);
+    throw new Error('AI响应被截断，请重试');
+  }
+
+  const content = data.choices[0]?.message?.content;
+
+  if (!content) {
+    throw new Error('AI未返回有效内容');
+  }
+
+  const aiResult = parseJSONWithRepair(content) as Partial<WealthCurveData>;
+
+  // Debug: 输出AI返回的财富数据
+  console.log('=== 财富曲线AI返回数据 ===');
+  console.log('财富类型:', aiResult.wealthType);
+  console.log('财富范围:', aiResult.wealthRange);
+  console.log('高光时刻:', aiResult.highlights);
+  console.log('数据点数量:', aiResult.dataPoints?.length);
+  console.log('数据点:', aiResult.dataPoints);
+  console.log('========================');
+
+  if (!aiResult.dataPoints || !Array.isArray(aiResult.dataPoints)) {
+    throw new Error('返回数据格式不正确');
+  }
+
+  return aiResult as WealthCurveData;
 }
