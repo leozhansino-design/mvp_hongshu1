@@ -133,6 +133,11 @@ function HomePageContent() {
               : '解析财富密码 · 掌握财运周期'
             }
           </p>
+          {curveMode === 'wealth' && (
+            <p className="text-gold-400/60 text-xs mt-2">
+              已考虑年化2.5%通胀因素，显示未来名义财富值
+            </p>
+          )}
         </div>
 
         <div className={`mystic-card-gold w-full max-w-md ${
