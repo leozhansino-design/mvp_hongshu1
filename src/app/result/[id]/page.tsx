@@ -8,7 +8,7 @@ import UnlockLoader from '@/components/UnlockLoader';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult, generateWealthCurve } from '@/services/api';
 import { calculateDaYun } from '@/lib/bazi';
-import { getOrCreateAnalytics, trackEvent } from '@/services/analytics';
+import { getOrCreateAnalytics, trackEvent, trackPageView, trackButtonClick } from '@/services/analytics';
 import {
   StoredResult,
   PHASE_LABELS,
@@ -300,6 +300,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     if (urlMode === 'wealth') {
       setCurveMode('wealth');
     }
+    // 追踪页面访问（新埋点系统）
+    trackPageView('result', mode);
     // 初始化分析记录并追踪查看事件
     getOrCreateAnalytics(resolvedParams.id, storedResult.birthInfo, mode);
     trackEvent(resolvedParams.id, 'view_report', { curveMode: mode, isPaid: storedResult.isPaid });
@@ -314,7 +316,9 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
   const handleUpgrade = async () => {
     if (!result) return;
-    // 追踪点击解锁事件
+    // 追踪点击解锁事件（新埋点系统）
+    trackButtonClick('unlock', 'result', { curveMode, isPaid: false });
+    // 追踪点击解锁事件（旧分析系统）
     trackEvent(resolvedParams.id, 'click_unlock', { curveMode, isPaid: false });
     setUpgrading(true);
     setUnlockComplete(false);
@@ -371,7 +375,9 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const handleShare = async () => {
     const ref = isWealthMode ? wealthShareRef.current : shareRef.current;
     if (!ref) return;
-    // 追踪点击分享事件
+    // 追踪点击分享事件（新埋点系统）
+    trackButtonClick('share', 'result', { curveMode, isPaid: result?.isPaid });
+    // 追踪点击分享事件（旧分析系统）
     trackEvent(resolvedParams.id, 'click_share', { curveMode, isPaid: result?.isPaid });
     setShareLoading(true);
     try {

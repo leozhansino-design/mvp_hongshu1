@@ -12,6 +12,7 @@ import {
   saveResult,
   getTotalGeneratedCount,
 } from '@/services/storage';
+import { trackPageView, trackButtonClick } from '@/services/analytics';
 import { BirthInfo, StoredResult, CurveMode, CURVE_MODE_LABELS } from '@/types';
 import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
 
@@ -40,9 +41,17 @@ function HomePageContent() {
     setTotalGenerated(getTotalGeneratedCount());
   }, []);
 
+  // 追踪页面访问
+  useEffect(() => {
+    trackPageView('home', curveMode);
+  }, [curveMode]);
+
   const handleSubmit = useCallback(async (birthInfo: BirthInfo, isPaid: boolean = false) => {
     setIsLoading(true);
     setError(null);
+
+    // 追踪表单提交点击
+    trackButtonClick('form_submit', 'home', { curveMode, isPaid });
 
     try {
       const resultId = uuidv4();
