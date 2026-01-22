@@ -8,7 +8,7 @@ import UnlockLoader from '@/components/UnlockLoader';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult, generateWealthCurve } from '@/services/api';
 import { calculateDaYun } from '@/lib/bazi';
-import { getOrCreateAnalytics, trackEvent } from '@/services/analytics';
+import { getOrCreateAnalytics, trackEvent, trackPageView, trackButtonClick } from '@/services/analytics';
 import {
   StoredResult,
   PHASE_LABELS,
@@ -53,11 +53,12 @@ function WealthFunHighlights({
     const goodBaziTerms = ['食伤生财', '财官双美', '偏财入库', '正财透干', '财星得禄'];
     const badBaziTerms = ['比劫夺财', '劫财见财', '枭印夺食', '财星被克', '财库逢冲'];
 
-    // 判断财运等级
-    const isExcellent = peakWealth >= 5000; // 5000万+
-    const isGood = peakWealth >= 1000; // 1000万+
-    const isAverage = peakWealth >= 300; // 300万+
-    // 低于300万视为财运较弱
+    // 判断财运等级 - 考虑通胀后的数字会更高
+    const isExcellent = peakWealth >= 8000; // 8000万+ (考虑通胀)
+    const isGood = peakWealth >= 2000; // 2000万+
+    const isAverage = peakWealth >= 500; // 500万+
+    const isPoor = peakWealth >= 150; // 150万+
+    // 低于150万视为财运很弱
 
     const stories = [];
 
@@ -66,33 +67,39 @@ function WealthFunHighlights({
     if (isExcellent) {
       // 大富大贵
       const term = goodBaziTerms[highlights.peakAge % goodBaziTerms.length];
-      peakContent = `${highlights.peakAge}岁，${term}大运驾临！这一年你将见证什么叫"命中带财"。预计身价冲到${formatWealth(peakWealth)}，可能是创业套现、投资翻倍、或者祖坟冒青烟。建议提前学习如何低调炫富，以及如何回复亲戚的借钱短信~`;
+      peakContent = `${highlights.peakAge}岁，${term}大运驾临！这一年你将见证什么叫"命中带财"。预计身价冲到${formatWealth(peakWealth)}，可能是创业套现、投资翻倍、或者祖坟冒青烟。建议提前学习如何低调炫富，以及如何婉拒亲戚的借钱短信~`;
     } else if (isGood) {
       // 小有成就
       const term = goodBaziTerms[(highlights.peakAge + 1) % goodBaziTerms.length];
-      peakContent = `${highlights.peakAge}岁，${term}格局形成！虽然不至于富可敌国，但${formatWealth(peakWealth)}的身家足够让你在朋友圈里"不经意"晒一晒。至少房贷不用愁，想买的东西不用等双十一~`;
+      peakContent = `${highlights.peakAge}岁，${term}格局形成！虽然不至于富可敌国，但${formatWealth(peakWealth)}的身家足够让你在朋友圈里"不经意"晒一晒。房贷不愁、想买就买，这就是财务自信！`;
     } else if (isAverage) {
       // 普通人的巅峰
       const term = badBaziTerms[highlights.peakAge % badBaziTerms.length];
-      peakContent = `${highlights.peakAge}岁，${term}的命格注定你不是大富大贵的料，但${formatWealth(peakWealth)}也够你在三线城市买个小房子了！人生巅峰可能就是某天发现：诶？卡里的钱够付首付了！虽然不多，但胜在踏实~`;
-    } else {
-      // 财运较弱的有趣描述
+      peakContent = `${highlights.peakAge}岁，虽然命带${term}，但${formatWealth(peakWealth)}也够在二三线城市买房买车了！人生巅峰可能就是某天发现：诶？存款居然有7位数了！平凡但踏实，这才是大多数人的真实人生~`;
+    } else if (isPoor) {
+      // 财运较弱但有趣
       const term = badBaziTerms[(highlights.peakAge + 1) % badBaziTerms.length];
-      peakContent = `${highlights.peakAge}岁，${term}的命格说实话有点拉跨... 人生财富巅峰${formatWealth(peakWealth)}，可能就是存折上第一次出现6位数那天。但换个角度想，你永远不用担心"有钱人的烦恼"，比如该买哪个颜色的法拉利~`;
+      peakContent = `${highlights.peakAge}岁，${term}的命格让你和"暴富"无缘... 人生财富巅峰${formatWealth(peakWealth)}，可能就是存款终于有6位数那天！但换个角度：你不用操心"钱多了怎么花"的烦恼，朋友也不会因为你有钱才来找你，真实~`;
+    } else {
+      // 财运很弱的扎心但有趣描述
+      const term = badBaziTerms[(highlights.peakAge + 2) % badBaziTerms.length];
+      peakContent = `${highlights.peakAge}岁，${term}命格直接把你钉在了"普通人"的赛道上... 巅峰财富${formatWealth(peakWealth)}，说出来可能有点扎心。但hey，钱不是万能的！你省去了"该买宾利还是劳斯莱斯"的纠结，也不用担心有人图你钱财。穷开心也是一种境界！转发此报告，让朋友看看什么叫"真实"~`;
     }
     stories.push({ type: 'peak', age: highlights.peakAge, year: peakYear, content: peakContent });
 
     // 最大增长故事 - 根据实际增长额度调整语气
     const growthAmount = highlights.maxGrowthAmount;
     let growthContent = '';
-    if (growthAmount >= 500) {
-      growthContent = `${highlights.maxGrowthAge}岁是你的"暴富元年"！一年狂赚${formatWealth(growthAmount)}，平均每天进账${Math.floor(growthAmount * 10000 / 365)}块！这种赚钱速度，建议录个vlog，以后可以拍成励志电影《穷小子的逆袭》~`;
-    } else if (growthAmount >= 100) {
-      growthContent = `${highlights.maxGrowthAge}岁，财运小爆发！这一年进账${formatWealth(growthAmount)}，相当于每月多赚${Math.floor(growthAmount / 12 * 10000)}块。虽然不至于财务自由，但至少可以换个新手机不用看价格了~`;
-    } else if (growthAmount >= 30) {
+    if (growthAmount >= 800) {
+      growthContent = `${highlights.maxGrowthAge}岁是你的"暴富元年"！一年狂赚${formatWealth(growthAmount)}，平均每天进账${Math.floor(growthAmount * 10000 / 365)}块！这种赚钱速度，建议录个vlog，以后可以拍成励志电影《逆袭人生》~`;
+    } else if (growthAmount >= 200) {
+      growthContent = `${highlights.maxGrowthAge}岁，财运小爆发！这一年进账${formatWealth(growthAmount)}，相当于每月多赚${Math.floor(growthAmount / 12 * 10000)}块。换个新车不心疼，出去旅游不用看价格~`;
+    } else if (growthAmount >= 50) {
       growthContent = `${highlights.maxGrowthAge}岁，财运有点小意思~年入增加${formatWealth(growthAmount)}，约等于每月多了${Math.floor(growthAmount / 12 * 10000)}块钱。买杯奶茶不用犹豫，吃顿火锅可以加个肥牛！小确幸也是幸~`;
+    } else if (growthAmount >= 10) {
+      growthContent = `${highlights.maxGrowthAge}岁，财运波动约${formatWealth(growthAmount)}... 也就是每月多个${Math.floor(growthAmount / 12 * 10000)}块。好消息是能多吃几顿好的，坏消息是改变不了什么。但稳定也是一种幸福嘛~`;
     } else {
-      growthContent = `${highlights.maxGrowthAge}岁，财运波动约${formatWealth(growthAmount)}...好消息是：你不用担心暴富后朋友变多！坏消息是：你也不用担心。但hey，钱少有钱少的快乐，比如排队不用去VIP窗口~`;
+      growthContent = `${highlights.maxGrowthAge}岁，财运增长${formatWealth(growthAmount)}... 说实话有点惨淡。但换个角度想：你不用担心暴富后朋友变多、亲戚变亲！穷有穷的清净，富有富的烦恼。发给朋友看看，大家一起"穷开心"~`;
     }
     stories.push({ type: 'growth', age: highlights.maxGrowthAge, year: growthYear, content: growthContent });
 
@@ -104,8 +111,10 @@ function WealthFunHighlights({
         lossContent = `${highlights.maxLossAge}岁，血亏警告！可能会"散财"${formatWealth(lossAmount)}，感觉像是钱包被人开了闸门。但命理学讲"破财消灾"，权当给未来交学费了。建议这一年：管住手、捂好钱包、远离亲戚的创业项目~`;
       } else if (lossAmount >= 100) {
         lossContent = `${highlights.maxLossAge}岁，钱包要经历一次"瘦身"，预计缩水${formatWealth(lossAmount)}。可能是冲动消费、投资踩雷、或者被所谓的"好机会"坑了。记住：天上不会掉馅饼，掉的通常是陷阱~`;
-      } else {
+      } else if (lossAmount >= 20) {
         lossContent = `${highlights.maxLossAge}岁，小破财${formatWealth(lossAmount)}。可能是手机掉厕所、车被蹭、或者借钱被"忘还"。钱不多但心塞，就当是给命运交点保护费吧~`;
+      } else {
+        lossContent = `${highlights.maxLossAge}岁，轻微破财${formatWealth(lossAmount)}。好消息是：你本来也没多少钱可以亏的！坏消息是...这也是个坏消息。但塞翁失马焉知非福，说不定避免了一场更大的损失呢~`;
       }
       stories.push({ type: 'loss', age: highlights.maxLossAge, year: lossYear, content: lossContent });
     }
@@ -291,6 +300,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     if (urlMode === 'wealth') {
       setCurveMode('wealth');
     }
+    // 追踪页面访问（新埋点系统）
+    trackPageView('result', mode);
     // 初始化分析记录并追踪查看事件
     getOrCreateAnalytics(resolvedParams.id, storedResult.birthInfo, mode);
     trackEvent(resolvedParams.id, 'view_report', { curveMode: mode, isPaid: storedResult.isPaid });
@@ -305,7 +316,9 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
   const handleUpgrade = async () => {
     if (!result) return;
-    // 追踪点击解锁事件
+    // 追踪点击解锁事件（新埋点系统）
+    trackButtonClick('unlock', 'result', { curveMode, isPaid: false });
+    // 追踪点击解锁事件（旧分析系统）
     trackEvent(resolvedParams.id, 'click_unlock', { curveMode, isPaid: false });
     setUpgrading(true);
     setUnlockComplete(false);
@@ -362,7 +375,9 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const handleShare = async () => {
     const ref = isWealthMode ? wealthShareRef.current : shareRef.current;
     if (!ref) return;
-    // 追踪点击分享事件
+    // 追踪点击分享事件（新埋点系统）
+    trackButtonClick('share', 'result', { curveMode, isPaid: result?.isPaid });
+    // 追踪点击分享事件（旧分析系统）
     trackEvent(resolvedParams.id, 'click_share', { curveMode, isPaid: result?.isPaid });
     setShareLoading(true);
     try {
@@ -544,24 +559,32 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
               <p className="text-text-secondary text-lg">{birthInfo.name ? `${birthInfo.name}` : ''} {birthInfo.year}年生</p>
             </div>
 
-            {/* 有趣的高光文案 - 根据财富水平不同调整语气 */}
+            {/* 有趣的高光文案 - 根据财富水平不同调整语气，低财富也要有趣 */}
             <div className="bg-gold-400/10 border border-gold-400/30 rounded-2xl p-6 mb-6">
               <p className="text-gold-400 text-xl font-medium mb-2">
-                {wealthResult.highlights.peakWealth >= 1000
+                {wealthResult.highlights.peakWealth >= 5000
                   ? `${wealthResult.highlights.peakAge}岁，命中注定的财富巅峰！`
-                  : wealthResult.highlights.peakWealth >= 300
-                    ? `${wealthResult.highlights.peakAge}岁，我的小确幸巅峰~`
-                    : `${wealthResult.highlights.peakAge}岁，我的"巅峰"... 好吧也就那样`
+                  : wealthResult.highlights.peakWealth >= 1000
+                    ? `${wealthResult.highlights.peakAge}岁，我的"小富"巅峰~`
+                    : wealthResult.highlights.peakWealth >= 300
+                      ? `${wealthResult.highlights.peakAge}岁，平凡人的小确幸`
+                      : wealthResult.highlights.peakWealth >= 100
+                        ? `${wealthResult.highlights.peakAge}岁，我的"巅峰"... 扎心了老铁`
+                        : `${wealthResult.highlights.peakAge}岁，我命由天不由我...`
                 }
               </p>
               <p className="text-text-primary text-lg leading-relaxed">
                 {wealthResult.highlights.peakWealth >= 10000
                   ? `预计身价冲到${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿！"钱对我来说只是数字"的凡尔赛日子要来了~`
-                  : wealthResult.highlights.peakWealth >= 1000
-                    ? `预计身价冲到${Math.round(wealthResult.highlights.peakWealth)}万，可以在朋友圈"不经意"炫一下了~`
-                    : wealthResult.highlights.peakWealth >= 300
-                      ? `预计攒到${Math.round(wealthResult.highlights.peakWealth)}万，虽然不多但够买个小房子！平凡也是一种幸福~`
-                      : `预计存款${Math.round(wealthResult.highlights.peakWealth)}万...虽然扎心，但至少不用担心"有钱人的烦恼"，比如买哪辆法拉利~`
+                  : wealthResult.highlights.peakWealth >= 3000
+                    ? `预计身价冲到${Math.round(wealthResult.highlights.peakWealth)}万，可以在朋友圈"不经意"凡尔赛了~`
+                    : wealthResult.highlights.peakWealth >= 1000
+                      ? `预计攒到${Math.round(wealthResult.highlights.peakWealth)}万，房贷不愁、买车不慌，小康生活！`
+                      : wealthResult.highlights.peakWealth >= 300
+                        ? `预计攒到${Math.round(wealthResult.highlights.peakWealth)}万，够在小城市首付买房。平凡的幸福也是幸福~`
+                        : wealthResult.highlights.peakWealth >= 100
+                          ? `预计存款${Math.round(wealthResult.highlights.peakWealth)}万... 虽然不多，但至少不用操心"钱太多花不完"的烦恼！转发让朋友看看什么叫真实~`
+                          : `巅峰存款${Math.round(wealthResult.highlights.peakWealth)}万... 好吧这很扎心。但换个角度：没人会因为你的钱来接近你，都是真爱！转发此图，看看有没有比我更惨的~`
                 }
               </p>
             </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { getAllAnalytics, getAnalyticsSummary, clearAllAnalytics } from '@/services/analytics';
+import { getAllAnalytics, getAnalyticsSummary, clearAllAnalytics, getAdvancedMetrics, AdvancedMetrics } from '@/services/analytics';
 import { UserAnalytics, CurveMode } from '@/types';
 
 // 登录凭证
@@ -19,6 +19,7 @@ export default function AdminPage() {
   const [loginError, setLoginError] = useState('');
   const [analytics, setAnalytics] = useState<UserAnalytics[]>([]);
   const [summary, setSummary] = useState<ReturnType<typeof getAnalyticsSummary> | null>(null);
+  const [advancedMetrics, setAdvancedMetrics] = useState<AdvancedMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
@@ -47,7 +48,15 @@ export default function AdminPage() {
     const data = getAllAnalytics();
     setAnalytics(data);
     setSummary(getAnalyticsSummary());
+    setAdvancedMetrics(getAdvancedMetrics(filterDays));
   };
+
+  // 当筛选天数变化时重新加载高级指标
+  useEffect(() => {
+    if (isAuthenticated) {
+      setAdvancedMetrics(getAdvancedMetrics(filterDays));
+    }
+  }, [filterDays, isAuthenticated]);
 
   // 筛选后的数据
   const filteredAnalytics = useMemo(() => {
@@ -426,6 +435,139 @@ export default function AdminPage() {
               <StatCard label="已分享" value={advancedStats.funnel.shares} icon="📤" color="blue" />
               <StatCard label="分享率" value={`${advancedStats.funnelRates.viewToShareClick}%`} icon="📊" color="blue" />
             </div>
+
+            {/* CTR / 留存 / 付费率 - 新增核心指标 */}
+            {advancedMetrics && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white">核心埋点数据</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* 点击率 CTR */}
+                  <div className="bg-gray-800 rounded-lg p-6">
+                    <h4 className="text-gray-400 text-sm mb-4 flex items-center gap-2">
+                      <span>🎯</span>
+                      <span>点击率 (CTR)</span>
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">表单提交率</span>
+                        <div className="text-right">
+                          <span className="text-xl font-bold text-blue-400">{advancedMetrics.formSubmitCTR}%</span>
+                          <span className="text-gray-500 text-xs ml-2">({advancedMetrics.formSubmitClicks}/{advancedMetrics.homePageViews})</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">分享按钮CTR</span>
+                        <div className="text-right">
+                          <span className="text-xl font-bold text-green-400">{advancedMetrics.shareButtonCTR}%</span>
+                          <span className="text-gray-500 text-xs ml-2">({advancedMetrics.shareButtonClicks}/{advancedMetrics.resultPageViews})</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">解锁按钮CTR</span>
+                        <div className="text-right">
+                          <span className="text-xl font-bold text-yellow-400">{advancedMetrics.unlockButtonCTR}%</span>
+                          <span className="text-gray-500 text-xs ml-2">({advancedMetrics.unlockButtonClicks}/{advancedMetrics.resultPageViews})</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 留存率 */}
+                  <div className="bg-gray-800 rounded-lg p-6">
+                    <h4 className="text-gray-400 text-sm mb-4 flex items-center gap-2">
+                      <span>🔄</span>
+                      <span>留存率</span>
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">次日留存</span>
+                        <span className={`text-xl font-bold ${advancedMetrics.day1Retention >= 20 ? 'text-green-400' : advancedMetrics.day1Retention >= 10 ? 'text-yellow-400' : 'text-red-400'}`}>
+                          {advancedMetrics.day1Retention}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">7日留存</span>
+                        <span className={`text-xl font-bold ${advancedMetrics.day7Retention >= 10 ? 'text-green-400' : advancedMetrics.day7Retention >= 5 ? 'text-yellow-400' : 'text-red-400'}`}>
+                          {advancedMetrics.day7Retention}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">30日留存</span>
+                        <span className={`text-xl font-bold ${advancedMetrics.day30Retention >= 5 ? 'text-green-400' : advancedMetrics.day30Retention >= 2 ? 'text-yellow-400' : 'text-red-400'}`}>
+                          {advancedMetrics.day30Retention}%
+                        </span>
+                      </div>
+                      <div className="pt-2 border-t border-gray-700">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400 text-xs">回访用户</span>
+                          <span className="text-gray-300 text-sm">{advancedMetrics.returningVisitors} ({advancedMetrics.returningRate}%)</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 付费率 */}
+                  <div className="bg-gray-800 rounded-lg p-6">
+                    <h4 className="text-gray-400 text-sm mb-4 flex items-center gap-2">
+                      <span>💰</span>
+                      <span>付费率</span>
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">整体付费率</span>
+                        <span className={`text-xl font-bold ${advancedMetrics.paymentRate >= 5 ? 'text-green-400' : advancedMetrics.paymentRate >= 2 ? 'text-yellow-400' : 'text-red-400'}`}>
+                          {advancedMetrics.paymentRate}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">解锁点击率</span>
+                        <span className="text-xl font-bold text-yellow-400">{advancedMetrics.unlockClickRate}%</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">解锁完成率</span>
+                        <span className="text-xl font-bold text-green-400">{advancedMetrics.unlockCompleteRate}%</span>
+                      </div>
+                      <div className="pt-2 border-t border-gray-700 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400 text-xs">人生曲线付费率</span>
+                          <span className="text-purple-400 text-sm">{advancedMetrics.lifeModePaymentRate}%</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400 text-xs">财富曲线付费率</span>
+                          <span className="text-yellow-400 text-sm">{advancedMetrics.wealthModePaymentRate}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 页面访问统计 */}
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <h4 className="text-gray-400 text-sm mb-4 flex items-center gap-2">
+                    <span>📊</span>
+                    <span>页面访问统计</span>
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">{advancedMetrics.totalPageViews}</div>
+                      <div className="text-gray-400 text-sm">总PV</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-400">{advancedMetrics.uniqueVisitors}</div>
+                      <div className="text-gray-400 text-sm">独立访客UV</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-400">{advancedMetrics.homePageViews}</div>
+                      <div className="text-gray-400 text-sm">首页PV</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-400">{advancedMetrics.resultPageViews}</div>
+                      <div className="text-gray-400 text-sm">结果页PV</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* 关键洞察 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
