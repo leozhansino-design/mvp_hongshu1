@@ -444,14 +444,14 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
           }}
           className={`py-3 text-base font-serif ${points >= 200 ? 'btn-gold' : 'btn-gold opacity-50 cursor-not-allowed'}`}
         >
-          200积分详解
+          精批详解
         </button>
       </div>
 
-      {/* 积分提示 */}
+      {/* 积分不足提示 - 只在积分不够时显示 */}
       {points < 200 && (
         <p className="text-center text-xs text-text-secondary/70 mt-2">
-          精批详解需要200积分，当前积分不足
+          需要200积分解锁精批详解
         </p>
       )}
     </form>
