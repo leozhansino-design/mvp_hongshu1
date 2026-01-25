@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { BirthForm, AnalysisLoader } from '@/components';
+import { BirthForm, AnalysisLoader, UsageStatusBar } from '@/components';
 import Header from '@/components/Header';
 import { generateFreeResult, generatePaidResult, generateWealthCurve } from '@/services/api';
 import {
@@ -163,6 +163,11 @@ function HomePageContent() {
               <p className="text-red-400 text-sm text-center">{error}</p>
             </div>
           )}
+        </div>
+
+        {/* 使用状态栏 - 显示免费次数和积分 */}
+        <div className="w-full max-w-md">
+          <UsageStatusBar />
         </div>
 
         <p className="mt-6 md:mt-8 text-xs md:text-sm text-text-secondary">
