@@ -195,9 +195,19 @@ export default function AdminPage() {
     };
   }, [filteredAnalytics]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      // 同时调用 API 设置服务端 cookie（用于 API 鉴权）
+      try {
+        await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        });
+      } catch {
+        // 忽略错误，继续使用本地验证
+      }
       setIsAuthenticated(true);
       localStorage.setItem(AUTH_KEY, 'true');
       setLoginError('');
@@ -206,7 +216,13 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // 同时调用 API 清除服务端 cookie
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch {
+      // 忽略错误
+    }
     setIsAuthenticated(false);
     localStorage.removeItem(AUTH_KEY);
   };

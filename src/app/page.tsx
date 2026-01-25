@@ -13,15 +13,20 @@ import {
   getTotalGeneratedCount,
 } from '@/services/storage';
 import { trackPageView, trackButtonClick } from '@/services/analytics';
+import { checkUsageStatus, UsageStatus } from '@/lib/device';
 import { BirthInfo, StoredResult, CurveMode, CURVE_MODE_LABELS } from '@/types';
 import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
+
+// 基础统计数（运营初始值）
+const BASE_GENERATED_COUNT = 23847;
 
 // 主页面内容组件
 function HomePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [remainingUsage, setRemainingUsage] = useState(3);
-  const [totalGenerated, setTotalGenerated] = useState(0);
+  const [points, setPoints] = useState(0);
+  const [totalGenerated, setTotalGenerated] = useState(BASE_GENERATED_COUNT);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [curveMode, setCurveMode] = useState<CurveMode>('life');
@@ -37,8 +42,17 @@ function HomePageContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    setRemainingUsage(getRemainingUsage());
-    setTotalGenerated(getTotalGeneratedCount());
+    // 加载本地存储的使用次数（兼容旧数据）
+    const localRemaining = getRemainingUsage();
+    setRemainingUsage(localRemaining);
+    // 总生成数 = 基础数 + 真实数据
+    setTotalGenerated(BASE_GENERATED_COUNT + getTotalGeneratedCount());
+
+    // 从服务器加载使用状态
+    checkUsageStatus().then((status) => {
+      setRemainingUsage(status.freeRemaining);
+      setPoints(status.points);
+    });
   }, []);
 
   // 追踪页面访问
@@ -156,6 +170,7 @@ function HomePageContent() {
             onSubmit={handleSubmit}
             disabled={isLoading}
             remainingUsage={remainingUsage}
+            points={points}
           />
 
           {error && (
@@ -167,7 +182,10 @@ function HomePageContent() {
 
         {/* 使用状态栏 - 显示免费次数和积分 */}
         <div className="w-full max-w-md">
-          <UsageStatusBar />
+          <UsageStatusBar onStatusChange={(status: UsageStatus) => {
+            setRemainingUsage(status.freeRemaining);
+            setPoints(status.points);
+          }} />
         </div>
 
         <p className="mt-6 md:mt-8 text-xs md:text-sm text-text-secondary">
