@@ -3,14 +3,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getAllAnalytics, getAnalyticsSummary, clearAllAnalytics, getAdvancedMetrics, AdvancedMetrics } from '@/services/analytics';
 import { UserAnalytics, CurveMode } from '@/types';
+import KeyManagement from '@/components/admin/KeyManagement';
 
 // 登录凭证
 const ADMIN_USERNAME = 'leozhansino';
 const ADMIN_PASSWORD = 'Dianzi123';
 const AUTH_KEY = 'lc_admin_auth';
 
-// Tab类型
-type TabType = 'overview' | 'users' | 'funnel' | 'demographics' | 'timeline';
+// Tab类型 - 添加卡密管理
+type TabType = 'overview' | 'users' | 'funnel' | 'demographics' | 'timeline' | 'keys';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -358,6 +359,7 @@ export default function AdminPage() {
               { id: 'demographics', label: '用户画像' },
               { id: 'timeline', label: '时间分析' },
               { id: 'users', label: '用户列表' },
+              { id: 'keys', label: '卡密管理' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -993,6 +995,11 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* 卡密管理 Tab */}
+        {activeTab === 'keys' && (
+          <KeyManagement />
         )}
       </div>
     </div>
