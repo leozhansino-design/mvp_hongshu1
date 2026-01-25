@@ -12,3 +12,6 @@ export { default as DetailedDaYunTable } from './DetailedDaYunTable';
 export { default as WealthChart } from './WealthChart';
 export { default as WealthHighlights } from './WealthHighlights';
 export { default as WealthAnalysis } from './WealthAnalysis';
+// 用户功能组件
+export { default as UsageStatusBar } from './UsageStatusBar';
+export { default as RedeemKeyModal } from './RedeemKeyModal';

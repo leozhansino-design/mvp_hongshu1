@@ -9,6 +9,7 @@ interface BirthFormProps {
   onSubmit: (birthInfo: BirthInfo, isPaid?: boolean) => void;
   disabled?: boolean;
   remainingUsage: number;
+  points?: number; // 当前积分
 }
 
 // 十二时辰定义
@@ -27,7 +28,7 @@ const SHI_CHEN_OPTIONS = [
   { value: 21, label: '亥时', time: '21:00-23:00' },
 ];
 
-export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthFormProps) {
+export default function BirthForm({ onSubmit, disabled, remainingUsage, points = 0 }: BirthFormProps) {
   const [name, setName] = useState<string>('');
   const [gender, setGender] = useState<Gender | null>(null);
   const [calendarType, setCalendarType] = useState<CalendarType>('solar');
@@ -400,9 +401,10 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          disabled={!isValid || disabled}
+          disabled={!isValid || disabled || (remainingUsage <= 0 && points < 10)}
           onClick={() => {
             if (!isValid || disabled) return;
+            if (remainingUsage <= 0 && points < 10) return;
             const birthInfo: BirthInfo = {
               name: name || undefined,
               gender: gender!,
@@ -419,13 +421,13 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
           }}
           className="btn-outline py-3 text-base font-serif"
         >
-          免费概览
+          {remainingUsage > 0 ? '免费概览' : '10积分概览'}
         </button>
         <button
           type="button"
-          disabled={!isValid || disabled}
+          disabled={!isValid || disabled || points < 200}
           onClick={() => {
-            if (!isValid || disabled) return;
+            if (!isValid || disabled || points < 200) return;
             const birthInfo: BirthInfo = {
               name: name || undefined,
               gender: gender!,
@@ -440,16 +442,18 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage }: BirthF
             };
             onSubmit(birthInfo, true);
           }}
-          className="btn-gold py-3 text-base font-serif"
+          className={`py-3 text-base font-serif ${points >= 200 ? 'btn-gold' : 'btn-gold opacity-50 cursor-not-allowed'}`}
         >
-          精批详解
+          200积分详解
         </button>
       </div>
 
-      {/* TODO: 测试完成后恢复次数显示 */}
-      <p className="text-center text-sm text-text-secondary mt-3">
-        测试模式 · <span className="text-yellow-400">无限次数</span>
-      </p>
+      {/* 积分提示 */}
+      {points < 200 && (
+        <p className="text-center text-xs text-text-secondary/70 mt-2">
+          精批详解需要200积分，当前积分不足
+        </p>
+      )}
     </form>
   );
 }
