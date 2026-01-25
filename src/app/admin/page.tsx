@@ -4,14 +4,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { getAllAnalytics, getAnalyticsSummary, clearAllAnalytics, getAdvancedMetrics, AdvancedMetrics } from '@/services/analytics';
 import { UserAnalytics, CurveMode } from '@/types';
 import KeyManagement from '@/components/admin/KeyManagement';
+import DeviceManagement from '@/components/admin/DeviceManagement';
 
 // 登录凭证
 const ADMIN_USERNAME = 'leozhansino';
 const ADMIN_PASSWORD = 'Dianzi123';
 const AUTH_KEY = 'lc_admin_auth';
 
-// Tab类型 - 添加卡密管理
-type TabType = 'overview' | 'users' | 'funnel' | 'demographics' | 'timeline' | 'keys';
+// Tab类型 - 添加卡密管理和设备管理
+type TabType = 'overview' | 'users' | 'funnel' | 'demographics' | 'timeline' | 'keys' | 'devices';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -375,6 +376,7 @@ export default function AdminPage() {
               { id: 'demographics', label: '用户画像' },
               { id: 'timeline', label: '时间分析' },
               { id: 'users', label: '用户列表' },
+              { id: 'devices', label: '设备管理' },
               { id: 'keys', label: '卡密管理' },
             ].map(tab => (
               <button
@@ -1011,6 +1013,11 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* 设备管理 Tab */}
+        {activeTab === 'devices' && (
+          <DeviceManagement />
         )}
 
         {/* 卡密管理 Tab */}
