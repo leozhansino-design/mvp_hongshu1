@@ -1,26 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrCreateDevice } from '@/lib/supabase';
 
-const FREE_LIMIT = 3; // 每个设备免费3次
+const FREE_LIMIT = 3; // 每个设备每种曲线免费3次
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const deviceId = searchParams.get('deviceId');
+    const curveMode = searchParams.get('curveMode') || 'life';
 
     if (!deviceId) {
       return NextResponse.json({ error: '缺少设备ID' }, { status: 400 });
     }
 
     const device = await getOrCreateDevice(deviceId);
-    const freeRemaining = Math.max(0, FREE_LIMIT - device.free_used);
+
+    // 根据曲线类型返回对应的免费次数
+    const freeUsedLife = device.free_used || 0;
+    const freeUsedWealth = device.free_used_wealth || 0;
+    const freeUsed = curveMode === 'wealth' ? freeUsedWealth : freeUsedLife;
+    const freeRemaining = Math.max(0, FREE_LIMIT - freeUsed);
 
     return NextResponse.json({
       success: true,
       deviceId: device.device_id,
-      freeUsed: device.free_used,
+      curveMode,
+      freeUsed,
       freeRemaining,
       freeLimit: FREE_LIMIT,
+      // 返回两种曲线的免费次数
+      freeUsedLife,
+      freeRemainingLife: Math.max(0, FREE_LIMIT - freeUsedLife),
+      freeUsedWealth,
+      freeRemainingWealth: Math.max(0, FREE_LIMIT - freeUsedWealth),
       points: device.points,
       canUseFree: freeRemaining > 0,
       canUsePaid: device.points >= 10,
@@ -28,12 +40,16 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Check usage error:', error);
-    // 如果数据库不可用，返回默认值（开发模式）
+    // 如果数据库不可用，返回默认值
     return NextResponse.json({
       success: true,
       freeUsed: 0,
       freeRemaining: FREE_LIMIT,
       freeLimit: FREE_LIMIT,
+      freeUsedLife: 0,
+      freeRemainingLife: FREE_LIMIT,
+      freeUsedWealth: 0,
+      freeRemainingWealth: FREE_LIMIT,
       points: 0,
       canUseFree: true,
       canUsePaid: false,

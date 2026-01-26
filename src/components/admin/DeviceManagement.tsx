@@ -6,6 +6,7 @@ interface Device {
   id: number;
   device_id: string;
   free_used: number;
+  free_used_wealth: number;
   points: number;
   created_at: string;
   updated_at: string;
@@ -284,7 +285,7 @@ export default function DeviceManagement() {
             ) : deviceDetail ? (
               <div className="p-6 space-y-6">
                 {/* 设备概览 */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   <div className="bg-gray-800 rounded-lg p-4">
                     <p className="text-gray-400 text-xs mb-1">当前积分</p>
                     <p className="text-2xl font-bold text-green-400">{deviceDetail.device.points}</p>
@@ -298,8 +299,12 @@ export default function DeviceManagement() {
                     <p className="text-2xl font-bold text-yellow-400">{deviceDetail.device.total_consumed}</p>
                   </div>
                   <div className="bg-gray-800 rounded-lg p-4">
-                    <p className="text-gray-400 text-xs mb-1">免费已用</p>
+                    <p className="text-gray-400 text-xs mb-1">人生曲线免费已用</p>
                     <p className="text-2xl font-bold text-purple-400">{deviceDetail.device.free_used}/3</p>
+                  </div>
+                  <div className="bg-gray-800 rounded-lg p-4">
+                    <p className="text-gray-400 text-xs mb-1">财富曲线免费已用</p>
+                    <p className="text-2xl font-bold text-orange-400">{deviceDetail.device.free_used_wealth || 0}/3</p>
                   </div>
                 </div>
 

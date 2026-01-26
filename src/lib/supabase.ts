@@ -28,7 +28,8 @@ export interface DbKey {
 export interface DbDeviceUsage {
   id: number;
   device_id: string;
-  free_used: number;
+  free_used: number;          // 人生曲线免费已用次数
+  free_used_wealth: number;   // 财富曲线免费已用次数
   points: number;
   created_at: string;
   updated_at: string;
@@ -126,20 +127,27 @@ export async function getOrCreateDevice(deviceId: string): Promise<DbDeviceUsage
   return created as DbDeviceUsage;
 }
 
-// 增加设备使用次数
-export async function incrementDeviceUsage(deviceId: string): Promise<DbDeviceUsage> {
+// 增加设备使用次数（支持按曲线类型分别计数）
+export async function incrementDeviceUsage(deviceId: string, curveMode: 'life' | 'wealth' = 'life'): Promise<DbDeviceUsage> {
   const supabaseAdmin = getSupabaseAdmin();
 
   // 先获取或创建
   const device = await getOrCreateDevice(deviceId);
 
-  // 增加使用次数
+  // 根据曲线类型增加对应的使用次数
+  const updateData: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (curveMode === 'wealth') {
+    updateData.free_used_wealth = (device.free_used_wealth || 0) + 1;
+  } else {
+    updateData.free_used = device.free_used + 1;
+  }
+
   const { data, error } = await supabaseAdmin
     .from('device_usage')
-    .update({
-      free_used: device.free_used + 1,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq('device_id', deviceId)
     .select()
     .single();

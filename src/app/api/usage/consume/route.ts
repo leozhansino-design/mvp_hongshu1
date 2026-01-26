@@ -11,7 +11,7 @@ const FREE_LIMIT = 3;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { deviceId, action, birthInfo, resultId, curveMode } = body;
+    const { deviceId, action, birthInfo, resultId, curveMode = 'life' } = body;
 
     if (!deviceId) {
       return NextResponse.json({ error: '缺少设备ID' }, { status: 400 });
@@ -22,14 +22,19 @@ export async function POST(request: NextRequest) {
     }
 
     const device = await getOrCreateDevice(deviceId);
-    const freeRemaining = Math.max(0, FREE_LIMIT - device.free_used);
+
+    // 根据曲线类型获取对应的免费已用次数
+    const freeUsed = curveMode === 'wealth'
+      ? (device.free_used_wealth || 0)
+      : (device.free_used || 0);
+    const freeRemaining = Math.max(0, FREE_LIMIT - freeUsed);
 
     // 根据操作类型处理
     if (action === 'free_overview') {
       // 免费概览
       if (freeRemaining > 0) {
-        // 使用免费次数
-        await incrementDeviceUsage(deviceId);
+        // 使用免费次数（按曲线类型分别计数）
+        await incrementDeviceUsage(deviceId, curveMode);
         await logUsage({
           deviceId,
           action: 'free_overview',
@@ -47,7 +52,8 @@ export async function POST(request: NextRequest) {
         });
       } else if (device.points >= 10) {
         // 用积分
-        const result = await consumePoints(deviceId, 10, '免费概览（积分）');
+        const modeLabel = curveMode === 'wealth' ? '财富曲线' : '人生曲线';
+        const result = await consumePoints(deviceId, 10, `${modeLabel}概览（积分）`);
         if (!result.success) {
           return NextResponse.json({ error: result.error }, { status: 400 });
         }
