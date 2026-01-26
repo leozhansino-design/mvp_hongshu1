@@ -7,13 +7,11 @@ import { BirthForm, AnalysisLoader, UsageStatusBar } from '@/components';
 import Header from '@/components/Header';
 import { generateFreeResult, generatePaidResult, generateWealthCurve } from '@/services/api';
 import {
-  getRemainingUsage,
-  incrementUsage,
   saveResult,
   getTotalGeneratedCount,
 } from '@/services/storage';
 import { trackPageView, trackButtonClick } from '@/services/analytics';
-import { checkUsageStatus, UsageStatus } from '@/lib/device';
+import { checkUsageStatus, consumeUsage, UsageStatus } from '@/lib/device';
 import { BirthInfo, StoredResult, CurveMode, CURVE_MODE_LABELS } from '@/types';
 import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
 
@@ -41,19 +39,27 @@ function HomePageContent() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    // 加载本地存储的使用次数（兼容旧数据）
-    const localRemaining = getRemainingUsage();
-    setRemainingUsage(localRemaining);
-    // 总生成数 = 基础数 + 真实数据
-    setTotalGenerated(BASE_GENERATED_COUNT + getTotalGeneratedCount());
-
-    // 从服务器加载使用状态
-    checkUsageStatus().then((status) => {
-      setRemainingUsage(status.freeRemaining);
+  // 刷新使用状态（从服务器加载）
+  const refreshUsageStatus = useCallback(async (mode: CurveMode) => {
+    try {
+      const status = await checkUsageStatus(mode);
+      // 根据当前曲线类型显示对应的免费次数
+      if (mode === 'wealth') {
+        setRemainingUsage(status.freeRemainingWealth);
+      } else {
+        setRemainingUsage(status.freeRemainingLife);
+      }
       setPoints(status.points);
-    });
+    } catch (err) {
+      console.error('Failed to refresh usage status:', err);
+    }
   }, []);
+
+  // 初始加载 + 曲线模式变化时刷新
+  useEffect(() => {
+    setTotalGenerated(BASE_GENERATED_COUNT + getTotalGeneratedCount());
+    refreshUsageStatus(curveMode);
+  }, [curveMode, refreshUsageStatus]);
 
   // 追踪页面访问
   useEffect(() => {
@@ -69,6 +75,21 @@ function HomePageContent() {
 
     try {
       const resultId = uuidv4();
+
+      // 先消耗使用次数/积分（服务端扣费）
+      const action = isPaid ? 'detailed' : 'free_overview';
+      const consumeResult = await consumeUsage(
+        action,
+        birthInfo as unknown as Record<string, unknown>,
+        resultId,
+        curveMode
+      );
+
+      if (!consumeResult.success) {
+        setError(consumeResult.error || '使用次数/积分不足');
+        setIsLoading(false);
+        return;
+      }
 
       if (curveMode === 'wealth') {
         // 财富曲线模式
@@ -87,7 +108,7 @@ function HomePageContent() {
         saveResult(storedResult);
         router.push(`/result/${resultId}?mode=wealth`);
       } else {
-        // 人生曲线模式（原有逻辑）
+        // 人生曲线模式
         let storedResult: StoredResult;
 
         if (isPaid) {
@@ -111,17 +132,20 @@ function HomePageContent() {
           };
         }
 
-        incrementUsage();
-        setRemainingUsage(getRemainingUsage());
         saveResult(storedResult);
         router.push(`/result/${resultId}`);
       }
+
+      // 刷新使用状态（在后台刷新，不阻塞跳转）
+      refreshUsageStatus(curveMode);
     } catch (err) {
       console.error('生成失败:', err);
       setError(err instanceof Error ? err.message : '天机运算失败，请稍后再试');
       setIsLoading(false);
+      // 生成失败时也刷新状态（扣费已成功但生成失败的情况）
+      refreshUsageStatus(curveMode);
     }
-  }, [router, curveMode]);
+  }, [router, curveMode, refreshUsageStatus]);
 
   if (isLoading) {
     return (
@@ -182,10 +206,17 @@ function HomePageContent() {
 
         {/* 使用状态栏 - 显示免费次数和积分 */}
         <div className="w-full max-w-md">
-          <UsageStatusBar onStatusChange={(status: UsageStatus) => {
-            setRemainingUsage(status.freeRemaining);
-            setPoints(status.points);
-          }} />
+          <UsageStatusBar
+            curveMode={curveMode}
+            onStatusChange={(status: UsageStatus) => {
+              if (curveMode === 'wealth') {
+                setRemainingUsage(status.freeRemainingWealth);
+              } else {
+                setRemainingUsage(status.freeRemainingLife);
+              }
+              setPoints(status.points);
+            }}
+          />
         </div>
 
         <p className="mt-6 md:mt-8 text-xs md:text-sm text-text-secondary">

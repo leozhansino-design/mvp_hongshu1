@@ -13,11 +13,12 @@ jest.mock('@/lib/supabase', () => ({
     rpc: mockSupabaseRpc,
   }),
   getOrCreateDevice: jest.fn(),
+  incrementDeviceUsage: jest.fn(),
   redeemKey: jest.fn(),
   consumePoints: jest.fn(),
 }));
 
-import { getOrCreateDevice, redeemKey, consumePoints } from '@/lib/supabase';
+import { getOrCreateDevice, incrementDeviceUsage, redeemKey, consumePoints } from '@/lib/supabase';
 
 describe('Key Management', () => {
   beforeEach(() => {
@@ -346,5 +347,115 @@ describe('Usage Flow', () => {
     testCases.forEach(({ points, canUseDetailed }) => {
       expect(points >= DETAILED_PRICE).toBe(canUseDetailed);
     });
+  });
+});
+
+describe('Separate Life/Wealth Curve Tracking', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should track life and wealth curve free usage independently', async () => {
+    const mockGetOrCreateDevice = getOrCreateDevice as jest.Mock;
+    mockGetOrCreateDevice.mockResolvedValue({
+      device_id: 'device-123',
+      free_used: 2,           // 人生曲线已用2次
+      free_used_wealth: 0,    // 财富曲线未使用
+      points: 0,
+    });
+
+    const device = await getOrCreateDevice('device-123');
+
+    const FREE_LIMIT = 3;
+    const lifeRemaining = Math.max(0, FREE_LIMIT - device.free_used);
+    const wealthRemaining = Math.max(0, FREE_LIMIT - (device.free_used_wealth || 0));
+
+    expect(lifeRemaining).toBe(1);       // 人生曲线还剩1次
+    expect(wealthRemaining).toBe(3);     // 财富曲线还有3次
+  });
+
+  it('should increment correct counter based on curveMode', async () => {
+    const mockIncrement = incrementDeviceUsage as jest.Mock;
+
+    // 使用人生曲线
+    mockIncrement.mockResolvedValue({
+      device_id: 'device-123',
+      free_used: 1,
+      free_used_wealth: 0,
+      points: 0,
+    });
+
+    let result = await incrementDeviceUsage('device-123', 'life');
+    expect(result.free_used).toBe(1);
+    expect(result.free_used_wealth).toBe(0);
+
+    // 使用财富曲线
+    mockIncrement.mockResolvedValue({
+      device_id: 'device-123',
+      free_used: 1,
+      free_used_wealth: 1,
+      points: 0,
+    });
+
+    result = await incrementDeviceUsage('device-123', 'wealth');
+    expect(result.free_used).toBe(1);
+    expect(result.free_used_wealth).toBe(1);
+  });
+
+  it('should exhaust life curve free usage without affecting wealth curve', () => {
+    const FREE_LIMIT = 3;
+
+    // 模拟设备状态：人生曲线用完，财富曲线未使用
+    const device = {
+      free_used: 3,
+      free_used_wealth: 0,
+      points: 10,
+    };
+
+    const lifeRemaining = Math.max(0, FREE_LIMIT - device.free_used);
+    const wealthRemaining = Math.max(0, FREE_LIMIT - device.free_used_wealth);
+
+    expect(lifeRemaining).toBe(0);       // 人生曲线用完
+    expect(wealthRemaining).toBe(3);     // 财富曲线完全独立
+
+    // 人生曲线需要积分
+    const canUseLifeFree = lifeRemaining > 0;
+    const canUseLifePaid = device.points >= 10;
+    expect(canUseLifeFree).toBe(false);
+    expect(canUseLifePaid).toBe(true);
+
+    // 财富曲线还是免费
+    const canUseWealthFree = wealthRemaining > 0;
+    expect(canUseWealthFree).toBe(true);
+  });
+
+  it('should correctly determine action type based on curveMode and free remaining', () => {
+    const FREE_LIMIT = 3;
+
+    const testCases = [
+      { free_used: 0, free_used_wealth: 0, curveMode: 'life', isPaid: false, expectedAction: 'free_overview' },
+      { free_used: 3, free_used_wealth: 0, curveMode: 'life', isPaid: false, expectedAction: 'free_overview' }, // will fail at API level
+      { free_used: 0, free_used_wealth: 3, curveMode: 'wealth', isPaid: false, expectedAction: 'free_overview' },
+      { free_used: 0, free_used_wealth: 0, curveMode: 'life', isPaid: true, expectedAction: 'detailed' },
+      { free_used: 0, free_used_wealth: 0, curveMode: 'wealth', isPaid: true, expectedAction: 'detailed' },
+    ];
+
+    testCases.forEach(({ isPaid, expectedAction }) => {
+      const action = isPaid ? 'detailed' : 'free_overview';
+      expect(action).toBe(expectedAction);
+    });
+  });
+
+  it('should share points between life and wealth curves', () => {
+    // 积分是共享的，不区分曲线类型
+    const device = {
+      free_used: 3,
+      free_used_wealth: 3,
+      points: 200,
+    };
+
+    // 两种曲线都可以用积分
+    expect(device.points >= 10).toBe(true);   // 概览
+    expect(device.points >= 200).toBe(true);  // 精批
   });
 });

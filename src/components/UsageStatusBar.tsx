@@ -5,17 +5,18 @@ import { checkUsageStatus, UsageStatus } from '@/lib/device';
 import RedeemKeyModal from './RedeemKeyModal';
 
 interface UsageStatusBarProps {
+  curveMode?: 'life' | 'wealth';
   onStatusChange?: (status: UsageStatus) => void;
 }
 
-export default function UsageStatusBar({ onStatusChange }: UsageStatusBarProps) {
+export default function UsageStatusBar({ curveMode = 'life', onStatusChange }: UsageStatusBarProps) {
   const [status, setStatus] = useState<UsageStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
 
   const loadStatus = async () => {
     try {
-      const usageStatus = await checkUsageStatus();
+      const usageStatus = await checkUsageStatus(curveMode);
       setStatus(usageStatus);
       onStatusChange?.(usageStatus);
     } catch (error) {
@@ -27,7 +28,7 @@ export default function UsageStatusBar({ onStatusChange }: UsageStatusBarProps) 
 
   useEffect(() => {
     loadStatus();
-  }, []);
+  }, [curveMode]);
 
   const handleRedeemSuccess = () => {
     loadStatus();
@@ -45,6 +46,13 @@ export default function UsageStatusBar({ onStatusChange }: UsageStatusBarProps) 
     return null;
   }
 
+  // 当前曲线类型的免费次数
+  const currentFreeRemaining = curveMode === 'wealth'
+    ? status.freeRemainingWealth
+    : status.freeRemainingLife;
+
+  const modeLabel = curveMode === 'wealth' ? '财富曲线' : '人生曲线';
+
   return (
     <>
       <div className="mt-6 p-4 rounded-lg bg-mystic-800/50 border border-gray-700">
@@ -52,15 +60,15 @@ export default function UsageStatusBar({ onStatusChange }: UsageStatusBarProps) 
           {/* 免费次数 */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-text-secondary text-sm">剩余免费次数：</span>
-              <span className={`font-mono font-bold ${status.freeRemaining > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {status.freeRemaining}次
+              <span className="text-text-secondary text-sm">{modeLabel}免费：</span>
+              <span className={`font-mono font-bold ${currentFreeRemaining > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {currentFreeRemaining}次
               </span>
             </div>
 
             {/* 积分显示 */}
             <div className="flex items-center gap-2">
-              <span className="text-text-secondary text-sm">当前积分：</span>
+              <span className="text-text-secondary text-sm">积分：</span>
               <span className={`font-mono font-bold ${status.points > 0 ? 'text-gold-400' : 'text-gray-400'}`}>
                 {status.points}
               </span>
@@ -77,18 +85,18 @@ export default function UsageStatusBar({ onStatusChange }: UsageStatusBarProps) 
         </div>
 
         {/* 提示信息 */}
-        {status.freeRemaining === 0 && status.points < 10 && (
+        {currentFreeRemaining === 0 && status.points < 10 && (
           <div className="mt-3 pt-3 border-t border-gray-700">
             <p className="text-red-400/80 text-xs">
-              免费次数已用完，请兑换卡密获取积分继续使用
+              {modeLabel}免费次数已用完，请兑换卡密获取积分继续使用
             </p>
           </div>
         )}
 
-        {status.freeRemaining === 0 && status.points >= 10 && status.points < 50 && (
+        {currentFreeRemaining === 0 && status.points >= 10 && status.points < 200 && (
           <div className="mt-3 pt-3 border-t border-gray-700">
             <p className="text-yellow-400/80 text-xs">
-              免费次数已用完，将消耗 10 积分生成报告
+              {modeLabel}免费次数已用完，将消耗 10 积分生成报告
             </p>
           </div>
         )}

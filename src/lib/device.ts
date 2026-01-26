@@ -30,14 +30,17 @@ export interface UsageStatus {
   freeUsed: number;
   freeRemaining: number;
   freeLimit: number;
+  // 分曲线类型的免费次数
+  freeRemainingLife: number;
+  freeRemainingWealth: number;
   points: number;
   canUseFree: boolean;
   canUsePaid: boolean;
   canUseDetailed: boolean;
 }
 
-// 检查使用情况
-export async function checkUsageStatus(): Promise<UsageStatus> {
+// 检查使用情况（支持按曲线类型查询）
+export async function checkUsageStatus(curveMode: 'life' | 'wealth' = 'life'): Promise<UsageStatus> {
   const deviceId = getDeviceId();
 
   if (!deviceId) {
@@ -45,6 +48,8 @@ export async function checkUsageStatus(): Promise<UsageStatus> {
       freeUsed: 0,
       freeRemaining: 3,
       freeLimit: 3,
+      freeRemainingLife: 3,
+      freeRemainingWealth: 3,
       points: 0,
       canUseFree: true,
       canUsePaid: false,
@@ -53,7 +58,7 @@ export async function checkUsageStatus(): Promise<UsageStatus> {
   }
 
   try {
-    const response = await fetch(`/api/usage/check?deviceId=${encodeURIComponent(deviceId)}`);
+    const response = await fetch(`/api/usage/check?deviceId=${encodeURIComponent(deviceId)}&curveMode=${curveMode}`);
     const data = await response.json();
 
     if (data.success) {
@@ -61,6 +66,8 @@ export async function checkUsageStatus(): Promise<UsageStatus> {
         freeUsed: data.freeUsed,
         freeRemaining: data.freeRemaining,
         freeLimit: data.freeLimit,
+        freeRemainingLife: data.freeRemainingLife ?? data.freeRemaining,
+        freeRemainingWealth: data.freeRemainingWealth ?? data.freeRemaining,
         points: data.points,
         canUseFree: data.canUseFree,
         canUsePaid: data.canUsePaid,
@@ -76,6 +83,8 @@ export async function checkUsageStatus(): Promise<UsageStatus> {
     freeUsed: 0,
     freeRemaining: 3,
     freeLimit: 3,
+    freeRemainingLife: 3,
+    freeRemainingWealth: 3,
     points: 0,
     canUseFree: true,
     canUsePaid: false,
@@ -89,7 +98,7 @@ export async function consumeUsage(
   birthInfo?: Record<string, unknown>,
   resultId?: string,
   curveMode?: 'life' | 'wealth'
-): Promise<{ success: boolean; error?: string; type?: string; points?: number }> {
+): Promise<{ success: boolean; error?: string; type?: string; points?: number; freeRemaining?: number }> {
   const deviceId = getDeviceId();
 
   if (!deviceId) {
@@ -119,6 +128,7 @@ export async function consumeUsage(
       success: true,
       type: data.type,
       points: data.points,
+      freeRemaining: data.freeRemaining,
     };
   } catch (error) {
     console.error('Failed to consume usage:', error);

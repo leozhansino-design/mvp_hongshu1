@@ -50,7 +50,8 @@ CREATE INDEX IF NOT EXISTS idx_keys_key_code ON keys(key_code);
 CREATE TABLE IF NOT EXISTS device_usage (
   id              SERIAL PRIMARY KEY,
   device_id       TEXT UNIQUE NOT NULL,      -- 设备ID
-  free_used       INTEGER DEFAULT 0,         -- 已用免费次数
+  free_used       INTEGER DEFAULT 0,         -- 已用免费次数（人生曲线）
+  free_used_wealth INTEGER DEFAULT 0,        -- 已用免费次数（财富曲线）
   points          INTEGER DEFAULT 0,         -- 设备积分（未登录时）
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW()
