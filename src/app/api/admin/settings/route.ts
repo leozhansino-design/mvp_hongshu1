@@ -16,7 +16,7 @@ export async function GET(_request: NextRequest) {
   }
 
   try {
-    const options = await getRechargeOptions();
+    const options = await getRechargeOptions(false);
 
     return NextResponse.json({
       success: true,

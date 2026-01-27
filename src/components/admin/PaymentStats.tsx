@@ -31,7 +31,7 @@ export default function PaymentStats() {
         throw new Error(data.error || '获取统计数据失败');
       }
 
-      setStats(data);
+      setStats(data.stats);
     } catch (err) {
       console.error('Failed to fetch stats:', err);
       setError(err instanceof Error ? err.message : '获取统计数据失败');

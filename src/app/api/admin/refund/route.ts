@@ -21,7 +21,8 @@ export async function POST(request: NextRequest) {
     const { orderId, password } = await request.json();
 
     // 验证管理员密码
-    if (password !== process.env.ADMIN_PASSWORD) {
+    const adminPassword = process.env.ADMIN_PASSWORD || 'Dianzi123';
+    if (password !== adminPassword) {
       return NextResponse.json({ error: '密码错误' }, { status: 403 });
     }
 

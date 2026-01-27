@@ -59,11 +59,11 @@ export default function RechargeModal({
 
     const loadOptions = async () => {
       try {
-        const res = await fetch('/api/admin/settings');
+        const res = await fetch('/api/pay/options');
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.rechargeOptions) && data.rechargeOptions.length > 0) {
-            setOptions(data.rechargeOptions);
+          if (Array.isArray(data.options) && data.options.length > 0) {
+            setOptions(data.options);
           }
         }
       } catch {

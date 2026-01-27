@@ -440,6 +440,8 @@ export async function getOrderStats(): Promise<{
   todayOrders: number;
   totalRevenue: number;
   totalOrders: number;
+  paidOrders: number;
+  totalRefunded: number;
   totalUsers: number;
 }> {
   const supabaseAdmin = getSupabaseAdmin();
@@ -465,15 +467,31 @@ export async function getOrderStats(): Promise<{
     paid_at: string | null;
   }>;
 
+  // 查询所有已退款的订单
+  const { data: refundedOrders } = await supabaseAdmin
+    .from('orders')
+    .select('refund_amount')
+    .eq('status', 'refunded');
+
+  const totalRefunded = (refundedOrders || []).reduce(
+    (sum, o: { refund_amount: number | null }) => sum + (o.refund_amount || 0),
+    0
+  );
+
+  // 查询总订单数（所有状态）
+  const { count: allOrderCount } = await supabaseAdmin
+    .from('orders')
+    .select('*', { count: 'exact', head: true });
+
   // 计算今日订单和收入
   const todayOrders = orders.filter(
     (o) => o.paid_at && o.paid_at >= todayStartISO
   );
   const todayRevenue = todayOrders.reduce((sum, o) => sum + o.amount, 0);
 
-  // 计算总收入和总订单数
+  // 计算总收入和已支付订单数
   const totalRevenue = orders.reduce((sum, o) => sum + o.amount, 0);
-  const totalOrders = orders.length;
+  const paidOrders = orders.length;
 
   // 计算独立用户数（按设备去重）
   const uniqueDevices = new Set(orders.map((o) => o.device_id));
@@ -483,20 +501,27 @@ export async function getOrderStats(): Promise<{
     todayRevenue,
     todayOrders: todayOrders.length,
     totalRevenue,
-    totalOrders,
+    totalOrders: allOrderCount || 0,
+    paidOrders,
+    totalRefunded,
     totalUsers,
   };
 }
 
-// 获取所有启用的充值选项（按排序字段排序）
-export async function getRechargeOptions(): Promise<DbRechargeOption[]> {
+// 获取充值选项（按排序字段排序）
+// activeOnly: true 只返回启用的（用于前端用户），false 返回全部（用于管理后台）
+export async function getRechargeOptions(activeOnly = true): Promise<DbRechargeOption[]> {
   const supabaseAdmin = getSupabaseAdmin();
 
-  const { data, error } = await supabaseAdmin
+  let query = supabaseAdmin
     .from('recharge_options')
-    .select('*')
-    .eq('is_active', true)
-    .order('sort_order', { ascending: true });
+    .select('*');
+
+  if (activeOnly) {
+    query = query.eq('is_active', true);
+  }
+
+  const { data, error } = await query.order('sort_order', { ascending: true });
 
   if (error) {
     throw new Error(`获取充值选项失败: ${error.message}`);
@@ -507,7 +532,7 @@ export async function getRechargeOptions(): Promise<DbRechargeOption[]> {
 
 // 更新充值选项（删除旧选项并插入新选项）
 export async function updateRechargeOptions(
-  options: Array<{ price: number; points: number }>
+  options: Array<{ price: number; points: number; sort_order?: number; is_active?: boolean }>
 ): Promise<DbRechargeOption[]> {
   const supabaseAdmin = getSupabaseAdmin();
 
@@ -521,12 +546,12 @@ export async function updateRechargeOptions(
     throw new Error(`删除旧充值选项失败: ${deleteError.message}`);
   }
 
-  // 插入新选项，设置递增的排序顺序
+  // 插入新选项
   const newOptions = options.map((opt, index) => ({
     price: opt.price,
     points: opt.points,
-    sort_order: index + 1,
-    is_active: true,
+    sort_order: opt.sort_order ?? (index + 1),
+    is_active: opt.is_active ?? true,
   }));
 
   const { data, error: insertError } = await supabaseAdmin
