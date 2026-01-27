@@ -136,36 +136,3 @@ export async function consumeUsage(
   }
 }
 
-// 兑换卡密
-export async function redeemKeyCode(
-  keyCode: string
-): Promise<{ success: boolean; error?: string; pointsAdded?: number; totalPoints?: number }> {
-  const deviceId = getDeviceId();
-
-  if (!deviceId) {
-    return { success: false, error: '设备ID无效' };
-  }
-
-  try {
-    const response = await fetch('/api/keys/redeem', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keyCode, deviceId }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return { success: false, error: data.error || '兑换失败' };
-    }
-
-    return {
-      success: true,
-      pointsAdded: data.pointsAdded,
-      totalPoints: data.totalPoints,
-    };
-  } catch (error) {
-    console.error('Failed to redeem key:', error);
-    return { success: false, error: '网络错误' };
-  }
-}

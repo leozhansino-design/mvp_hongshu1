@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { BirthForm, AnalysisLoader, UsageStatusBar } from '@/components';
+import { BirthForm, AnalysisLoader, UsageStatusBar, Footer } from '@/components';
 import Header from '@/components/Header';
 import { generateFreeResult, generatePaidResult, generateWealthCurve } from '@/services/api';
 import {
@@ -223,6 +223,7 @@ function HomePageContent() {
           已有 <span className="text-gold-400 font-mono">{totalGenerated.toLocaleString()}</span> 人生成过命盘报告
         </p>
       </div>
+      <Footer />
     </div>
   );
 }

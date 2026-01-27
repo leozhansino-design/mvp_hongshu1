@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       points: device.points,
       canUseFree: freeRemaining > 0,
       canUsePaid: device.points >= 10,
-      canUseDetailed: device.points >= 200,
+      canUseDetailed: device.points >= 50,
     });
   } catch (error) {
     console.error('Check usage error:', error);

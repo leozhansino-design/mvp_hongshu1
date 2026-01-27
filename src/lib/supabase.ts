@@ -13,17 +13,6 @@ export interface DbUser {
   last_login_at: string | null;
 }
 
-export interface DbKey {
-  id: number;
-  key_code: string;
-  points: number;
-  status: 'unused' | 'used' | 'disabled';
-  created_at: string;
-  used_at: string | null;
-  used_by: string | null;
-  used_by_device: string | null;
-  used_by_info: string | null;
-}
 
 export interface DbDeviceUsage {
   id: number;
@@ -59,20 +48,6 @@ export interface DbUsageLog {
   created_at: string;
 }
 
-export interface KeysStats {
-  unused_count: number;
-  used_count: number;
-  disabled_count: number;
-  total_count: number;
-  total_points_used: number;
-  total_points_unused: number;
-  unused_10: number;
-  used_10: number;
-  unused_200: number;
-  used_200: number;
-  unused_1000: number;
-  used_1000: number;
-}
 
 // 客户端 Supabase 实例（公开的，用于客户端）
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -157,184 +132,6 @@ export async function incrementDeviceUsage(deviceId: string, curveMode: 'life' |
   }
 
   return data as DbDeviceUsage;
-}
-
-// ============================================
-// 卡密相关操作
-// ============================================
-
-// 生成卡密
-export async function generateKeys(points: number, count: number): Promise<string[]> {
-  const supabaseAdmin = getSupabaseAdmin();
-
-  const { data, error } = await supabaseAdmin.rpc('batch_generate_keys', {
-    p_points: points,
-    p_count: count,
-  });
-
-  if (error) {
-    throw new Error(`Failed to generate keys: ${error.message}`);
-  }
-
-  return (data as { key_code: string }[]).map((k) => k.key_code);
-}
-
-// 获取卡密列表
-export async function getKeys(options: {
-  status?: 'unused' | 'used' | 'disabled' | 'all';
-  points?: number;
-  page?: number;
-  pageSize?: number;
-}): Promise<{ keys: DbKey[]; total: number }> {
-  const supabaseAdmin = getSupabaseAdmin();
-  const { status = 'all', points, page = 1, pageSize = 50 } = options;
-
-  let query = supabaseAdmin.from('keys').select('*', { count: 'exact' });
-
-  if (status !== 'all') {
-    query = query.eq('status', status);
-  }
-
-  if (points) {
-    query = query.eq('points', points);
-  }
-
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-
-  const { data, error, count } = await query
-    .order('created_at', { ascending: false })
-    .range(from, to);
-
-  if (error) {
-    throw new Error(`Failed to get keys: ${error.message}`);
-  }
-
-  return {
-    keys: (data as DbKey[]) || [],
-    total: count || 0,
-  };
-}
-
-// 获取卡密统计
-export async function getKeysStats(): Promise<KeysStats> {
-  const supabaseAdmin = getSupabaseAdmin();
-
-  const { data, error } = await supabaseAdmin.from('keys_stats').select('*').single();
-
-  if (error) {
-    // 如果视图不存在，手动计算
-    const { data: keys } = await supabaseAdmin.from('keys').select('status, points');
-    const allKeys = (keys as DbKey[]) || [];
-
-    return {
-      unused_count: allKeys.filter((k) => k.status === 'unused').length,
-      used_count: allKeys.filter((k) => k.status === 'used').length,
-      disabled_count: allKeys.filter((k) => k.status === 'disabled').length,
-      total_count: allKeys.length,
-      total_points_used: allKeys
-        .filter((k) => k.status === 'used')
-        .reduce((sum, k) => sum + k.points, 0),
-      total_points_unused: allKeys
-        .filter((k) => k.status === 'unused')
-        .reduce((sum, k) => sum + k.points, 0),
-      unused_10: allKeys.filter((k) => k.points === 10 && k.status === 'unused').length,
-      used_10: allKeys.filter((k) => k.points === 10 && k.status === 'used').length,
-      unused_200: allKeys.filter((k) => k.points === 200 && k.status === 'unused').length,
-      used_200: allKeys.filter((k) => k.points === 200 && k.status === 'used').length,
-      unused_1000: allKeys.filter((k) => k.points === 1000 && k.status === 'unused').length,
-      used_1000: allKeys.filter((k) => k.points === 1000 && k.status === 'used').length,
-    };
-  }
-
-  return data as KeysStats;
-}
-
-// 禁用卡密
-export async function disableKey(keyCode: string): Promise<boolean> {
-  const supabaseAdmin = getSupabaseAdmin();
-
-  const { error } = await supabaseAdmin
-    .from('keys')
-    .update({ status: 'disabled' })
-    .eq('key_code', keyCode)
-    .eq('status', 'unused');
-
-  if (error) {
-    throw new Error(`Failed to disable key: ${error.message}`);
-  }
-
-  return true;
-}
-
-// 兑换卡密
-export async function redeemKey(
-  keyCode: string,
-  deviceId: string,
-  userId?: string
-): Promise<{ success: boolean; points?: number; error?: string }> {
-  const supabaseAdmin = getSupabaseAdmin();
-
-  // 查找卡密
-  const { data: key, error: keyError } = await supabaseAdmin
-    .from('keys')
-    .select('*')
-    .eq('key_code', keyCode.toUpperCase())
-    .single();
-
-  if (keyError || !key) {
-    return { success: false, error: '卡密无效' };
-  }
-
-  if (key.status === 'used') {
-    return { success: false, error: '卡密已被使用' };
-  }
-
-  if (key.status === 'disabled') {
-    return { success: false, error: '卡密已作废' };
-  }
-
-  const dbKey = key as DbKey;
-
-  // 更新卡密状态
-  const { error: updateError } = await supabaseAdmin
-    .from('keys')
-    .update({
-      status: 'used',
-      used_at: new Date().toISOString(),
-      used_by: userId || null,
-      used_by_device: deviceId,
-    })
-    .eq('key_code', keyCode.toUpperCase());
-
-  if (updateError) {
-    return { success: false, error: '兑换失败，请重试' };
-  }
-
-  // 增加设备积分
-  const device = await getOrCreateDevice(deviceId);
-  const newBalance = device.points + dbKey.points;
-
-  await supabaseAdmin
-    .from('device_usage')
-    .update({
-      points: newBalance,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('device_id', deviceId);
-
-  // 记录积分变动
-  await supabaseAdmin.from('points_log').insert({
-    user_id: userId || null,
-    device_id: deviceId,
-    type: 'recharge',
-    points: dbKey.points,
-    balance: newBalance,
-    description: '兑换卡密',
-    related_key: keyCode.toUpperCase(),
-  });
-
-  return { success: true, points: dbKey.points };
 }
 
 // ============================================
@@ -460,4 +257,377 @@ export async function getUsageLogs(options: {
     logs: (data as DbUsageLog[]) || [],
     total: count || 0,
   };
+}
+
+// ============================================
+// 订单相关操作
+// ============================================
+
+export interface DbOrder {
+  id: string;
+  device_id: string;
+  amount: number;       // 金额（分）
+  points: number;       // 积分数量
+  pay_method: string | null;
+  status: 'pending' | 'paid' | 'failed' | 'refunded';
+  trade_no: string | null;
+  refund_no: string | null;
+  refund_amount: number | null;
+  refund_time: string | null;
+  created_at: string;
+  paid_at: string | null;
+  expire_at: string | null;
+}
+
+export interface DbRechargeOption {
+  id: number;
+  price: number;        // 价格（分）
+  points: number;       // 积分数量
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// 创建订单
+export async function createOrder(params: {
+  id: string;
+  deviceId: string;
+  amount: number;
+  points: number;
+  payMethod: string;
+}): Promise<DbOrder> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  // 设置订单过期时间为30分钟后
+  const expireAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabaseAdmin
+    .from('orders')
+    .insert({
+      id: params.id,
+      device_id: params.deviceId,
+      amount: params.amount,
+      points: params.points,
+      pay_method: params.payMethod,
+      status: 'pending',
+      expire_at: expireAt,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`创建订单失败: ${error.message}`);
+  }
+
+  return data as DbOrder;
+}
+
+// 根据ID获取订单
+export async function getOrder(orderId: string): Promise<DbOrder | null> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('orders')
+    .select('*')
+    .eq('id', orderId)
+    .single();
+
+  if (error) {
+    // 未找到记录不算错误，返回null
+    return null;
+  }
+
+  return data as DbOrder;
+}
+
+// 更新订单为已支付（仅当状态为 pending 时才允许更新，防止重复支付）
+export async function updateOrderPaid(
+  orderId: string,
+  tradeNo: string
+): Promise<DbOrder> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('orders')
+    .update({
+      status: 'paid',
+      paid_at: new Date().toISOString(),
+      trade_no: tradeNo,
+    })
+    .eq('id', orderId)
+    .eq('status', 'pending')  // 仅 pending 状态可更新为 paid
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`更新订单支付状态失败: ${error.message}`);
+  }
+
+  return data as DbOrder;
+}
+
+// 更新订单为已退款（仅当状态为 paid 时才允许退款）
+export async function updateOrderRefunded(
+  orderId: string,
+  refundNo: string,
+  refundAmount: number
+): Promise<DbOrder> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('orders')
+    .update({
+      status: 'refunded',
+      refund_no: refundNo,
+      refund_amount: refundAmount,
+      refund_time: new Date().toISOString(),
+    })
+    .eq('id', orderId)
+    .eq('status', 'paid')  // 仅 paid 状态可退款
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`更新订单退款状态失败: ${error.message}`);
+  }
+
+  return data as DbOrder;
+}
+
+// 获取订单列表（分页，支持按状态和设备筛选）
+export async function getOrders(options: {
+  status?: string;
+  page?: number;
+  pageSize?: number;
+  deviceId?: string;
+}): Promise<{ orders: DbOrder[]; total: number }> {
+  const supabaseAdmin = getSupabaseAdmin();
+  const { status, page = 1, pageSize = 50, deviceId } = options;
+
+  let query = supabaseAdmin.from('orders').select('*', { count: 'exact' });
+
+  // 按状态筛选
+  if (status) {
+    query = query.eq('status', status);
+  }
+
+  // 按设备筛选
+  if (deviceId) {
+    query = query.eq('device_id', deviceId);
+  }
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await query
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    throw new Error(`获取订单列表失败: ${error.message}`);
+  }
+
+  return {
+    orders: (data as DbOrder[]) || [],
+    total: count || 0,
+  };
+}
+
+// 获取订单统计数据
+export async function getOrderStats(): Promise<{
+  todayRevenue: number;
+  todayOrders: number;
+  totalRevenue: number;
+  totalOrders: number;
+  totalUsers: number;
+}> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  // 获取今天的起始时间（UTC）
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayStartISO = todayStart.toISOString();
+
+  // 查询所有已支付的订单
+  const { data: allPaidOrders, error: allError } = await supabaseAdmin
+    .from('orders')
+    .select('amount, device_id, paid_at')
+    .eq('status', 'paid');
+
+  if (allError) {
+    throw new Error(`获取订单统计失败: ${allError.message}`);
+  }
+
+  const orders = (allPaidOrders || []) as Array<{
+    amount: number;
+    device_id: string;
+    paid_at: string | null;
+  }>;
+
+  // 计算今日订单和收入
+  const todayOrders = orders.filter(
+    (o) => o.paid_at && o.paid_at >= todayStartISO
+  );
+  const todayRevenue = todayOrders.reduce((sum, o) => sum + o.amount, 0);
+
+  // 计算总收入和总订单数
+  const totalRevenue = orders.reduce((sum, o) => sum + o.amount, 0);
+  const totalOrders = orders.length;
+
+  // 计算独立用户数（按设备去重）
+  const uniqueDevices = new Set(orders.map((o) => o.device_id));
+  const totalUsers = uniqueDevices.size;
+
+  return {
+    todayRevenue,
+    todayOrders: todayOrders.length,
+    totalRevenue,
+    totalOrders,
+    totalUsers,
+  };
+}
+
+// 获取所有启用的充值选项（按排序字段排序）
+export async function getRechargeOptions(): Promise<DbRechargeOption[]> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('recharge_options')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    throw new Error(`获取充值选项失败: ${error.message}`);
+  }
+
+  return (data as DbRechargeOption[]) || [];
+}
+
+// 更新充值选项（删除旧选项并插入新选项）
+export async function updateRechargeOptions(
+  options: Array<{ price: number; points: number }>
+): Promise<DbRechargeOption[]> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  // 删除所有现有选项
+  const { error: deleteError } = await supabaseAdmin
+    .from('recharge_options')
+    .delete()
+    .gte('id', 0);  // 删除所有记录
+
+  if (deleteError) {
+    throw new Error(`删除旧充值选项失败: ${deleteError.message}`);
+  }
+
+  // 插入新选项，设置递增的排序顺序
+  const newOptions = options.map((opt, index) => ({
+    price: opt.price,
+    points: opt.points,
+    sort_order: index + 1,
+    is_active: true,
+  }));
+
+  const { data, error: insertError } = await supabaseAdmin
+    .from('recharge_options')
+    .insert(newOptions)
+    .select();
+
+  if (insertError) {
+    throw new Error(`插入新充值选项失败: ${insertError.message}`);
+  }
+
+  return (data as DbRechargeOption[]) || [];
+}
+
+// 支付成功后增加积分（更新设备积分、累计充值金额，并记录积分日志）
+export async function addPointsFromOrder(
+  deviceId: string,
+  points: number,
+  orderId: string
+): Promise<void> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  // 获取或创建设备记录
+  const device = await getOrCreateDevice(deviceId);
+  const newBalance = device.points + points;
+
+  // 获取订单信息以获取金额
+  const order = await getOrder(orderId);
+  const orderAmount = order?.amount || 0;
+
+  // 更新设备积分和累计充值金额
+  const { error: updateError } = await supabaseAdmin
+    .from('device_usage')
+    .update({
+      points: newBalance,
+      total_paid: (device as unknown as Record<string, number>).total_paid
+        ? (device as unknown as Record<string, number>).total_paid + orderAmount
+        : orderAmount,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('device_id', deviceId);
+
+  if (updateError) {
+    throw new Error(`增加积分失败: ${updateError.message}`);
+  }
+
+  // 记录积分变动日志
+  const { error: logError } = await supabaseAdmin
+    .from('points_log')
+    .insert({
+      device_id: deviceId,
+      type: 'recharge',
+      points: points,
+      balance: newBalance,
+      description: `订单充值 (${orderId})`,
+    });
+
+  if (logError) {
+    throw new Error(`记录积分日志失败: ${logError.message}`);
+  }
+}
+
+// 退款后扣除积分（积分最小为0，并记录积分日志）
+export async function refundPointsFromOrder(
+  deviceId: string,
+  points: number,
+  orderId: string
+): Promise<void> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  // 获取设备记录
+  const device = await getOrCreateDevice(deviceId);
+
+  // 扣除积分，最小为0
+  const newBalance = Math.max(0, device.points - points);
+
+  // 更新设备积分
+  const { error: updateError } = await supabaseAdmin
+    .from('device_usage')
+    .update({
+      points: newBalance,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('device_id', deviceId);
+
+  if (updateError) {
+    throw new Error(`扣除积分失败: ${updateError.message}`);
+  }
+
+  // 记录积分变动日志
+  const { error: logError } = await supabaseAdmin
+    .from('points_log')
+    .insert({
+      device_id: deviceId,
+      type: 'consume',
+      points: -points,
+      balance: newBalance,
+      description: `订单退款 (${orderId})`,
+    });
+
+  if (logError) {
+    throw new Error(`记录退款积分日志失败: ${logError.message}`);
+  }
 }
