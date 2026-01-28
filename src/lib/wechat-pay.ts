@@ -6,6 +6,7 @@
  * Uses Node.js built-in crypto module — no third-party dependencies.
  *
  * 环境变量 (Environment variables):
+ *   WECHAT_APP_ID        - 公众号/小程序/应用 AppID
  *   WECHAT_MCH_ID        - 商户号 (Merchant ID)
  *   WECHAT_API_V3_KEY    - API V3 密钥 (for AES-GCM decryption of callbacks)
  *   WECHAT_CERT_SERIAL   - 商户证书序列号 (Certificate serial number)
@@ -154,7 +155,11 @@ export async function createNativePayOrder(
 ): Promise<CreateNativePayOrderResult> {
   const { orderId, amount, description, notifyUrl } = params;
 
+  const appId = process.env.WECHAT_APP_ID;
   const mchId = process.env.WECHAT_MCH_ID;
+  if (!appId) {
+    return { success: false, error: "WECHAT_APP_ID 环境变量未设置" };
+  }
   if (!mchId) {
     return { success: false, error: "WECHAT_MCH_ID 环境变量未设置" };
   }
@@ -165,6 +170,7 @@ export async function createNativePayOrder(
 
   // 请求体
   const requestBody = JSON.stringify({
+    appid: appId,
     mchid: mchId,
     out_trade_no: orderId,
     description,
