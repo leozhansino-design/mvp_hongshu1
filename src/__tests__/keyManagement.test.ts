@@ -1,6 +1,6 @@
 /**
- * Key Management Tests
- * 测试卡密管理的核心功能
+ * Payment System Tests
+ * 测试支付系统和积分管理的核心功能
  */
 
 // Mock Supabase
@@ -14,295 +14,176 @@ jest.mock('@/lib/supabase', () => ({
   }),
   getOrCreateDevice: jest.fn(),
   incrementDeviceUsage: jest.fn(),
-  redeemKey: jest.fn(),
   consumePoints: jest.fn(),
 }));
 
-import { getOrCreateDevice, incrementDeviceUsage, redeemKey, consumePoints } from '@/lib/supabase';
+import { getOrCreateDevice, incrementDeviceUsage, consumePoints } from '@/lib/supabase';
 
-describe('Key Management', () => {
+describe('Device Usage Tracking', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Key Generation', () => {
-    it('should generate keys with correct format LC-XXXX-XXXX-XXXX', () => {
-      // 卡密格式正则
-      const keyFormat = /^LC-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
-
-      // 测试几个示例卡密
-      const sampleKeys = [
-        'LC-AB12-CD34-EF56',
-        'LC-GHIJ-KLMN-PQRS',
-        'LC-1234-5678-9ABC',
-      ];
-
-      sampleKeys.forEach(key => {
-        expect(key).toMatch(keyFormat);
-      });
+  it('should create new device with 0 free_used', async () => {
+    const mockGetOrCreateDevice = getOrCreateDevice as jest.Mock;
+    mockGetOrCreateDevice.mockResolvedValue({
+      device_id: 'new-device-123',
+      free_used: 0,
+      points: 0,
     });
 
-    it('should reject invalid key formats', () => {
-      const keyFormat = /^LC-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+    const device = await getOrCreateDevice('new-device-123');
 
-      const invalidKeys = [
-        'AB-1234-5678-9ABC',  // 不以 LC 开头
-        'LC-123-5678-9ABC',   // 第一段只有3位
-        'LC-12345-5678-9ABC', // 第一段5位
-        'LC-1234-5678',       // 缺少最后一段
-        'lc-1234-5678-9abc',  // 小写
-      ];
-
-      invalidKeys.forEach(key => {
-        expect(key).not.toMatch(keyFormat);
-      });
-    });
-
-    it('should support all valid point tiers', () => {
-      const validTiers = [10, 200, 1000];
-      const invalidTiers = [0, 5, 50, 100, 500, 2000];
-
-      validTiers.forEach(tier => {
-        expect([10, 200, 1000]).toContain(tier);
-      });
-
-      invalidTiers.forEach(tier => {
-        expect([10, 200, 1000]).not.toContain(tier);
-      });
-    });
+    expect(device.free_used).toBe(0);
+    expect(device.points).toBe(0);
   });
 
-  describe('Key Redemption', () => {
-    it('should successfully redeem a valid unused key', async () => {
-      const mockRedeemKey = redeemKey as jest.Mock;
-      mockRedeemKey.mockResolvedValue({
-        success: true,
-        points: 200,
-      });
+  it('should track free usage correctly', async () => {
+    const mockGetOrCreateDevice = getOrCreateDevice as jest.Mock;
 
-      const result = await redeemKey('LC-TEST-1234-5678', 'device-123');
-
-      expect(result.success).toBe(true);
-      expect(result.points).toBe(200);
+    // First use
+    mockGetOrCreateDevice.mockResolvedValue({
+      device_id: 'device-123',
+      free_used: 1,
+      points: 0,
     });
 
-    it('should reject already used keys', async () => {
-      const mockRedeemKey = redeemKey as jest.Mock;
-      mockRedeemKey.mockResolvedValue({
-        success: false,
-        error: '卡密已被使用',
-      });
+    let device = await getOrCreateDevice('device-123');
+    expect(device.free_used).toBe(1);
 
-      const result = await redeemKey('LC-USED-1234-5678', 'device-123');
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('卡密已被使用');
+    // Second use
+    mockGetOrCreateDevice.mockResolvedValue({
+      device_id: 'device-123',
+      free_used: 2,
+      points: 0,
     });
 
-    it('should reject invalid keys', async () => {
-      const mockRedeemKey = redeemKey as jest.Mock;
-      mockRedeemKey.mockResolvedValue({
-        success: false,
-        error: '卡密无效',
-      });
+    device = await getOrCreateDevice('device-123');
+    expect(device.free_used).toBe(2);
 
-      const result = await redeemKey('LC-FAKE-1234-5678', 'device-123');
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('卡密无效');
+    // Third use (last free)
+    mockGetOrCreateDevice.mockResolvedValue({
+      device_id: 'device-123',
+      free_used: 3,
+      points: 0,
     });
 
-    it('should reject disabled keys', async () => {
-      const mockRedeemKey = redeemKey as jest.Mock;
-      mockRedeemKey.mockResolvedValue({
-        success: false,
-        error: '卡密已作废',
-      });
-
-      const result = await redeemKey('LC-DEAD-1234-5678', 'device-123');
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('卡密已作废');
-    });
+    device = await getOrCreateDevice('device-123');
+    expect(device.free_used).toBe(3);
   });
 
-  describe('Device Usage Tracking', () => {
-    it('should create new device with 0 free_used', async () => {
-      const mockGetOrCreateDevice = getOrCreateDevice as jest.Mock;
-      mockGetOrCreateDevice.mockResolvedValue({
-        device_id: 'new-device-123',
-        free_used: 0,
-        points: 0,
-      });
+  it('should correctly calculate remaining free uses', () => {
+    const FREE_LIMIT = 3;
 
-      const device = await getOrCreateDevice('new-device-123');
+    const testCases = [
+      { free_used: 0, expected: 3 },
+      { free_used: 1, expected: 2 },
+      { free_used: 2, expected: 1 },
+      { free_used: 3, expected: 0 },
+      { free_used: 5, expected: 0 }, // Overflow case
+    ];
 
-      expect(device.free_used).toBe(0);
-      expect(device.points).toBe(0);
-    });
-
-    it('should track free usage correctly', async () => {
-      const mockGetOrCreateDevice = getOrCreateDevice as jest.Mock;
-
-      // First use
-      mockGetOrCreateDevice.mockResolvedValue({
-        device_id: 'device-123',
-        free_used: 1,
-        points: 0,
-      });
-
-      let device = await getOrCreateDevice('device-123');
-      expect(device.free_used).toBe(1);
-
-      // Second use
-      mockGetOrCreateDevice.mockResolvedValue({
-        device_id: 'device-123',
-        free_used: 2,
-        points: 0,
-      });
-
-      device = await getOrCreateDevice('device-123');
-      expect(device.free_used).toBe(2);
-
-      // Third use (last free)
-      mockGetOrCreateDevice.mockResolvedValue({
-        device_id: 'device-123',
-        free_used: 3,
-        points: 0,
-      });
-
-      device = await getOrCreateDevice('device-123');
-      expect(device.free_used).toBe(3);
-    });
-
-    it('should correctly calculate remaining free uses', () => {
-      const FREE_LIMIT = 3;
-
-      const testCases = [
-        { free_used: 0, expected: 3 },
-        { free_used: 1, expected: 2 },
-        { free_used: 2, expected: 1 },
-        { free_used: 3, expected: 0 },
-        { free_used: 5, expected: 0 }, // Overflow case
-      ];
-
-      testCases.forEach(({ free_used, expected }) => {
-        const remaining = Math.max(0, FREE_LIMIT - free_used);
-        expect(remaining).toBe(expected);
-      });
-    });
-  });
-
-  describe('Points Consumption', () => {
-    it('should deduct 10 points for overview when free exhausted', async () => {
-      const mockConsumePoints = consumePoints as jest.Mock;
-      mockConsumePoints.mockResolvedValue({ success: true });
-
-      const result = await consumePoints('device-123', 10, '免费概览（积分）');
-
-      expect(result.success).toBe(true);
-      expect(mockConsumePoints).toHaveBeenCalledWith('device-123', 10, '免费概览（积分）');
-    });
-
-    it('should deduct 200 points for detailed analysis', async () => {
-      const mockConsumePoints = consumePoints as jest.Mock;
-      mockConsumePoints.mockResolvedValue({ success: true });
-
-      const result = await consumePoints('device-123', 200, '精批详解');
-
-      expect(result.success).toBe(true);
-      expect(mockConsumePoints).toHaveBeenCalledWith('device-123', 200, '精批详解');
-    });
-
-    it('should reject when insufficient points', async () => {
-      const mockConsumePoints = consumePoints as jest.Mock;
-      mockConsumePoints.mockResolvedValue({
-        success: false,
-        error: '积分不足',
-      });
-
-      const result = await consumePoints('device-123', 200, '精批详解');
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('积分不足');
-    });
-
-    it('should validate correct pricing', () => {
-      const OVERVIEW_PRICE = 10;
-      const DETAILED_PRICE = 200;
-
-      expect(OVERVIEW_PRICE).toBe(10);
-      expect(DETAILED_PRICE).toBe(200);
-
-      // 精批价格应该是概览价格的20倍
-      expect(DETAILED_PRICE / OVERVIEW_PRICE).toBe(20);
-    });
-  });
-
-  describe('Points Balance Calculation', () => {
-    it('should correctly add points after redemption', () => {
-      const currentPoints = 50;
-      const redeemPoints = 200;
-      const newBalance = currentPoints + redeemPoints;
-
-      expect(newBalance).toBe(250);
-    });
-
-    it('should correctly deduct points after consumption', () => {
-      const currentPoints = 250;
-      const consumeAmount = 200;
-      const newBalance = currentPoints - consumeAmount;
-
-      expect(newBalance).toBe(50);
-    });
-
-    it('should handle point tiers correctly', () => {
-      const tiers = [
-        { points: 10, price: 1 },   // 10积分 = 1元
-        { points: 200, price: 20 }, // 200积分 = 20元
-        { points: 1000, price: 100 }, // 1000积分 = 100元
-      ];
-
-      tiers.forEach(tier => {
-        expect(tier.points / tier.price).toBe(10); // 10积分 = 1元
-      });
+    testCases.forEach(({ free_used, expected }) => {
+      const remaining = Math.max(0, FREE_LIMIT - free_used);
+      expect(remaining).toBe(expected);
     });
   });
 });
 
-describe('Key Format Validation', () => {
-  const validateKeyFormat = (key: string): boolean => {
-    return /^LC-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(key.toUpperCase().trim());
-  };
-
-  it('should accept valid key formats', () => {
-    const validKeys = [
-      'LC-ABCD-EFGH-IJKL',
-      'LC-1234-5678-9ABC',
-      'LC-A1B2-C3D4-E5F6',
-      'lc-abcd-efgh-ijkl', // lowercase should be accepted (will be uppercased)
-      ' LC-ABCD-EFGH-IJKL ', // with spaces (will be trimmed)
-    ];
-
-    validKeys.forEach(key => {
-      expect(validateKeyFormat(key)).toBe(true);
-    });
+describe('Points Consumption', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('should reject invalid key formats', () => {
-    const invalidKeys = [
-      'AB-ABCD-EFGH-IJKL', // wrong prefix
-      'LC-ABC-EFGH-IJKL',  // first segment too short
-      'LC-ABCDE-EFGH-IJKL', // first segment too long
-      'LC-ABCD-EFGH',      // missing last segment
-      'LCABCDEFGHIJKL',    // no dashes
-      '',                  // empty
-      'LC-ABCD-EFGH-IJKL-MNOP', // too many segments
+  it('should deduct 10 points for overview when free exhausted', async () => {
+    const mockConsumePoints = consumePoints as jest.Mock;
+    mockConsumePoints.mockResolvedValue({ success: true });
+
+    const result = await consumePoints('device-123', 10, '免费概览（积分）');
+
+    expect(result.success).toBe(true);
+    expect(mockConsumePoints).toHaveBeenCalledWith('device-123', 10, '免费概览（积分）');
+  });
+
+  it('should deduct 50 points for detailed analysis', async () => {
+    const mockConsumePoints = consumePoints as jest.Mock;
+    mockConsumePoints.mockResolvedValue({ success: true });
+
+    const result = await consumePoints('device-123', 50, '精批详解');
+
+    expect(result.success).toBe(true);
+    expect(mockConsumePoints).toHaveBeenCalledWith('device-123', 50, '精批详解');
+  });
+
+  it('should reject when insufficient points', async () => {
+    const mockConsumePoints = consumePoints as jest.Mock;
+    mockConsumePoints.mockResolvedValue({
+      success: false,
+      error: '积分不足',
+    });
+
+    const result = await consumePoints('device-123', 50, '精批详解');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('积分不足');
+  });
+
+  it('should validate correct pricing', () => {
+    const OVERVIEW_PRICE = 10;
+    const DETAILED_PRICE = 50;
+
+    expect(OVERVIEW_PRICE).toBe(10);
+    expect(DETAILED_PRICE).toBe(50);
+
+    // 精批价格应该是概览价格的5倍
+    expect(DETAILED_PRICE / OVERVIEW_PRICE).toBe(5);
+  });
+});
+
+describe('Points Balance Calculation', () => {
+  it('should correctly add points after purchase', () => {
+    const currentPoints = 50;
+    const purchasePoints = 100;
+    const newBalance = currentPoints + purchasePoints;
+
+    expect(newBalance).toBe(150);
+  });
+
+  it('should correctly deduct points after consumption', () => {
+    const currentPoints = 150;
+    const consumeAmount = 50;
+    const newBalance = currentPoints - consumeAmount;
+
+    expect(newBalance).toBe(100);
+  });
+
+  it('should handle recharge tiers correctly', () => {
+    const tiers = [
+      { points: 100, price: 990 },     // 100积分 = 9.90元
+      { points: 350, price: 2990 },    // 350积分 = 29.90元
+      { points: 600, price: 4990 },    // 600积分 = 49.90元
+      { points: 1300, price: 9990 },   // 1300积分 = 99.90元
+      { points: 2800, price: 19990 },  // 2800积分 = 199.90元
+      { points: 7500, price: 49990 },  // 7500积分 = 499.90元
     ];
 
-    invalidKeys.forEach(key => {
-      expect(validateKeyFormat(key)).toBe(false);
+    // 所有档位积分数大于0
+    tiers.forEach(tier => {
+      expect(tier.points).toBeGreaterThan(0);
+      expect(tier.price).toBeGreaterThan(0);
     });
+
+    // 按价格递增排列
+    for (let i = 1; i < tiers.length; i++) {
+      expect(tiers[i].price).toBeGreaterThan(tiers[i - 1].price);
+    }
+
+    // 越高档位每元获得的积分越多（更优惠）
+    for (let i = 1; i < tiers.length; i++) {
+      const currentRatio = tiers[i].points / tiers[i].price;
+      const prevRatio = tiers[i - 1].points / tiers[i - 1].price;
+      expect(currentRatio).toBeGreaterThanOrEqual(prevRatio);
+    }
   });
 });
 
@@ -326,21 +207,21 @@ describe('Usage Flow', () => {
     // Need points to continue
     expect(points >= 10).toBe(false);
 
-    // After redemption
-    points = 200;
+    // After purchase
+    points = 100;
     expect(points >= 10).toBe(true);
-    expect(points >= 200).toBe(true);
+    expect(points >= 50).toBe(true);
   });
 
   it('should allow detailed analysis only with sufficient points', () => {
-    const DETAILED_PRICE = 200;
+    const DETAILED_PRICE = 50;
 
     const testCases = [
       { points: 0, canUseDetailed: false },
-      { points: 50, canUseDetailed: false },
-      { points: 100, canUseDetailed: false },
-      { points: 199, canUseDetailed: false },
-      { points: 200, canUseDetailed: true },
+      { points: 10, canUseDetailed: false },
+      { points: 49, canUseDetailed: false },
+      { points: 50, canUseDetailed: true },
+      { points: 100, canUseDetailed: true },
       { points: 500, canUseDetailed: true },
     ];
 
@@ -430,11 +311,9 @@ describe('Separate Life/Wealth Curve Tracking', () => {
   });
 
   it('should correctly determine action type based on curveMode and free remaining', () => {
-    const FREE_LIMIT = 3;
-
     const testCases = [
       { free_used: 0, free_used_wealth: 0, curveMode: 'life', isPaid: false, expectedAction: 'free_overview' },
-      { free_used: 3, free_used_wealth: 0, curveMode: 'life', isPaid: false, expectedAction: 'free_overview' }, // will fail at API level
+      { free_used: 3, free_used_wealth: 0, curveMode: 'life', isPaid: false, expectedAction: 'free_overview' },
       { free_used: 0, free_used_wealth: 3, curveMode: 'wealth', isPaid: false, expectedAction: 'free_overview' },
       { free_used: 0, free_used_wealth: 0, curveMode: 'life', isPaid: true, expectedAction: 'detailed' },
       { free_used: 0, free_used_wealth: 0, curveMode: 'wealth', isPaid: true, expectedAction: 'detailed' },
@@ -451,11 +330,77 @@ describe('Separate Life/Wealth Curve Tracking', () => {
     const device = {
       free_used: 3,
       free_used_wealth: 3,
-      points: 200,
+      points: 100,
     };
 
     // 两种曲线都可以用积分
     expect(device.points >= 10).toBe(true);   // 概览
-    expect(device.points >= 200).toBe(true);  // 精批
+    expect(device.points >= 50).toBe(true);   // 精批
+  });
+});
+
+describe('Order Management', () => {
+  it('should generate valid order IDs', () => {
+    const orderId = `ORD_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    expect(orderId).toMatch(/^ORD_\d+_[a-z0-9]+$/);
+  });
+
+  it('should calculate amounts correctly (price in fen)', () => {
+    const tiers = [
+      { price: 990, expectedYuan: '9.90' },
+      { price: 2990, expectedYuan: '29.90' },
+      { price: 4990, expectedYuan: '49.90' },
+      { price: 9990, expectedYuan: '99.90' },
+      { price: 19990, expectedYuan: '199.90' },
+      { price: 49990, expectedYuan: '499.90' },
+    ];
+
+    tiers.forEach(({ price, expectedYuan }) => {
+      expect((price / 100).toFixed(2)).toBe(expectedYuan);
+    });
+  });
+
+  it('should validate order status transitions', () => {
+    const validTransitions: Record<string, string[]> = {
+      pending: ['paid', 'failed'],
+      paid: ['refunded'],
+      failed: [],
+      refunded: [],
+    };
+
+    // pending -> paid is valid
+    expect(validTransitions['pending']).toContain('paid');
+    // paid -> refunded is valid
+    expect(validTransitions['paid']).toContain('refunded');
+    // refunded -> anything is invalid
+    expect(validTransitions['refunded']).toHaveLength(0);
+    // failed -> anything is invalid
+    expect(validTransitions['failed']).toHaveLength(0);
+  });
+
+  it('should handle refund amount correctly', () => {
+    const order = {
+      amount: 2990,
+      points: 350,
+      status: 'paid' as const,
+    };
+
+    // Refund amount should equal original amount
+    const refundAmount = order.amount;
+    expect(refundAmount).toBe(2990);
+    expect((refundAmount / 100).toFixed(2)).toBe('29.90');
+  });
+
+  it('should prevent double-payment by only updating pending orders', () => {
+    const orders = [
+      { id: '1', status: 'pending' },
+      { id: '2', status: 'paid' },
+      { id: '3', status: 'failed' },
+    ];
+
+    // Only pending orders should be updatable to paid
+    const updatable = orders.filter(o => o.status === 'pending');
+    expect(updatable).toHaveLength(1);
+    expect(updatable[0].id).toBe('1');
   });
 });

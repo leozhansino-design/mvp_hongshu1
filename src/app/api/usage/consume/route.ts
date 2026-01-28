@@ -6,6 +6,8 @@ import {
   logUsage,
 } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 const FREE_LIMIT = 3;
 
 export async function POST(request: NextRequest) {
@@ -80,15 +82,15 @@ export async function POST(request: NextRequest) {
         );
       }
     } else if (action === 'detailed') {
-      // 精批详解 - 需要200积分
-      if (device.points < 200) {
+      // 精批详解 - 需要50积分
+      if (device.points < 50) {
         return NextResponse.json(
-          { error: '积分不足，需要200积分', code: 'INSUFFICIENT_POINTS', required: 200, current: device.points },
+          { error: '积分不足，需要50积分', code: 'INSUFFICIENT_POINTS', required: 50, current: device.points },
           { status: 400 }
         );
       }
 
-      const result = await consumePoints(deviceId, 200, '精批详解');
+      const result = await consumePoints(deviceId, 50, '精批详解');
       if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }
@@ -96,7 +98,7 @@ export async function POST(request: NextRequest) {
       await logUsage({
         deviceId,
         action: 'detailed',
-        pointsCost: 200,
+        pointsCost: 50,
         birthInfo,
         resultId,
         curveMode,
@@ -105,8 +107,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         type: 'points',
-        pointsUsed: 200,
-        points: device.points - 200,
+        pointsUsed: 50,
+        points: device.points - 50,
       });
     }
 

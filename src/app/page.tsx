@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { BirthForm, AnalysisLoader, UsageStatusBar } from '@/components';
+import { BirthForm, AnalysisLoader, UsageStatusBar, Footer } from '@/components';
 import Header from '@/components/Header';
 import { generateFreeResult, generatePaidResult, generateWealthCurve } from '@/services/api';
 import {
@@ -28,6 +28,7 @@ function HomePageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [curveMode, setCurveMode] = useState<CurveMode>('life');
+  const [usageRefreshKey, setUsageRefreshKey] = useState(0);
 
   // 从 URL 读取模式参数
   useEffect(() => {
@@ -50,6 +51,8 @@ function HomePageContent() {
         setRemainingUsage(status.freeRemainingLife);
       }
       setPoints(status.points);
+      // 通知 UsageStatusBar 也刷新
+      setUsageRefreshKey(prev => prev + 1);
     } catch (err) {
       console.error('Failed to refresh usage status:', err);
     }
@@ -208,6 +211,7 @@ function HomePageContent() {
         <div className="w-full max-w-md">
           <UsageStatusBar
             curveMode={curveMode}
+            refreshKey={usageRefreshKey}
             onStatusChange={(status: UsageStatus) => {
               if (curveMode === 'wealth') {
                 setRemainingUsage(status.freeRemainingWealth);
@@ -223,6 +227,7 @@ function HomePageContent() {
           已有 <span className="text-gold-400 font-mono">{totalGenerated.toLocaleString()}</span> 人生成过命盘报告
         </p>
       </div>
+      <Footer />
     </div>
   );
 }

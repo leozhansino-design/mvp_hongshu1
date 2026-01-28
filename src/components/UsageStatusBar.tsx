@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { checkUsageStatus, UsageStatus } from '@/lib/device';
-import RedeemKeyModal from './RedeemKeyModal';
+import RechargeModal from './RechargeModal';
 
 interface UsageStatusBarProps {
   curveMode?: 'life' | 'wealth';
   onStatusChange?: (status: UsageStatus) => void;
+  refreshKey?: number;
 }
 
-export default function UsageStatusBar({ curveMode = 'life', onStatusChange }: UsageStatusBarProps) {
+export default function UsageStatusBar({ curveMode = 'life', onStatusChange, refreshKey = 0 }: UsageStatusBarProps) {
   const [status, setStatus] = useState<UsageStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showRedeemModal, setShowRedeemModal] = useState(false);
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
 
   const loadStatus = async () => {
     try {
@@ -28,9 +29,9 @@ export default function UsageStatusBar({ curveMode = 'life', onStatusChange }: U
 
   useEffect(() => {
     loadStatus();
-  }, [curveMode]);
+  }, [curveMode, refreshKey]);
 
-  const handleRedeemSuccess = () => {
+  const handleRechargeSuccess = () => {
     loadStatus();
   };
 
@@ -75,12 +76,12 @@ export default function UsageStatusBar({ curveMode = 'life', onStatusChange }: U
             </div>
           </div>
 
-          {/* 兑换按钮 */}
+          {/* 充值积分按钮 */}
           <button
-            onClick={() => setShowRedeemModal(true)}
+            onClick={() => setShowRechargeModal(true)}
             className="px-4 py-2 bg-gold-400/20 hover:bg-gold-400/30 text-gold-400 text-sm rounded-lg transition-colors border border-gold-400/30"
           >
-            兑换卡密
+            充值积分
           </button>
         </div>
 
@@ -88,12 +89,12 @@ export default function UsageStatusBar({ curveMode = 'life', onStatusChange }: U
         {currentFreeRemaining === 0 && status.points < 10 && (
           <div className="mt-3 pt-3 border-t border-gray-700">
             <p className="text-red-400/80 text-xs">
-              {modeLabel}免费次数已用完，请兑换卡密获取积分继续使用
+              {modeLabel}免费次数已用完，请充值积分继续使用
             </p>
           </div>
         )}
 
-        {currentFreeRemaining === 0 && status.points >= 10 && status.points < 200 && (
+        {currentFreeRemaining === 0 && status.points >= 10 && status.points < 50 && (
           <div className="mt-3 pt-3 border-t border-gray-700">
             <p className="text-yellow-400/80 text-xs">
               {modeLabel}免费次数已用完，将消耗 10 积分生成报告
@@ -102,11 +103,12 @@ export default function UsageStatusBar({ curveMode = 'life', onStatusChange }: U
         )}
       </div>
 
-      {/* 兑换卡密弹窗 */}
-      <RedeemKeyModal
-        isOpen={showRedeemModal}
-        onClose={() => setShowRedeemModal(false)}
-        onSuccess={handleRedeemSuccess}
+      {/* 充值积分弹窗 */}
+      <RechargeModal
+        isOpen={showRechargeModal}
+        onClose={() => setShowRechargeModal(false)}
+        currentPoints={status.points}
+        onSuccess={handleRechargeSuccess}
       />
     </>
   );

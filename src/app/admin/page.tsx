@@ -3,16 +3,18 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getAllAnalytics, getAnalyticsSummary, clearAllAnalytics, getAdvancedMetrics, AdvancedMetrics } from '@/services/analytics';
 import { UserAnalytics, CurveMode } from '@/types';
-import KeyManagement from '@/components/admin/KeyManagement';
 import DeviceManagement from '@/components/admin/DeviceManagement';
+import OrderManagement from '@/components/admin/OrderManagement';
+import PaymentStats from '@/components/admin/PaymentStats';
+import RechargeSettings from '@/components/admin/RechargeSettings';
 
 // 登录凭证
 const ADMIN_USERNAME = 'leozhansino';
 const ADMIN_PASSWORD = 'Dianzi123';
 const AUTH_KEY = 'lc_admin_auth';
 
-// Tab类型 - 添加卡密管理和设备管理
-type TabType = 'overview' | 'users' | 'funnel' | 'demographics' | 'timeline' | 'keys' | 'devices';
+// Tab类型
+type TabType = 'overview' | 'users' | 'funnel' | 'demographics' | 'timeline' | 'devices' | 'orders' | 'pay_stats' | 'pay_settings';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -377,7 +379,9 @@ export default function AdminPage() {
               { id: 'timeline', label: '时间分析' },
               { id: 'users', label: '用户列表' },
               { id: 'devices', label: '设备管理' },
-              { id: 'keys', label: '卡密管理' },
+              { id: 'orders', label: '订单管理' },
+              { id: 'pay_stats', label: '收入统计' },
+              { id: 'pay_settings', label: '充值设置' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -1020,9 +1024,19 @@ export default function AdminPage() {
           <DeviceManagement />
         )}
 
-        {/* 卡密管理 Tab */}
-        {activeTab === 'keys' && (
-          <KeyManagement />
+        {/* 订单管理 Tab */}
+        {activeTab === 'orders' && (
+          <OrderManagement />
+        )}
+
+        {/* 收入统计 Tab */}
+        {activeTab === 'pay_stats' && (
+          <PaymentStats />
+        )}
+
+        {/* 充值设置 Tab */}
+        {activeTab === 'pay_settings' && (
+          <RechargeSettings />
         )}
       </div>
     </div>

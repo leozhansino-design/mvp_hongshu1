@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrCreateDevice } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 const FREE_LIMIT = 3; // 每个设备每种曲线免费3次
 
 export async function GET(request: NextRequest) {
@@ -36,25 +38,15 @@ export async function GET(request: NextRequest) {
       points: device.points,
       canUseFree: freeRemaining > 0,
       canUsePaid: device.points >= 10,
-      canUseDetailed: device.points >= 200,
+      canUseDetailed: device.points >= 50,
     });
   } catch (error) {
     console.error('Check usage error:', error);
-    // 如果数据库不可用，返回默认值
+    // 返回错误状态，让客户端知道查询失败
     return NextResponse.json({
-      success: true,
-      freeUsed: 0,
-      freeRemaining: FREE_LIMIT,
-      freeLimit: FREE_LIMIT,
-      freeUsedLife: 0,
-      freeRemainingLife: FREE_LIMIT,
-      freeUsedWealth: 0,
-      freeRemainingWealth: FREE_LIMIT,
-      points: 0,
-      canUseFree: true,
-      canUsePaid: false,
-      canUseDetailed: false,
-      fallback: true,
-    });
+      success: false,
+      error: '查询使用状态失败',
+      detail: error instanceof Error ? error.message : String(error),
+    }, { status: 500 });
   }
 }

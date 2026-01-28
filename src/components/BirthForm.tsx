@@ -425,9 +425,9 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
         </button>
         <button
           type="button"
-          disabled={!isValid || disabled || points < 200}
+          disabled={!isValid || disabled || points < 50}
           onClick={() => {
-            if (!isValid || disabled || points < 200) return;
+            if (!isValid || disabled || points < 50) return;
             const birthInfo: BirthInfo = {
               name: name || undefined,
               gender: gender!,
@@ -442,16 +442,16 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
             };
             onSubmit(birthInfo, true);
           }}
-          className={`py-3 text-base font-serif ${points >= 200 ? 'btn-gold' : 'btn-gold opacity-50 cursor-not-allowed'}`}
+          className={`py-3 text-base font-serif ${points >= 50 ? 'btn-gold' : 'btn-gold opacity-50 cursor-not-allowed'}`}
         >
           精批详解
         </button>
       </div>
 
       {/* 积分不足提示 - 只在积分不够时显示 */}
-      {points < 200 && (
+      {points < 50 && (
         <p className="text-center text-xs text-text-secondary/70 mt-2">
-          需要200积分解锁精批详解
+          需要50积分解锁精批详解
         </p>
       )}
     </form>
