@@ -31,6 +31,19 @@ export default function UsageStatusBar({ curveMode = 'life', onStatusChange, ref
     loadStatus();
   }, [curveMode, refreshKey]);
 
+  // 页面重新可见时刷新（从结果页返回时触发）
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadStatus();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [curveMode]);
+
   const handleRechargeSuccess = () => {
     loadStatus();
   };

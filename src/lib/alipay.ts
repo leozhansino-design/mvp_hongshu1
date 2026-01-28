@@ -9,7 +9,8 @@
  *   ALIPAY_APP_ID        - 应用 App ID
  *   ALIPAY_PRIVATE_KEY   - 应用私钥 (PKCS8 格式, 无 PEM 头尾)
  *   ALIPAY_PUBLIC_KEY    - 支付宝公钥 (无 PEM 头尾)
- *   ALIPAY_GATEWAY       - 网关地址 (https://openapi.alipay.com/gateway.do)
+ *   ALIPAY_GATEWAY       - 网关地址，默认正式环境 (https://openapi.alipay.com/gateway.do)
+ *                          沙箱环境请设置为: https://openapi-sandbox.dl.alipaydev.com/gateway.do
  *   NEXT_PUBLIC_SITE_URL - 站点地址，用于构造 return_url
  */
 
