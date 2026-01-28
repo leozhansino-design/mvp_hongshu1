@@ -64,6 +64,24 @@ function HomePageContent() {
     refreshUsageStatus(curveMode);
   }, [curveMode, refreshUsageStatus]);
 
+  // 页面可见性变化时刷新（从结果页返回时触发）
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshUsageStatus(curveMode);
+      }
+    };
+    const handleFocus = () => {
+      refreshUsageStatus(curveMode);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [curveMode, refreshUsageStatus]);
+
   // 追踪页面访问
   useEffect(() => {
     trackPageView('home', curveMode);

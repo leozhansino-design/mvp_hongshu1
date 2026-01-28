@@ -163,6 +163,9 @@ export async function createNativePayOrder(
   if (!mchId) {
     return { success: false, error: "WECHAT_MCH_ID 环境变量未设置" };
   }
+  if (!appId) {
+    return { success: false, error: "WECHAT_APP_ID 环境变量未设置" };
+  }
 
   const apiUrl =
     "https://api.mch.weixin.qq.com/v3/pay/transactions/native";

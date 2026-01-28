@@ -32,13 +32,30 @@ export default function AdminPage() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'unlocked' | 'shared' | 'none'>('all');
   const [filterDays, setFilterDays] = useState<number>(7);
 
-  // 检查是否已登录
+  // 检查是否已登录（验证服务端session）
   useEffect(() => {
-    const auth = localStorage.getItem(AUTH_KEY);
-    if (auth === 'true') {
-      setIsAuthenticated(true);
-    }
-    setLoading(false);
+    const checkAuth = async () => {
+      const auth = localStorage.getItem(AUTH_KEY);
+      if (auth === 'true') {
+        // 验证服务端 session 是否仍然有效
+        try {
+          const res = await fetch('/api/admin/verify');
+          if (res.ok) {
+            setIsAuthenticated(true);
+          } else {
+            // 服务端 session 已失效，清除本地状态
+            localStorage.removeItem(AUTH_KEY);
+            setIsAuthenticated(false);
+          }
+        } catch {
+          // 网络错误时也清除，要求重新登录
+          localStorage.removeItem(AUTH_KEY);
+          setIsAuthenticated(false);
+        }
+      }
+      setLoading(false);
+    };
+    checkAuth();
   }, []);
 
   // 加载数据
@@ -200,20 +217,25 @@ export default function AdminPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      // 同时调用 API 设置服务端 cookie（用于 API 鉴权）
+    if (username === ADMIN_USERNAME) {
+      // 调用服务端 API 验证密码并设置 session cookie
       try {
-        await fetch('/api/admin/login', {
+        const res = await fetch('/api/admin/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password }),
         });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setIsAuthenticated(true);
+          localStorage.setItem(AUTH_KEY, 'true');
+          setLoginError('');
+        } else {
+          setLoginError(data.error || '登录失败');
+        }
       } catch {
-        // 忽略错误，继续使用本地验证
+        setLoginError('网络错误，请重试');
       }
-      setIsAuthenticated(true);
-      localStorage.setItem(AUTH_KEY, 'true');
-      setLoginError('');
     } else {
       setLoginError('账号或密码错误');
     }
