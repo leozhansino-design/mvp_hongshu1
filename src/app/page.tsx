@@ -28,6 +28,7 @@ function HomePageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [curveMode, setCurveMode] = useState<CurveMode>('life');
+  const [usageRefreshKey, setUsageRefreshKey] = useState(0);
 
   // 从 URL 读取模式参数
   useEffect(() => {
@@ -50,6 +51,8 @@ function HomePageContent() {
         setRemainingUsage(status.freeRemainingLife);
       }
       setPoints(status.points);
+      // 通知 UsageStatusBar 也刷新
+      setUsageRefreshKey(prev => prev + 1);
     } catch (err) {
       console.error('Failed to refresh usage status:', err);
     }
@@ -208,6 +211,7 @@ function HomePageContent() {
         <div className="w-full max-w-md">
           <UsageStatusBar
             curveMode={curveMode}
+            refreshKey={usageRefreshKey}
             onStatusChange={(status: UsageStatus) => {
               if (curveMode === 'wealth') {
                 setRemainingUsage(status.freeRemainingWealth);

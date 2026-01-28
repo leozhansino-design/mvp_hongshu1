@@ -58,7 +58,9 @@ export async function checkUsageStatus(curveMode: 'life' | 'wealth' = 'life'): P
   }
 
   try {
-    const response = await fetch(`/api/usage/check?deviceId=${encodeURIComponent(deviceId)}&curveMode=${curveMode}`);
+    const response = await fetch(`/api/usage/check?deviceId=${encodeURIComponent(deviceId)}&curveMode=${curveMode}&_t=${Date.now()}`, {
+      cache: 'no-store',
+    });
     const data = await response.json();
 
     if (data.success) {
@@ -73,6 +75,8 @@ export async function checkUsageStatus(curveMode: 'life' | 'wealth' = 'life'): P
         canUsePaid: data.canUsePaid,
         canUseDetailed: data.canUseDetailed,
       };
+    } else {
+      console.error('Usage check API returned error:', data.error, data.detail);
     }
   } catch (error) {
     console.error('Failed to check usage status:', error);

@@ -7,9 +7,10 @@ import RechargeModal from './RechargeModal';
 interface UsageStatusBarProps {
   curveMode?: 'life' | 'wealth';
   onStatusChange?: (status: UsageStatus) => void;
+  refreshKey?: number;
 }
 
-export default function UsageStatusBar({ curveMode = 'life', onStatusChange }: UsageStatusBarProps) {
+export default function UsageStatusBar({ curveMode = 'life', onStatusChange, refreshKey = 0 }: UsageStatusBarProps) {
   const [status, setStatus] = useState<UsageStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRechargeModal, setShowRechargeModal] = useState(false);
@@ -28,7 +29,7 @@ export default function UsageStatusBar({ curveMode = 'life', onStatusChange }: U
 
   useEffect(() => {
     loadStatus();
-  }, [curveMode]);
+  }, [curveMode, refreshKey]);
 
   const handleRechargeSuccess = () => {
     loadStatus();

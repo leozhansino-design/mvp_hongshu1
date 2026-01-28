@@ -6,6 +6,8 @@ import {
   logUsage,
 } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 const FREE_LIMIT = 3;
 
 export async function POST(request: NextRequest) {
