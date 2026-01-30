@@ -16,3 +16,6 @@ export { default as WealthAnalysis } from './WealthAnalysis';
 export { default as UsageStatusBar } from './UsageStatusBar';
 export { default as RechargeModal } from './RechargeModal';
 export { default as Footer } from './Footer';
+// 认证组件
+export { default as LoginModal } from './LoginModal';
+export { default as UserMenu } from './UserMenu';

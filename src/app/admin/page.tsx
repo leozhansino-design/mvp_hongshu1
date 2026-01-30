@@ -7,6 +7,8 @@ import DeviceManagement from '@/components/admin/DeviceManagement';
 import OrderManagement from '@/components/admin/OrderManagement';
 import PaymentStats from '@/components/admin/PaymentStats';
 import RechargeSettings from '@/components/admin/RechargeSettings';
+import MasterManagement from '@/components/admin/MasterManagement';
+import ConsultationManagement from '@/components/admin/ConsultationManagement';
 
 // 登录凭证
 const ADMIN_USERNAME = 'leozhansino';
@@ -14,7 +16,7 @@ const ADMIN_PASSWORD = 'Dianzi123';
 const AUTH_KEY = 'lc_admin_auth';
 
 // Tab类型
-type TabType = 'overview' | 'users' | 'funnel' | 'demographics' | 'timeline' | 'devices' | 'orders' | 'pay_stats' | 'pay_settings';
+type TabType = 'overview' | 'users' | 'funnel' | 'demographics' | 'timeline' | 'devices' | 'orders' | 'pay_stats' | 'pay_settings' | 'masters' | 'consultations';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -404,6 +406,8 @@ export default function AdminPage() {
               { id: 'orders', label: '订单管理' },
               { id: 'pay_stats', label: '收入统计' },
               { id: 'pay_settings', label: '充值设置' },
+              { id: 'masters', label: '大师管理' },
+              { id: 'consultations', label: '咨询订单' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -1059,6 +1063,16 @@ export default function AdminPage() {
         {/* 充值设置 Tab */}
         {activeTab === 'pay_settings' && (
           <RechargeSettings />
+        )}
+
+        {/* 大师管理 Tab */}
+        {activeTab === 'masters' && (
+          <MasterManagement />
+        )}
+
+        {/* 咨询订单 Tab */}
+        {activeTab === 'consultations' && (
+          <ConsultationManagement />
         )}
       </div>
     </div>

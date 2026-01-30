@@ -58,6 +58,14 @@ export default function MyPage() {
                     <span className="text-gold-400 font-serif">
                       {result.birthInfo.name || '未命名'}
                     </span>
+                    {/* 曲线类型标签 */}
+                    <span className={`px-2 py-0.5 text-xs rounded ${
+                      result.curveMode === 'wealth'
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'bg-purple-500/20 text-purple-400'
+                    }`}>
+                      {result.curveMode === 'wealth' ? '💰 财富曲线' : '✦ 人生曲线'}
+                    </span>
                     {result.isPaid && (
                       <span className="px-2 py-0.5 text-xs rounded bg-gold-400/20 text-gold-400">
                         完整版
@@ -74,7 +82,7 @@ export default function MyPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Link
-                    href={`/result/${result.id}`}
+                    href={`/result/${result.id}${result.curveMode === 'wealth' ? '?mode=wealth' : ''}`}
                     className="btn-outline text-sm"
                   >
                     查看
