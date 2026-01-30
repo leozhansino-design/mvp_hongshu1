@@ -3,6 +3,21 @@
 -- 手机号+密码登录，防刷机制
 -- ============================================
 
+-- 先创建 result_cache 表（如果不存在）
+CREATE TABLE IF NOT EXISTS result_cache (
+  id              SERIAL PRIMARY KEY,
+  cache_key       TEXT UNIQUE NOT NULL,
+  device_id       TEXT NOT NULL,
+  curve_mode      TEXT NOT NULL,
+  is_paid         BOOLEAN DEFAULT FALSE,
+  result_data     JSONB NOT NULL,
+  birth_info      JSONB,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_result_cache_key ON result_cache(cache_key);
+CREATE INDEX IF NOT EXISTS idx_result_cache_device_id ON result_cache(device_id);
+
 -- 修改 users 表结构（添加手机号和密码字段）
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT UNIQUE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
