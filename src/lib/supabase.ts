@@ -725,3 +725,303 @@ export async function saveCachedResult(params: {
     // 不抛出错误，缓存失败不应影响正常流程
   }
 }
+
+// ============================================
+// 大师相关操作
+// ============================================
+
+import { MasterDB, ConsultationDB, ConsultationStatus } from '@/types/master';
+
+// 获取大师列表
+export async function getMasters(includeInactive = false): Promise<MasterDB[]> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  let query = supabaseAdmin
+    .from('masters')
+    .select('*')
+    .order('sort_order', { ascending: true });
+
+  if (!includeInactive) {
+    query = query.eq('is_active', true);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new Error(`获取大师列表失败: ${error.message}`);
+  }
+
+  return (data as MasterDB[]) || [];
+}
+
+// 获取单个大师
+export async function getMaster(masterId: string): Promise<MasterDB | null> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('masters')
+    .select('*')
+    .eq('id', masterId)
+    .single();
+
+  if (error) {
+    return null;
+  }
+
+  return data as MasterDB;
+}
+
+// 创建大师
+export async function createMaster(master: Omit<MasterDB, 'created_at' | 'updated_at'>): Promise<MasterDB> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('masters')
+    .insert(master)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`创建大师失败: ${error.message}`);
+  }
+
+  return data as MasterDB;
+}
+
+// 更新大师
+export async function updateMaster(
+  masterId: string,
+  updates: Partial<Omit<MasterDB, 'id' | 'created_at' | 'updated_at'>>
+): Promise<MasterDB> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('masters')
+    .update(updates)
+    .eq('id', masterId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`更新大师失败: ${error.message}`);
+  }
+
+  return data as MasterDB;
+}
+
+// 删除大师
+export async function deleteMaster(masterId: string): Promise<void> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { error } = await supabaseAdmin
+    .from('masters')
+    .delete()
+    .eq('id', masterId);
+
+  if (error) {
+    throw new Error(`删除大师失败: ${error.message}`);
+  }
+}
+
+// 切换大师上架状态
+export async function toggleMasterActive(masterId: string, isActive: boolean): Promise<MasterDB> {
+  return updateMaster(masterId, { is_active: isActive });
+}
+
+// ============================================
+// 咨询订单相关操作
+// ============================================
+
+// 创建咨询订单
+export async function createConsultation(consultation: Omit<ConsultationDB, 'created_at' | 'paid_at' | 'completed_at' | 'refunded_at'>): Promise<ConsultationDB> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('consultations')
+    .insert(consultation)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`创建咨询订单失败: ${error.message}`);
+  }
+
+  return data as ConsultationDB;
+}
+
+// 获取咨询订单
+export async function getConsultation(consultationId: string): Promise<ConsultationDB | null> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('consultations')
+    .select('*')
+    .eq('id', consultationId)
+    .single();
+
+  if (error) {
+    return null;
+  }
+
+  return data as ConsultationDB;
+}
+
+// 获取咨询订单列表
+export async function getConsultations(options: {
+  status?: ConsultationStatus;
+  masterId?: string;
+  userId?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<{ consultations: ConsultationDB[]; total: number }> {
+  const supabaseAdmin = getSupabaseAdmin();
+  const { status, masterId, userId, search, page = 1, pageSize = 50 } = options;
+
+  let query = supabaseAdmin.from('consultations').select('*', { count: 'exact' });
+
+  if (status) {
+    query = query.eq('status', status);
+  }
+  if (masterId) {
+    query = query.eq('master_id', masterId);
+  }
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+  if (search) {
+    query = query.or(`id.ilike.%${search}%,user_phone.ilike.%${search}%`);
+  }
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await query
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    throw new Error(`获取咨询订单列表失败: ${error.message}`);
+  }
+
+  return {
+    consultations: (data as ConsultationDB[]) || [],
+    total: count || 0,
+  };
+}
+
+// 更新咨询订单为已支付
+export async function updateConsultationPaid(
+  consultationId: string,
+  tradeNo: string
+): Promise<ConsultationDB> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('consultations')
+    .update({
+      status: 'pending',
+      paid_at: new Date().toISOString(),
+      trade_no: tradeNo,
+    })
+    .eq('id', consultationId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`更新咨询订单支付状态失败: ${error.message}`);
+  }
+
+  return data as ConsultationDB;
+}
+
+// 标记咨询订单为已完成
+export async function markConsultationCompleted(consultationId: string): Promise<ConsultationDB> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('consultations')
+    .update({
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+    })
+    .eq('id', consultationId)
+    .eq('status', 'pending')
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`标记咨询订单完成失败: ${error.message}`);
+  }
+
+  return data as ConsultationDB;
+}
+
+// 咨询订单退款
+export async function refundConsultation(consultationId: string): Promise<ConsultationDB> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('consultations')
+    .update({
+      status: 'refunded',
+      refunded_at: new Date().toISOString(),
+    })
+    .eq('id', consultationId)
+    .in('status', ['pending'])
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`咨询订单退款失败: ${error.message}`);
+  }
+
+  return data as ConsultationDB;
+}
+
+// 获取咨询订单统计
+export async function getConsultationStats(): Promise<{
+  pendingCount: number;
+  completedCount: number;
+  refundedCount: number;
+  totalRevenue: number;
+  todayOrders: number;
+}> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  // 获取今天的起始时间
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayStartISO = todayStart.toISOString();
+
+  // 获取所有订单
+  const { data: allConsultations, error } = await supabaseAdmin
+    .from('consultations')
+    .select('status, price, created_at');
+
+  if (error) {
+    throw new Error(`获取咨询统计失败: ${error.message}`);
+  }
+
+  const consultations = (allConsultations || []) as Array<{
+    status: string;
+    price: number;
+    created_at: string;
+  }>;
+
+  const pendingCount = consultations.filter(c => c.status === 'pending').length;
+  const completedCount = consultations.filter(c => c.status === 'completed').length;
+  const refundedCount = consultations.filter(c => c.status === 'refunded').length;
+  const totalRevenue = consultations
+    .filter(c => c.status !== 'refunded')
+    .reduce((sum, c) => sum + c.price, 0);
+  const todayOrders = consultations.filter(c => c.created_at >= todayStartISO).length;
+
+  return {
+    pendingCount,
+    completedCount,
+    refundedCount,
+    totalRevenue,
+    todayOrders,
+  };
+}

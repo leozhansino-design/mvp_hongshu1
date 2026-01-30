@@ -30,11 +30,11 @@ export async function GET() {
       success: true,
       options: [
         { id: 1, price: 990, points: 100 },
-        { id: 2, price: 2990, points: 350 },
+        { id: 2, price: 1990, points: 220 },
         { id: 3, price: 4990, points: 600 },
         { id: 4, price: 9990, points: 1300 },
         { id: 5, price: 19990, points: 2800 },
-        { id: 6, price: 49990, points: 7500 },
+        { id: 6, price: 49990, points: 8000 },
       ],
     });
   }

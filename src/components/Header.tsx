@@ -33,6 +33,7 @@ export default function Header({
 
   const navItems = [
     { href: '/', label: '首页' },
+    { href: '/masters', label: '大师测算' },
     { href: '/my', label: '我的报告' },
   ];
 
