@@ -1,7 +1,45 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Master, formatPrice, formatFollowUps } from '@/types/master';
+
+// 裁剪并压缩头像图片
+async function cropAndResizeImage(file: File, size: number = 200): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('无法创建canvas上下文'));
+          return;
+        }
+
+        // 计算裁剪参数，取中心正方形区域
+        const minDim = Math.min(img.width, img.height);
+        const sx = (img.width - minDim) / 2;
+        const sy = (img.height - minDim) / 2;
+
+        // 设置输出尺寸
+        canvas.width = size;
+        canvas.height = size;
+
+        // 裁剪并缩放
+        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+
+        // 转为 base64，使用较高质量
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        resolve(dataUrl);
+      };
+      img.onerror = () => reject(new Error('图片加载失败'));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error('文件读取失败'));
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function MasterManagement() {
   const [masters, setMasters] = useState<Master[]>([]);
@@ -9,8 +47,10 @@ export default function MasterManagement() {
   const [showModal, setShowModal] = useState(false);
   const [editingMaster, setEditingMaster] = useState<Master | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state
+  // Form state (移除了 sortOrder，添加了 avatar)
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -19,7 +59,7 @@ export default function MasterManagement() {
     years: '',
     intro: '',
     tags: [] as string[],
-    sortOrder: '0',
+    avatar: '', // base64 头像
   });
 
   useEffect(() => {
@@ -50,7 +90,7 @@ export default function MasterManagement() {
       years: '',
       intro: '',
       tags: [],
-      sortOrder: '0',
+      avatar: '',
     });
     setShowModal(true);
   };
@@ -65,9 +105,42 @@ export default function MasterManagement() {
       years: master.years?.toString() || '',
       intro: master.intro || '',
       tags: master.tags || [],
-      sortOrder: master.sortOrder.toString(),
+      avatar: (master as Master & { avatar?: string }).avatar || '',
     });
     setShowModal(true);
+  };
+
+  // 处理头像上传
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 验证文件类型
+    if (!file.type.startsWith('image/')) {
+      alert('请选择图片文件');
+      return;
+    }
+
+    // 验证文件大小（最大5MB）
+    if (file.size > 5 * 1024 * 1024) {
+      alert('图片大小不能超过5MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const base64 = await cropAndResizeImage(file, 200);
+      setFormData(prev => ({ ...prev, avatar: base64 }));
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      alert('头像处理失败，请重试');
+    } finally {
+      setUploadingAvatar(false);
+      // 清空文件输入，允许重复选择同一文件
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -82,7 +155,7 @@ export default function MasterManagement() {
         years: formData.years ? parseInt(formData.years) : undefined,
         intro: formData.intro || undefined,
         tags: formData.tags,
-        sortOrder: parseInt(formData.sortOrder),
+        avatar: formData.avatar || undefined, // 头像 base64
       };
 
       let response;
@@ -209,9 +282,17 @@ export default function MasterManagement() {
               {masters.map((master) => (
                 <tr key={master.id} className="hover:bg-gray-750">
                   <td className="px-4 py-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold-400/30 to-purple-500/30 flex items-center justify-center text-sm font-medium text-gold-400">
-                      {master.name.charAt(0)}
-                    </div>
+                    {(master as Master & { avatar?: string }).avatar ? (
+                      <img
+                        src={(master as Master & { avatar?: string }).avatar}
+                        alt={master.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold-400/30 to-purple-500/30 flex items-center justify-center text-sm font-medium text-gold-400">
+                        {master.name.charAt(0)}
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="text-white font-medium">{master.name}</div>
@@ -219,7 +300,10 @@ export default function MasterManagement() {
                       <div className="text-gray-400 text-xs truncate max-w-[200px]">{master.intro}</div>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gold-400">¥{formatPrice(master.price)}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-gold-400">¥{formatPrice(master.price)}</span>
+                    <span className="text-gray-500 text-xs ml-1">({Math.round(master.price / 100 * 10)}积分)</span>
+                  </td>
                   <td className="px-4 py-3 text-gray-300">{master.wordCount}字</td>
                   <td className="px-4 py-3 text-gray-300">{formatFollowUps(master.followUps)}</td>
                   <td className="px-4 py-3">
@@ -383,17 +467,59 @@ export default function MasterManagement() {
                 </div>
               </div>
 
-              {/* Sort Order */}
+              {/* Avatar Upload */}
               <div>
-                <label className="block text-sm text-gray-400 mb-2">排序（数字越小越靠前）</label>
-                <input
-                  type="number"
-                  value={formData.sortOrder}
-                  onChange={(e) => setFormData(prev => ({ ...prev, sortOrder: e.target.value }))}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 focus:outline-none"
-                  placeholder="如：1"
-                />
+                <label className="block text-sm text-gray-400 mb-2">头像</label>
+                <div className="flex items-center gap-4">
+                  {formData.avatar ? (
+                    <img
+                      src={formData.avatar}
+                      alt="预览"
+                      className="w-16 h-16 rounded-full object-cover border-2 border-gray-600"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-gray-700 border-2 border-gray-600 flex items-center justify-center text-gray-400">
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                      id="avatar-upload"
+                    />
+                    <label
+                      htmlFor="avatar-upload"
+                      className={`inline-block px-4 py-2 text-sm rounded-lg cursor-pointer transition-colors ${
+                        uploadingAvatar
+                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                          : 'bg-gray-600 hover:bg-gray-500 text-white'
+                      }`}
+                    >
+                      {uploadingAvatar ? '处理中...' : formData.avatar ? '更换头像' : '上传头像'}
+                    </label>
+                    {formData.avatar && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, avatar: '' }))}
+                        className="ml-2 text-red-400 hover:text-red-300 text-sm"
+                      >
+                        删除
+                      </button>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">支持 jpg/png，最大 5MB，自动裁剪为正方形</p>
+                  </div>
+                </div>
               </div>
+
+              <p className="text-xs text-gray-500 mt-2">
+                💡 提示：大师按价格从低到高自动排序，无需手动设置排序
+              </p>
             </div>
 
             <div className="sticky bottom-0 bg-gray-800 border-t border-gray-700 px-6 py-4 flex items-center justify-end gap-3">

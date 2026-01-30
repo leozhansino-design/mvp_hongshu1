@@ -98,6 +98,24 @@ function SuccessContent() {
           <p className="text-text-secondary">大师将在24小时内为您解读</p>
         </div>
 
+        {/* Important Notice */}
+        <div className="bg-gold-400/10 rounded-xl p-6 border border-gold-400/30 mb-6">
+          <h2 className="text-lg font-medium text-center mb-4 text-gold-400">重要提示</h2>
+          <p className="text-center text-white mb-4">
+            大师测算完成后，将通过微信发送报告给您
+          </p>
+          <div className="bg-gray-900/50 rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-text-secondary">请添加客服微信：</span>
+              <span className="text-gold-400 font-medium">lifecurve_ai</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-text-secondary">或关注公众号：</span>
+              <span className="text-gold-400 font-medium">人生曲线AI</span>
+            </div>
+          </div>
+        </div>
+
         {/* Instructions */}
         <div className="bg-gray-900/50 rounded-xl p-6 border border-gray-800 mb-6">
           <h2 className="text-lg font-medium text-center mb-6">领取报告步骤</h2>
@@ -107,7 +125,7 @@ function SuccessContent() {
                 1
               </div>
               <div className="flex-1">
-                <p className="text-white">长按识别下方二维码</p>
+                <p className="text-white">添加客服微信 <span className="text-gold-400">lifecurve_ai</span></p>
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -115,7 +133,7 @@ function SuccessContent() {
                 2
               </div>
               <div className="flex-1">
-                <p className="text-white">关注公众号「人生曲线」</p>
+                <p className="text-white">告知客服您的订单号</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -123,31 +141,16 @@ function SuccessContent() {
                 3
               </div>
               <div className="flex-1">
-                <p className="text-white">回复「报告」添加小助手微信</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-gold-400/20 text-gold-400 flex items-center justify-center flex-shrink-0 text-sm font-medium">
-                4
-              </div>
-              <div className="flex-1">
-                <p className="text-white">小助手会将报告发送给您</p>
+                <p className="text-white">大师完成测算后，报告将发送至您的微信</p>
               </div>
             </div>
           </div>
 
-          {/* QR Code Placeholder */}
-          <div className="mt-8 text-center">
-            <div className="w-40 h-40 mx-auto bg-white rounded-xl flex items-center justify-center">
-              {/* This would be replaced with actual QR code image */}
-              <div className="text-gray-400 text-sm">
-                <svg className="w-16 h-16 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                </svg>
-                公众号二维码
-              </div>
-            </div>
-            <p className="text-text-secondary text-sm mt-3">长按识别二维码</p>
+          {/* Service Account Prompt */}
+          <div className="mt-6 pt-6 border-t border-gray-700">
+            <p className="text-center text-text-secondary text-sm mb-3">
+              您也可以关注公众号「人生曲线AI」获取更多命理资讯
+            </p>
           </div>
         </div>
 
@@ -176,7 +179,7 @@ function SuccessContent() {
 
         {/* Footer Note */}
         <p className="text-center text-text-secondary text-sm mt-6">
-          如有问题请联系客服
+          如有问题请联系客服微信：lifecurve_ai
         </p>
 
         {/* Back Button */}
