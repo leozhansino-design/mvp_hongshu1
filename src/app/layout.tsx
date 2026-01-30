@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   title: "人生曲线 | Life Curve",
   description: "用一张K线图看清你这辈子什么时候最顺",
   keywords: ["人生曲线", "命理", "运势", "K线图"],
+  verification: {
+    other: {
+      "baidu-site-verification": "codeva-3JyEzS19C9",
+    },
+  },
 };
 
 export default function RootLayout({

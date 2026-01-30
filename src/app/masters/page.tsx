@@ -122,18 +122,18 @@ function MasterCard({
   };
 
   return (
-    <div className="bg-gray-900/50 rounded-xl p-6 border border-gray-800 hover:border-gray-700 transition-all hover:bg-gray-900/70">
-      <div className="flex items-start gap-4">
+    <div className="bg-gray-900/50 rounded-xl p-4 sm:p-6 border border-gray-800 hover:border-gray-700 transition-all hover:bg-gray-900/70">
+      <div className="flex items-start gap-3 sm:gap-4">
         {/* Avatar */}
         <div className="flex-shrink-0">
           {(master as Master & { avatar?: string }).avatar ? (
             <img
               src={(master as Master & { avatar?: string }).avatar}
               alt={master.name}
-              className="w-16 h-16 rounded-full object-cover"
+              className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gold-400/30 to-purple-500/30 flex items-center justify-center text-2xl font-serif text-gold-400">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-gold-400/30 to-purple-500/30 flex items-center justify-center text-xl sm:text-2xl font-serif text-gold-400">
               {master.name.charAt(0)}
             </div>
           )}
@@ -141,14 +141,14 @@ function MasterCard({
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-lg font-medium text-white">{master.name}</h3>
-            <span className="text-xl font-medium text-gold-400">
+          <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2 flex-wrap">
+            <h3 className="text-base sm:text-lg font-medium text-white">{master.name}</h3>
+            <span className="text-lg sm:text-xl font-medium text-gold-400">
               ¥{formatPrice(master.price)}
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-sm text-text-secondary mb-3">
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm text-text-secondary mb-2 sm:mb-3">
             {master.years && <span>从业{master.years}年</span>}
             <span>·</span>
             <span>{master.wordCount}字解读</span>
@@ -158,11 +158,11 @@ function MasterCard({
 
           {/* Tags */}
           {master.tags && master.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2 sm:mb-3">
               {master.tags.map((tag) => (
                 <span
                   key={tag}
-                  className={`px-2 py-0.5 text-xs rounded border ${getTagStyle(tag)}`}
+                  className={`px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs rounded border ${getTagStyle(tag)}`}
                 >
                   {tag}
                 </span>
@@ -172,14 +172,14 @@ function MasterCard({
 
           {/* Intro */}
           {master.intro && (
-            <p className="text-text-secondary text-sm italic">
+            <p className="text-text-secondary text-xs sm:text-sm italic line-clamp-2">
               「{master.intro}」
             </p>
           )}
         </div>
 
-        {/* Consult Button */}
-        <div className="flex-shrink-0">
+        {/* Consult Button - Desktop only */}
+        <div className="hidden sm:block flex-shrink-0">
           <button
             onClick={onConsult}
             className="px-6 py-2.5 bg-gradient-to-r from-gold-400/90 to-amber-500/90 text-black font-medium rounded-lg hover:from-gold-400 hover:to-amber-500 transition-all"
@@ -188,6 +188,14 @@ function MasterCard({
           </button>
         </div>
       </div>
+
+      {/* Consult Button - Mobile only */}
+      <button
+        onClick={onConsult}
+        className="sm:hidden w-full mt-3 py-2.5 bg-gradient-to-r from-gold-400/90 to-amber-500/90 text-black font-medium rounded-lg hover:from-gold-400 hover:to-amber-500 transition-all"
+      >
+        立即咨询
+      </button>
     </div>
   );
 }
