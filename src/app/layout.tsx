@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
+import { AuthProvider } from "@/contexts/AuthContext";
+import GlobalLoginModal from "@/components/GlobalLoginModal";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,13 +18,16 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="antialiased">
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <StarBackground />
-        </div>
-        <main className="relative z-10 min-h-screen">
-          {children}
-        </main>
-        <Analytics />
+        <AuthProvider>
+          <div className="fixed inset-0 overflow-hidden pointer-events-none">
+            <StarBackground />
+          </div>
+          <main className="relative z-10 min-h-screen">
+            {children}
+          </main>
+          <GlobalLoginModal />
+          <Analytics />
+        </AuthProvider>
       </body>
     </html>
   );

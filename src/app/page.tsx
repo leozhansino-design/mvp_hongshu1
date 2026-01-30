@@ -14,6 +14,7 @@ import { trackPageView, trackButtonClick } from '@/services/analytics';
 import { checkUsageStatus, consumeUsage, UsageStatus, checkResultCache, saveResultCache } from '@/lib/device';
 import { BirthInfo, StoredResult, CurveMode, CURVE_MODE_LABELS, FreeVersionResult, PaidVersionResult, WealthCurveData } from '@/types';
 import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
+import { useAuth } from '@/contexts/AuthContext';
 
 // 基础统计数（运营初始值）
 const BASE_GENERATED_COUNT = 23847;
@@ -22,6 +23,7 @@ const BASE_GENERATED_COUNT = 23847;
 function HomePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, isLoggedIn, setShowLoginModal, setLoginRedirectMessage, updateFreeUsed, updatePoints } = useAuth();
   const [remainingUsage, setRemainingUsage] = useState(3);
   const [points, setPoints] = useState(0);
   const [totalGenerated, setTotalGenerated] = useState(BASE_GENERATED_COUNT);
@@ -29,6 +31,8 @@ function HomePageContent() {
   const [error, setError] = useState<string | null>(null);
   const [curveMode, setCurveMode] = useState<CurveMode>('life');
   const [usageRefreshKey, setUsageRefreshKey] = useState(0);
+  // 存储待提交的表单数据（用于登录后继续）
+  const [pendingSubmission, setPendingSubmission] = useState<{ birthInfo: BirthInfo; isPaid: boolean } | null>(null);
 
   // 从 URL 读取模式参数
   useEffect(() => {
@@ -40,23 +44,29 @@ function HomePageContent() {
     }
   }, [searchParams]);
 
-  // 刷新使用状态（从服务器加载）
+  // 刷新使用状态（从服务器/用户状态加载）
   const refreshUsageStatus = useCallback(async (mode: CurveMode) => {
     try {
-      const status = await checkUsageStatus(mode);
-      // 根据当前曲线类型显示对应的免费次数
-      if (mode === 'wealth') {
-        setRemainingUsage(status.freeRemainingWealth);
+      // 如果已登录，使用用户的数据
+      if (isLoggedIn && user) {
+        const freeLimit = 1; // 每种模式免费1次
+        if (mode === 'wealth') {
+          setRemainingUsage(Math.max(0, freeLimit - user.freeUsedWealth));
+        } else {
+          setRemainingUsage(Math.max(0, freeLimit - user.freeUsed));
+        }
+        setPoints(user.points);
       } else {
-        setRemainingUsage(status.freeRemainingLife);
+        // 未登录时显示默认值（需要登录才能使用）
+        setRemainingUsage(1); // 显示有1次免费机会，但点击时会要求登录
+        setPoints(0);
       }
-      setPoints(status.points);
       // 通知 UsageStatusBar 也刷新
       setUsageRefreshKey(prev => prev + 1);
     } catch (err) {
       console.error('Failed to refresh usage status:', err);
     }
-  }, []);
+  }, [isLoggedIn, user]);
 
   // 初始加载 + 曲线模式变化时刷新
   useEffect(() => {
@@ -96,7 +106,21 @@ function HomePageContent() {
     trackPageView('home', curveMode);
   }, [curveMode]);
 
-  const handleSubmit = useCallback(async (birthInfo: BirthInfo, isPaid: boolean = false) => {
+  // 登录成功后处理待提交的表单
+  useEffect(() => {
+    if (isLoggedIn && pendingSubmission) {
+      // 清空待提交数据，然后提交
+      const { birthInfo, isPaid } = pendingSubmission;
+      setPendingSubmission(null);
+      // 延迟一下以确保状态更新
+      setTimeout(() => {
+        handleSubmitInternal(birthInfo, isPaid);
+      }, 100);
+    }
+  }, [isLoggedIn, pendingSubmission]);
+
+  // 内部提交函数（需要已登录）
+  const handleSubmitInternal = useCallback(async (birthInfo: BirthInfo, isPaid: boolean = false) => {
     setIsLoading(true);
     setError(null);
 
@@ -240,6 +264,22 @@ function HomePageContent() {
       refreshUsageStatus(curveMode);
     }
   }, [router, curveMode, refreshUsageStatus]);
+
+  // 外部提交函数（检查登录状态）
+  const handleSubmit = useCallback((birthInfo: BirthInfo, isPaid: boolean = false) => {
+    // 必须登录才能使用
+    if (!isLoggedIn) {
+      // 保存待提交的数据
+      setPendingSubmission({ birthInfo, isPaid });
+      // 显示登录弹窗
+      setLoginRedirectMessage(isPaid ? '请先登录后再使用精批功能' : '请先登录后再使用免费概览');
+      setShowLoginModal(true);
+      return;
+    }
+
+    // 已登录，直接提交
+    handleSubmitInternal(birthInfo, isPaid);
+  }, [isLoggedIn, handleSubmitInternal, setLoginRedirectMessage, setShowLoginModal]);
 
   if (isLoading) {
     return (

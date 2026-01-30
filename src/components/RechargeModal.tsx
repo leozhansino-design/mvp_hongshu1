@@ -8,6 +8,8 @@ interface RechargeOption {
   id: number;
   price: number;   // cents
   points: number;
+  label?: string;
+  recommended?: boolean;
 }
 
 interface RechargeModalProps {
@@ -20,13 +22,14 @@ interface RechargeModalProps {
 type ModalView = 'select' | 'wechat_qr' | 'success';
 type PayMethod = 'wechat' | 'alipay';
 
+// 新价格阶梯配置
 const FALLBACK_OPTIONS: RechargeOption[] = [
-  { id: 1, price: 990, points: 100 },
-  { id: 2, price: 2990, points: 350 },
-  { id: 3, price: 4990, points: 600 },
-  { id: 4, price: 9990, points: 1300 },
-  { id: 5, price: 19990, points: 2800 },
-  { id: 6, price: 49990, points: 7500 },
+  { id: 1, price: 990, points: 100, label: '新手体验' },
+  { id: 2, price: 1990, points: 220, label: '轻度用户' },
+  { id: 3, price: 4990, points: 600, label: '主力档位', recommended: true },
+  { id: 4, price: 9990, points: 1300, label: '高频用户' },
+  { id: 5, price: 19990, points: 2800, label: '重度用户' },
+  { id: 6, price: 49990, points: 8000, label: 'VIP用户' },
 ];
 
 function formatPrice(priceCents: number): string {
@@ -286,36 +289,60 @@ export default function RechargeModal({
               </div>
 
               {/* Package grid */}
-              <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
                 {options.map((opt) => {
                   const isSelected = selectedOption?.id === opt.id;
+                  // 计算优惠比例（基准：¥9.9/100积分 = 0.099元/积分）
+                  const baseRate = 0.099;
+                  const actualRate = opt.price / 100 / opt.points;
+                  const bonusPercent = Math.round((1 - actualRate / baseRate) * 100);
                   return (
                     <button
                       key={opt.id}
                       onClick={() => setSelectedOption(opt)}
                       className={`
-                        rounded-lg p-3 text-center transition-all duration-150
+                        relative rounded-lg p-3 text-center transition-all duration-150
                         ${
                           isSelected
                             ? 'bg-gold-400/10 border-2 border-gold-400 shadow-gold-glow'
-                            : 'bg-gray-800 border border-gray-700 hover:border-gray-500 hover:bg-gray-750'
+                            : opt.recommended
+                              ? 'bg-gold-400/5 border-2 border-gold-400/50 hover:border-gold-400'
+                              : 'bg-gray-800 border border-gray-700 hover:border-gray-500 hover:bg-gray-750'
                         }
                       `}
                     >
+                      {/* 推荐标签 */}
+                      {opt.recommended && (
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-gold-400 text-black text-xs font-bold rounded-full">
+                          推荐
+                        </div>
+                      )}
                       <div
-                        className={`text-lg font-bold mb-1 ${
+                        className={`text-lg font-bold mb-0.5 ${
                           isSelected ? 'text-gold-400' : 'text-white'
                         }`}
                       >
                         &yen;{formatPrice(opt.price)}
                       </div>
                       <div
-                        className={`text-sm ${
-                          isSelected ? 'text-gold-500' : 'text-gray-400'
+                        className={`text-sm font-medium ${
+                          isSelected ? 'text-gold-500' : 'text-gray-300'
                         }`}
                       >
                         {opt.points}积分
                       </div>
+                      {/* 优惠信息 */}
+                      {bonusPercent > 0 && (
+                        <div className="text-xs text-green-400 mt-1">
+                          多送{bonusPercent}%
+                        </div>
+                      )}
+                      {/* 标签 */}
+                      {opt.label && (
+                        <div className={`text-xs mt-1 ${isSelected ? 'text-gold-400/70' : 'text-gray-500'}`}>
+                          {opt.label}
+                        </div>
+                      )}
                     </button>
                   );
                 })}
