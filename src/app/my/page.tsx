@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { getAllResults, deleteResult } from '@/services/storage';
 import { StoredResult } from '@/types';
 
@@ -99,6 +100,8 @@ export default function MyPage() {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }

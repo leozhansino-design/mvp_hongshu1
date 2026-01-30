@@ -3,13 +3,14 @@
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import html2canvas from 'html2canvas';
-import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagram, DetailedDaYunTable, WealthChart, WealthAnalysis, RechargeModal } from '@/components';
+import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagram, DetailedDaYunTable, WealthChart, WealthAnalysis, RechargeModal, Footer } from '@/components';
 import UnlockLoader from '@/components/UnlockLoader';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult, generateWealthCurve } from '@/services/api';
 import { calculateDaYun } from '@/lib/bazi';
 import { getOrCreateAnalytics, trackEvent, trackPageView, trackButtonClick } from '@/services/analytics';
 import { checkUsageStatus, consumeUsage } from '@/lib/device';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   StoredResult,
   PHASE_LABELS,
@@ -283,6 +284,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const resolvedParams = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, isLoggedIn, setShowLoginModal, setLoginRedirectMessage } = useAuth();
   const [result, setResult] = useState<StoredResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
@@ -330,6 +332,14 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
   const handleUpgrade = async () => {
     if (!result) return;
+
+    // 检查登录状态 - 必须先登录才能解锁/充值
+    if (!isLoggedIn) {
+      setLoginRedirectMessage('请先登录后再解锁完整报告');
+      setShowLoginModal(true);
+      return;
+    }
+
     // 追踪点击解锁事件（新埋点系统）
     trackButtonClick('unlock', 'result', { curveMode, isPaid: false });
     // 追踪点击解锁事件（旧分析系统）
@@ -686,6 +696,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           onSuccess={handleRechargeSuccess}
         />
       </div>
+
+      <Footer />
     </div>
     );
   }
@@ -1073,6 +1085,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           onSuccess={handleRechargeSuccess}
         />
       </div>
+
+      <Footer />
     </div>
   );
 }
