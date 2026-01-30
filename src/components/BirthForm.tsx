@@ -278,7 +278,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* 姓名和性别 */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-text-secondary mb-2">
             姓名 <span className="text-kline-down">*</span>
@@ -302,25 +302,25 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
           <div className="flex gap-2">
             <button
               type="button"
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1 border ${
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center border ${
                 gender === 'male'
                   ? 'bg-white/10 border-white text-white'
                   : 'bg-black/50 border-gray-700 text-text-secondary hover:border-gray-500'
               }`}
               onClick={() => setGender('male')}
             >
-              乾造 (男)
+              乾造(男)
             </button>
             <button
               type="button"
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1 border ${
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center border ${
                 gender === 'female'
                   ? 'bg-white/10 border-white text-white'
                   : 'bg-black/50 border-gray-700 text-text-secondary hover:border-gray-500'
               }`}
               onClick={() => setGender('female')}
             >
-              坤造 (女)
+              坤造(女)
             </button>
           </div>
         </div>
@@ -446,7 +446,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
             onChange={(e) => handleProvinceChange(e.target.value)}
             className="select-mystic"
           >
-            <option value="">省份/直辖市</option>
+            <option value="">选择省份</option>
             {CHINA_PROVINCES.map((p) => (
               <option key={p.name} value={p.name}>
                 {p.name}

@@ -66,15 +66,15 @@ export default function Header({
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             {/* Logo with Tab Switcher + 大师测算 */}
-            <div className="flex items-center gap-2 md:gap-4">
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-4 overflow-x-auto">
               {showModeSelector ? (
                 // 水平标签切换器
-                <div className="flex items-center bg-gray-900/50 rounded-lg p-1">
+                <div className="flex items-center bg-gray-900/50 rounded-lg p-0.5 sm:p-1 flex-shrink-0">
                   {(Object.keys(CURVE_MODE_LABELS) as CurveMode[]).map((mode) => (
                     <button
                       key={mode}
                       onClick={() => handleModeChange(mode)}
-                      className={`px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all ${
+                      className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                         curveMode === mode
                           ? mode === 'wealth'
                             ? 'bg-gradient-to-r from-gold-400/30 to-amber-500/30 text-gold-400 shadow-sm'
@@ -87,7 +87,7 @@ export default function Header({
                   ))}
                 </div>
               ) : (
-                <Link href="/" className="flex items-center gap-2">
+                <Link href="/" className="flex items-center gap-2 flex-shrink-0">
                   <span className="font-serif text-base md:text-lg text-white">人生曲线</span>
                 </Link>
               )}
@@ -95,7 +95,7 @@ export default function Header({
               {/* 大师测算链接 - 紧挨着模式切换器 */}
               <Link
                 href="/masters"
-                className={`px-3 md:px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all border ${
+                className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all border flex-shrink-0 whitespace-nowrap ${
                   pathname === '/masters'
                     ? 'bg-gold-400/20 text-gold-400 border-gold-400/50'
                     : 'text-text-secondary hover:text-gold-400 border-gray-700 hover:border-gold-400/50'
