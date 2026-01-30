@@ -629,69 +629,85 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             </div>
           )}
 
-          {/* 财富分享图隐藏区域 - 竖屏手机尺寸，曲线图为核心 */}
-          <div ref={wealthShareRef} className="fixed -left-[9999px] w-[750px] p-6 bg-gradient-to-b from-black via-gray-900 to-black">
-            {/* 头部标题 */}
-            <div className="text-center mb-3">
-              <p className="text-gold-400 text-2xl font-bold mb-1">💰 财富曲线</p>
-              <p className="text-text-secondary text-base">{maskName(birthInfo.name || '')} · {birthInfo.gender === 'male' ? '乾造' : '坤造'}</p>
-              <p className="text-text-secondary/70 text-xs">{birthInfo.year}年生</p>
-            </div>
-
-            {/* 财富曲线图 - 核心内容 */}
-            <div className="bg-black/40 rounded-2xl p-3 mb-3">
-              <WealthChart
-                dataPoints={wealthResult.dataPoints}
-                highlights={wealthResult.highlights}
-                wealthRange={wealthResult.wealthRange}
-                isPaid={isPaid}
-              />
-            </div>
-
-            {/* 财富巅峰和类型 - 更紧凑的横向布局 */}
-            <div className="flex items-center justify-center gap-6 mb-3 py-2">
-              <div className="flex items-center gap-2">
-                <span className="text-text-secondary text-sm">财富巅峰</span>
-                <span className="text-gold-400 text-xl font-bold">
-                  {wealthResult.highlights.peakWealth >= 10000
-                    ? `${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿`
-                    : `${Math.round(wealthResult.highlights.peakWealth)}万`
-                  }
-                </span>
-                <span className="text-text-secondary text-xs">({wealthResult.highlights.peakAge}岁)</span>
+          {/* 财富分享图隐藏区域 - 适合小红书的竖屏比例 */}
+          <div ref={wealthShareRef} className="fixed -left-[9999px] w-[750px] bg-gradient-to-b from-black via-gray-900 to-black" style={{ aspectRatio: '3/4' }}>
+            <div className="p-6 flex flex-col h-full">
+              {/* 头部标题 */}
+              <div className="text-center mb-4">
+                <p className="text-gold-400 text-2xl font-bold mb-1">💰 财富曲线</p>
+                <p className="text-text-secondary text-base">{maskName(birthInfo.name || '')} · {birthInfo.gender === 'male' ? '乾造' : '坤造'}</p>
+                <p className="text-text-secondary/70 text-xs">{birthInfo.year}年生</p>
               </div>
-              <div className="w-px h-6 bg-gray-600"></div>
-              <div className="flex items-center gap-2">
-                <span className="text-text-secondary text-sm">财富类型</span>
-                <span className="text-gold-400 text-lg font-bold">{wealthResult.wealthType}</span>
-              </div>
-            </div>
 
-            {/* 有趣的高光文案 */}
-            <div className="bg-gold-400/10 border border-gold-400/30 rounded-xl p-3 mb-3">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-lg">🌟</span>
-                <span className="text-gold-400 font-bold text-sm">财富高光时刻</span>
-                <span className="px-2 py-0.5 bg-gold-400 text-black rounded-full text-xs font-bold">
-                  {wealthResult.highlights.peakAge}岁
-                </span>
+              {/* 财富曲线图 - 隐藏升级提示 */}
+              <div className="bg-black/40 rounded-2xl p-3 mb-4 flex-shrink-0">
+                <WealthChart
+                  dataPoints={wealthResult.dataPoints}
+                  highlights={wealthResult.highlights}
+                  wealthRange={wealthResult.wealthRange}
+                  isPaid={isPaid}
+                  hideUpgradePrompt={true}
+                />
               </div>
-              <p className="text-text-primary text-sm leading-relaxed line-clamp-2">
-                {wealthResult.highlights.peakWealth >= 5000
-                  ? `命中注定的财富巅峰！预计身价冲到${wealthResult.highlights.peakWealth >= 10000 ? `${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿` : `${Math.round(wealthResult.highlights.peakWealth)}万`}~`
-                  : wealthResult.highlights.peakWealth >= 1000
-                    ? `达到小富巅峰，房贷不愁、买车不慌~`
-                    : wealthResult.highlights.peakWealth >= 300
-                      ? `积累到${Math.round(wealthResult.highlights.peakWealth)}万，平凡的幸福也是幸福~`
-                      : `存款${Math.round(wealthResult.highlights.peakWealth)}万，真实不凡尔赛~`
-                }
-              </p>
-            </div>
 
-            {/* 底部网址 - 更醒目 */}
-            <div className="text-center pt-2 pb-1">
-              <p className="text-gold-400 text-2xl font-bold tracking-wider">lifecurve.cn</p>
-              <p className="text-text-secondary/60 text-xs mt-1">测算你的财富曲线</p>
+              {/* 财富巅峰和类型 - 更紧凑的横向布局 */}
+              <div className="flex items-center justify-center gap-6 mb-4 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-text-secondary text-sm">财富巅峰</span>
+                  <span className="text-gold-400 text-xl font-bold">
+                    {wealthResult.highlights.peakWealth >= 10000
+                      ? `${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿`
+                      : `${Math.round(wealthResult.highlights.peakWealth)}万`
+                    }
+                  </span>
+                  <span className="text-text-secondary text-xs">({wealthResult.highlights.peakAge}岁)</span>
+                </div>
+                <div className="w-px h-6 bg-gray-600"></div>
+                <div className="flex items-center gap-2">
+                  <span className="text-text-secondary text-sm">财富类型</span>
+                  <span className="text-gold-400 text-lg font-bold">{wealthResult.wealthType}</span>
+                </div>
+              </div>
+
+              {/* 有趣的高光文案 - 使用与报告相同的内容 */}
+              <div className="bg-gold-400/10 border border-gold-400/30 rounded-xl p-4 mb-4 flex-grow">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🌟</span>
+                  <span className="text-gold-400 font-bold">财富高光时刻</span>
+                  <span className="px-2 py-0.5 bg-gold-400 text-black rounded-full text-xs font-bold">
+                    {wealthResult.highlights.peakAge}岁
+                  </span>
+                </div>
+                <p className="text-text-primary text-sm leading-relaxed">
+                  {(() => {
+                    const peakWealth = wealthResult.highlights.peakWealth;
+                    const peakAge = wealthResult.highlights.peakAge;
+                    const formatWealth = (v: number) => v >= 10000 ? `${(v / 10000).toFixed(1)}亿` : `${Math.round(v)}万`;
+                    const goodBaziTerms = ['食伤生财', '财官双美', '偏财入库', '正财透干', '财星得禄'];
+                    const badBaziTerms = ['比劫夺财', '劫财见财', '枭印夺食', '财星被克', '财库逢冲'];
+
+                    if (peakWealth >= 8000) {
+                      const term = goodBaziTerms[peakAge % goodBaziTerms.length];
+                      return `${peakAge}岁，${term}大运驾临！预计身价冲到${formatWealth(peakWealth)}，这就是"命中带财"~`;
+                    } else if (peakWealth >= 2000) {
+                      const term = goodBaziTerms[(peakAge + 1) % goodBaziTerms.length];
+                      return `${peakAge}岁，${term}格局形成！${formatWealth(peakWealth)}的身家，房贷不愁、想买就买~`;
+                    } else if (peakWealth >= 500) {
+                      return `${peakAge}岁，人生财富巅峰${formatWealth(peakWealth)}！平凡但踏实，这才是真实人生~`;
+                    } else if (peakWealth >= 150) {
+                      return `${peakAge}岁，财富巅峰${formatWealth(peakWealth)}，存款终于有6位数！真实不凡尔赛~`;
+                    } else {
+                      return `${peakAge}岁，巅峰财富${formatWealth(peakWealth)}，穷开心也是一种境界！`;
+                    }
+                  })()}
+                </p>
+              </div>
+
+              {/* 底部网址 */}
+              <div className="text-center pt-2 pb-1 mt-auto">
+                <p className="text-gold-400 text-2xl font-bold tracking-wider">lifecurve.cn</p>
+                <p className="text-text-secondary/60 text-xs mt-1">测算你的财富曲线</p>
+              </div>
             </div>
           </div>
 
@@ -1025,66 +1041,68 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           </div>
         )}
 
-        {/* 分享图隐藏区域 - 竖屏手机尺寸，曲线图为核心 */}
-        <div ref={shareRef} className="fixed -left-[9999px] w-[750px] p-6" style={{ background: 'linear-gradient(180deg, #0D0221 0%, #1A0A2E 50%, #16213E 100%)' }}>
-          {/* 头部标题 */}
-          <div className="text-center mb-3">
-            <p className="text-gold-400 text-2xl font-bold mb-1">✦ 人生曲线 ✦</p>
-            <p className="text-text-secondary text-base">{maskName(birthInfo.name || '')} · {birthInfo.gender === 'male' ? '乾造' : '坤造'}</p>
-            <p className="text-text-secondary/70 text-xs">
-              {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日
-            </p>
-          </div>
-
-          {/* 人生曲线图 - 核心内容 */}
-          <div className="bg-black/40 rounded-2xl p-3 mb-3">
-            <LifeCurveChart
-              data={data?.chartPoints || []}
-              currentAge={currentAge}
-              birthYear={birthInfo.year}
-            />
-          </div>
-
-          {/* 综合评分和当前运势 - 更紧凑的横向布局 */}
-          <div className="flex items-center justify-center gap-6 mb-3 py-2">
-            <div className="flex items-center gap-2">
-              <span className="text-text-secondary text-sm">综合评分</span>
-              <span className="text-gold-400 text-2xl font-bold">{data?.summaryScore}</span>
-            </div>
-            <div className="w-px h-6 bg-gray-600"></div>
-            <div className="flex items-center gap-2">
-              <span className="text-text-secondary text-sm">当前运势</span>
-              <span className="text-gold-400 text-lg font-bold">
-                {currentPhase === 'rising' && '📈 上升期'}
-                {currentPhase === 'peak' && '⭐ 巅峰期'}
-                {currentPhase === 'stable' && '➡️ 平稳期'}
-                {currentPhase === 'declining' && '📉 调整期'}
-                {currentPhase === 'valley' && '🌙 蓄势期'}
-              </span>
-            </div>
-          </div>
-
-          {/* 人生高光时刻 - 使用与报告一致的 highlightMoment 数据 */}
-          {data?.highlightMoment && (
-            <div className="bg-gold-400/10 border border-gold-400/30 rounded-xl p-3 mb-3">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-lg">🌟</span>
-                <span className="text-gold-400 font-bold text-sm">人生高光时刻</span>
-                <span className="px-2 py-0.5 bg-gold-400 text-black rounded-full text-xs font-bold">
-                  {data.highlightMoment.age}岁
-                </span>
-                <span className="text-text-secondary text-xs">· {data.highlightMoment.title}</span>
-              </div>
-              <p className="text-text-primary text-sm leading-relaxed line-clamp-2">
-                {data.highlightMoment.description}
+        {/* 分享图隐藏区域 - 适合小红书的竖屏比例 3:4 */}
+        <div ref={shareRef} className="fixed -left-[9999px] w-[750px]" style={{ aspectRatio: '3/4', background: 'linear-gradient(180deg, #0D0221 0%, #1A0A2E 50%, #16213E 100%)' }}>
+          <div className="p-6 flex flex-col h-full">
+            {/* 头部标题 */}
+            <div className="text-center mb-4">
+              <p className="text-gold-400 text-2xl font-bold mb-1">✦ 人生曲线 ✦</p>
+              <p className="text-text-secondary text-base">{maskName(birthInfo.name || '')} · {birthInfo.gender === 'male' ? '乾造' : '坤造'}</p>
+              <p className="text-text-secondary/70 text-xs">
+                {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日
               </p>
             </div>
-          )}
 
-          {/* 底部网址 - 更醒目 */}
-          <div className="text-center pt-2 pb-1">
-            <p className="text-gold-400 text-2xl font-bold tracking-wider">lifecurve.cn</p>
-            <p className="text-text-secondary/60 text-xs mt-1">测算你的人生曲线</p>
+            {/* 人生曲线图 - 核心内容 */}
+            <div className="bg-black/40 rounded-2xl p-3 mb-4 flex-shrink-0">
+              <LifeCurveChart
+                data={data?.chartPoints || []}
+                currentAge={currentAge}
+                birthYear={birthInfo.year}
+              />
+            </div>
+
+            {/* 综合评分和当前运势 - 更紧凑的横向布局 */}
+            <div className="flex items-center justify-center gap-6 mb-4 py-2">
+              <div className="flex items-center gap-2">
+                <span className="text-text-secondary text-sm">综合评分</span>
+                <span className="text-gold-400 text-2xl font-bold">{data?.summaryScore}</span>
+              </div>
+              <div className="w-px h-6 bg-gray-600"></div>
+              <div className="flex items-center gap-2">
+                <span className="text-text-secondary text-sm">当前运势</span>
+                <span className="text-gold-400 text-lg font-bold">
+                  {currentPhase === 'rising' && '📈 上升期'}
+                  {currentPhase === 'peak' && '⭐ 巅峰期'}
+                  {currentPhase === 'stable' && '➡️ 平稳期'}
+                  {currentPhase === 'declining' && '📉 调整期'}
+                  {currentPhase === 'valley' && '🌙 蓄势期'}
+                </span>
+              </div>
+            </div>
+
+            {/* 人生高光时刻 - 使用与报告一致的 highlightMoment 数据 */}
+            {data?.highlightMoment && (
+              <div className="bg-gold-400/10 border border-gold-400/30 rounded-xl p-4 mb-4 flex-grow">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🌟</span>
+                  <span className="text-gold-400 font-bold">人生高光时刻</span>
+                  <span className="px-2 py-0.5 bg-gold-400 text-black rounded-full text-xs font-bold">
+                    {data.highlightMoment.age}岁
+                  </span>
+                  <span className="text-text-secondary text-xs">· {data.highlightMoment.title}</span>
+                </div>
+                <p className="text-text-primary text-sm leading-relaxed">
+                  {data.highlightMoment.description}
+                </p>
+              </div>
+            )}
+
+            {/* 底部网址 */}
+            <div className="text-center pt-2 pb-1 mt-auto">
+              <p className="text-gold-400 text-2xl font-bold tracking-wider">lifecurve.cn</p>
+              <p className="text-text-secondary/60 text-xs mt-1">测算你的人生曲线</p>
+            </div>
           </div>
         </div>
 
