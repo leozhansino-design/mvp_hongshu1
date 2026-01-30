@@ -10,9 +10,16 @@ export async function GET() {
   try {
     const options = await getRechargeOptions();
 
-    // 只返回启用的选项，且只暴露前端需要的字段
+    // 只返回启用的选项，去重（根据价格+积分），且只暴露前端需要的字段
+    const seen = new Set<string>();
     const publicOptions = options
       .filter((opt) => opt.is_active)
+      .filter((opt) => {
+        const key = `${opt.price}-${opt.points}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
       .map((opt) => ({
         id: opt.id,
         price: opt.price,

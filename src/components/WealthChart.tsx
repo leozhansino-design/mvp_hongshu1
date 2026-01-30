@@ -8,6 +8,7 @@ interface WealthChartProps {
   highlights: WealthHighlights;
   wealthRange: WealthRange;
   isPaid?: boolean;
+  hideUpgradePrompt?: boolean; // 用于分享图片时隐藏升级提示
 }
 
 // 图表尺寸常量
@@ -20,6 +21,7 @@ export default function WealthChart({
   highlights,
   wealthRange,
   isPaid = false,
+  hideUpgradePrompt = false,
 }: WealthChartProps) {
   const width = CHART_WIDTH;
   const height = CHART_HEIGHT;
@@ -340,8 +342,8 @@ export default function WealthChart({
         </text>
       </svg>
 
-      {/* 免费版提示 */}
-      {!isPaid && (
+      {/* 免费版提示 - 分享图片时隐藏 */}
+      {!isPaid && !hideUpgradePrompt && (
         <div className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-black/80 border border-gold-400/30 rounded-lg px-4 py-2 text-center">
           <p className="text-sm text-gold-400">
             解锁完整版，查看每年详细走势

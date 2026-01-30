@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import ConsultationModal from '@/components/ConsultationModal';
 import { Master, formatPrice, formatFollowUps } from '@/types/master';
 
@@ -93,6 +94,8 @@ export default function MastersPage() {
           master={selectedMaster}
         />
       )}
+
+      <Footer />
     </div>
   );
 }
