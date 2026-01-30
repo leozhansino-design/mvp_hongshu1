@@ -38,9 +38,17 @@ export default function UsageStatusBar({ curveMode = 'life', onStatusChange, ref
         loadStatus();
       }
     };
+    // pageshow 事件在浏览器后退时也会触发（包括从 bfcache 恢复时）
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        loadStatus();
+      }
+    };
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pageshow', handlePageShow);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageShow);
     };
   }, [curveMode]);
 

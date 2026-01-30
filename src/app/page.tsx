@@ -74,11 +74,20 @@ function HomePageContent() {
     const handleFocus = () => {
       refreshUsageStatus(curveMode);
     };
+    // pageshow 事件在浏览器后退时也会触发（包括从 bfcache 恢复时）
+    const handlePageShow = (event: PageTransitionEvent) => {
+      // persisted 为 true 表示页面从 bfcache 恢复
+      if (event.persisted) {
+        refreshUsageStatus(curveMode);
+      }
+    };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('pageshow', handlePageShow);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('pageshow', handlePageShow);
     };
   }, [curveMode, refreshUsageStatus]);
 
