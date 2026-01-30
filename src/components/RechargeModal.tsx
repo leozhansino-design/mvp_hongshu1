@@ -264,8 +264,8 @@ export default function RechargeModal({
       {/* Modal */}
       <div className="relative w-full max-w-lg bg-gray-900 rounded-xl border border-gray-700 shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-          <h3 className="text-lg font-medium text-white">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
+          <h3 className="text-base font-medium text-white">
             {view === 'wechat_qr' ? '微信支付' : view === 'success' ? '支付成功' : '充值积分'}
           </h3>
           <button
@@ -278,18 +278,18 @@ export default function RechargeModal({
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4">
           {/* ===== SELECT VIEW ===== */}
           {view === 'select' && (
             <>
               {/* Current points */}
-              <div className="mb-5 text-center">
+              <div className="mb-3 text-center">
                 <span className="text-gray-400 text-sm">当前积分 </span>
                 <span className="text-gold-400 font-bold text-lg">{currentPoints}</span>
               </div>
 
               {/* Package grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+              <div className="grid grid-cols-3 gap-2 mb-4">
                 {options.map((opt) => {
                   const isSelected = selectedOption?.id === opt.id;
                   // 计算优惠比例（基准：¥9.9/100积分 = 0.099元/积分）
@@ -301,7 +301,7 @@ export default function RechargeModal({
                       key={opt.id}
                       onClick={() => setSelectedOption(opt)}
                       className={`
-                        relative rounded-lg p-3 text-center transition-all duration-150
+                        relative rounded-lg p-2 text-center transition-all duration-150
                         ${
                           isSelected
                             ? 'bg-gold-400/10 border-2 border-gold-400 shadow-gold-glow'
@@ -313,19 +313,19 @@ export default function RechargeModal({
                     >
                       {/* 推荐标签 */}
                       {opt.recommended && (
-                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-gold-400 text-black text-xs font-bold rounded-full">
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-gold-400 text-black text-[10px] font-bold rounded-full">
                           推荐
                         </div>
                       )}
                       <div
-                        className={`text-lg font-bold mb-0.5 ${
+                        className={`text-base font-bold ${
                           isSelected ? 'text-gold-400' : 'text-white'
                         }`}
                       >
                         &yen;{formatPrice(opt.price)}
                       </div>
                       <div
-                        className={`text-sm font-medium ${
+                        className={`text-xs font-medium ${
                           isSelected ? 'text-gold-500' : 'text-gray-300'
                         }`}
                       >
@@ -333,14 +333,8 @@ export default function RechargeModal({
                       </div>
                       {/* 优惠信息 */}
                       {bonusPercent > 0 && (
-                        <div className="text-xs text-green-400 mt-1">
-                          多送{bonusPercent}%
-                        </div>
-                      )}
-                      {/* 标签 */}
-                      {opt.label && (
-                        <div className={`text-xs mt-1 ${isSelected ? 'text-gold-400/70' : 'text-gray-500'}`}>
-                          {opt.label}
+                        <div className="text-[10px] text-green-400">
+                          +{bonusPercent}%
                         </div>
                       )}
                     </button>
@@ -349,13 +343,13 @@ export default function RechargeModal({
               </div>
 
               {/* Payment method */}
-              <div className="mb-6">
-                <div className="text-gray-400 text-sm mb-3">支付方式</div>
-                <div className="flex gap-3">
+              <div className="mb-4">
+                <div className="text-gray-400 text-xs mb-2">支付方式</div>
+                <div className="flex gap-2">
                   <button
                     onClick={() => setPayMethod('wechat')}
                     className={`
-                      flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+                      flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-150
                       ${
                         payMethod === 'wechat'
                           ? 'bg-gold-400/10 border-2 border-gold-400 text-gold-400'
@@ -368,7 +362,7 @@ export default function RechargeModal({
                   <button
                     onClick={() => setPayMethod('alipay')}
                     className={`
-                      flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+                      flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-150
                       ${
                         payMethod === 'alipay'
                           ? 'bg-gold-400/10 border-2 border-gold-400 text-gold-400'
@@ -383,8 +377,8 @@ export default function RechargeModal({
 
               {/* Error message */}
               {error && (
-                <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                  <p className="text-red-400 text-sm text-center">{error}</p>
+                <div className="mb-3 p-2 rounded-lg bg-red-500/10 border border-red-500/30">
+                  <p className="text-red-400 text-xs text-center">{error}</p>
                 </div>
               )}
 
@@ -392,14 +386,14 @@ export default function RechargeModal({
               <button
                 onClick={handleSubmit}
                 disabled={loading || !selectedOption}
-                className="w-full py-3 bg-gold-400 hover:bg-gold-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors text-base"
+                className="w-full py-2.5 bg-gold-400 hover:bg-gold-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors text-sm"
               >
                 {loading ? '创建订单中...' : '立即支付'}
               </button>
 
               {/* Refund notice */}
-              <p className="text-center text-xs text-gray-500 mt-3">
-                如有退款需求，请联系客服微信：lifecurveai
+              <p className="text-center text-[10px] text-gray-500 mt-2">
+                退款请联系微信：lifecurveai
               </p>
             </>
           )}
