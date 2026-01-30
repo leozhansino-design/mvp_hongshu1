@@ -246,16 +246,6 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
             <span className="text-xs text-gray-400 ml-2 font-normal">(评分仅和自身比较)</span>
           </h3>
         </div>
-        <div className="flex items-center gap-4 text-xs">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-            <span className="text-green-600">吉运 (涨)</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-            <span className="text-red-500">凶运 (跌)</span>
-          </span>
-        </div>
       </div>
 
       {/* 图表 */}

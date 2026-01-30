@@ -1026,21 +1026,21 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             />
           </div>
 
-          {/* 综合评分和当前运势 */}
-          <div className="flex gap-4 mb-4">
-            <div className="flex-1 bg-gold-400/10 border border-gold-400/30 rounded-xl p-4 text-center">
-              <p className="text-gold-400 text-4xl font-bold">{data?.summaryScore}</p>
-              <p className="text-text-secondary text-sm">综合评分</p>
+          {/* 综合评分和当前运势 - 缩小尺寸 */}
+          <div className="flex gap-3 mb-4">
+            <div className="flex-1 bg-gold-400/10 border border-gold-400/30 rounded-xl p-3 text-center">
+              <p className="text-gold-400 text-2xl font-bold">{data?.summaryScore}</p>
+              <p className="text-text-secondary text-xs">综合评分</p>
             </div>
-            <div className="flex-1 bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 text-center">
-              <p className="text-gold-400 text-2xl font-bold">
+            <div className="flex-1 bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 text-center flex flex-col justify-center">
+              <p className="text-gold-400 text-lg font-bold">
                 {currentPhase === 'rising' && '📈 上升期'}
                 {currentPhase === 'peak' && '⭐ 巅峰期'}
                 {currentPhase === 'stable' && '➡️ 平稳期'}
                 {currentPhase === 'declining' && '📉 调整期'}
                 {currentPhase === 'valley' && '🌙 蓄势期'}
               </p>
-              <p className="text-text-secondary text-sm">当前运势</p>
+              <p className="text-text-secondary text-xs">当前运势</p>
             </div>
           </div>
 
