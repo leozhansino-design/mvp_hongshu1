@@ -117,8 +117,8 @@ export async function POST(request: NextRequest) {
       // 如果设备已经使用过免费次数，新用户的免费次数设为1（表示已用完）
       if (eligibility.hasUsedFree) {
         // 更新用户的免费次数为已使用状态
-        const { supabase } = await import('@/lib/supabase');
-        await supabase
+        const { getSupabaseAdmin } = await import('@/lib/supabase');
+        await getSupabaseAdmin()
           .from('users')
           .update({ free_used: 1, free_used_wealth: 1 })
           .eq('id', newUser.id);
