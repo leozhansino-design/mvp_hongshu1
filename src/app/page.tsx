@@ -26,6 +26,7 @@ function HomePageContent() {
   const { user, isLoggedIn, setShowLoginModal, setLoginRedirectMessage, updateFreeUsed, updatePoints } = useAuth();
   const [remainingUsage, setRemainingUsage] = useState(3);
   const [points, setPoints] = useState(0);
+  const [detailedPrice, setDetailedPrice] = useState(200);
   const [totalGenerated, setTotalGenerated] = useState(FALLBACK_GENERATED_COUNT);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -350,6 +351,7 @@ function HomePageContent() {
             disabled={isLoading}
             remainingUsage={remainingUsage}
             points={points}
+            detailedPrice={detailedPrice}
           />
 
           {error && (
@@ -371,6 +373,7 @@ function HomePageContent() {
                 setRemainingUsage(status.freeRemainingLife);
               }
               setPoints(status.points);
+              setDetailedPrice(status.detailedPrice);
             }}
           />
         </div>

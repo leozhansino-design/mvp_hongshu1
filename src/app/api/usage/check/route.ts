@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrCreateDevice } from '@/lib/supabase';
+import { getOrCreateDevice, getDetailedPoints } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
     const freeUsed = curveMode === 'wealth' ? freeUsedWealth : freeUsedLife;
     const freeRemaining = Math.max(0, FREE_LIMIT - freeUsed);
 
+    // 从系统配置获取精批积分价格
+    const detailedPrice = await getDetailedPoints();
+
     return NextResponse.json({
       success: true,
       deviceId: device.device_id,
@@ -38,7 +41,8 @@ export async function GET(request: NextRequest) {
       points: device.points,
       canUseFree: freeRemaining > 0,
       canUsePaid: device.points >= 10,
-      canUseDetailed: device.points >= 50,
+      canUseDetailed: device.points >= detailedPrice,
+      detailedPrice, // 返回精批价格供前端使用
     }, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',

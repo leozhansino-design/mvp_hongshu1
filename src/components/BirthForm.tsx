@@ -11,6 +11,7 @@ interface BirthFormProps {
   disabled?: boolean;
   remainingUsage: number;
   points?: number; // 当前积分
+  detailedPrice?: number; // 精批价格（从后台配置获取）
 }
 
 // 十二时辰定义
@@ -29,7 +30,7 @@ const SHI_CHEN_OPTIONS = [
   { value: 21, label: '亥时', time: '21:00-23:00' },
 ];
 
-export default function BirthForm({ onSubmit, disabled, remainingUsage, points = 0 }: BirthFormProps) {
+export default function BirthForm({ onSubmit, disabled, remainingUsage, points = 0, detailedPrice = 200 }: BirthFormProps) {
   const { isLoggedIn, setShowLoginModal, setLoginRedirectMessage } = useAuth();
   const [name, setName] = useState<string>('');
   const [nameError, setNameError] = useState<string>('');
@@ -585,23 +586,23 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
               return;
             }
             // 再检查积分
-            if (points < 50) {
-              setFormErrors(['积分不足，需要50积分解锁精批详解']);
+            if (points < detailedPrice) {
+              setFormErrors([`积分不足，需要${detailedPrice}积分解锁精批详解`]);
               setShowErrors(true);
               return;
             }
             trySubmit(true);
           }}
-          className={`py-3 text-base font-serif ${points >= 50 ? 'btn-gold' : 'btn-gold opacity-50'}`}
+          className={`py-3 text-base font-serif ${points >= detailedPrice ? 'btn-gold' : 'btn-gold opacity-50'}`}
         >
           精批详解
         </button>
       </div>
 
       {/* 积分不足提示 - 只在积分不够时显示 */}
-      {points < 50 && !showErrors && (
+      {points < detailedPrice && !showErrors && (
         <p className="text-center text-xs text-text-secondary/70 mt-2">
-          需要50积分解锁精批详解
+          需要{detailedPrice}积分解锁精批详解
         </p>
       )}
     </form>

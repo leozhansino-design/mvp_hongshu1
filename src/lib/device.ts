@@ -37,6 +37,7 @@ export interface UsageStatus {
   canUseFree: boolean;
   canUsePaid: boolean;
   canUseDetailed: boolean;
+  detailedPrice: number; // 精批价格（从后台配置获取）
 }
 
 // 检查使用情况（支持按曲线类型查询）
@@ -54,6 +55,7 @@ export async function checkUsageStatus(curveMode: 'life' | 'wealth' = 'life'): P
       canUseFree: true,
       canUsePaid: false,
       canUseDetailed: false,
+      detailedPrice: 200,
     };
   }
 
@@ -74,6 +76,7 @@ export async function checkUsageStatus(curveMode: 'life' | 'wealth' = 'life'): P
         canUseFree: data.canUseFree,
         canUsePaid: data.canUsePaid,
         canUseDetailed: data.canUseDetailed,
+        detailedPrice: data.detailedPrice ?? 200,
       };
     } else {
       console.error('Usage check API returned error:', data.error, data.detail);
@@ -93,6 +96,7 @@ export async function checkUsageStatus(curveMode: 'life' | 'wealth' = 'life'): P
     canUseFree: true,
     canUsePaid: false,
     canUseDetailed: false,
+    detailedPrice: 200,
   };
 }
 

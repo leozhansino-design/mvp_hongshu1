@@ -671,36 +671,50 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
               {/* 有趣的高光文案 - 使用与报告相同的内容 */}
               <div className="bg-gold-400/10 border border-gold-400/30 rounded-xl p-4 mb-4 flex-grow">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">🌟</span>
-                  <span className="text-gold-400 font-bold">财富高光时刻</span>
-                  <span className="px-2 py-0.5 bg-gold-400 text-black rounded-full text-xs font-bold">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">🌟</span>
+                  <span className="text-gold-400 font-bold text-lg">财富高光时刻</span>
+                  <span className="px-2 py-0.5 bg-gold-400 text-black rounded-full text-sm font-bold">
                     {wealthResult.highlights.peakAge}岁
                   </span>
                 </div>
-                <p className="text-text-primary text-sm leading-relaxed">
-                  {(() => {
-                    const peakWealth = wealthResult.highlights.peakWealth;
-                    const peakAge = wealthResult.highlights.peakAge;
-                    const formatWealth = (v: number) => v >= 10000 ? `${(v / 10000).toFixed(1)}亿` : `${Math.round(v)}万`;
-                    const goodBaziTerms = ['食伤生财', '财官双美', '偏财入库', '正财透干', '财星得禄'];
-                    const badBaziTerms = ['比劫夺财', '劫财见财', '枭印夺食', '财星被克', '财库逢冲'];
+                {(() => {
+                  const peakWealth = wealthResult.highlights.peakWealth;
+                  const peakAge = wealthResult.highlights.peakAge;
+                  const formatWealth = (v: number) => v >= 10000 ? `${(v / 10000).toFixed(1)}亿` : `${Math.round(v)}万`;
+                  const goodBaziTerms = ['食伤生财', '财官双美', '偏财入库', '正财透干', '财星得禄'];
 
-                    if (peakWealth >= 8000) {
-                      const term = goodBaziTerms[peakAge % goodBaziTerms.length];
-                      return `${peakAge}岁，${term}大运驾临！预计身价冲到${formatWealth(peakWealth)}，这就是"命中带财"~`;
-                    } else if (peakWealth >= 2000) {
-                      const term = goodBaziTerms[(peakAge + 1) % goodBaziTerms.length];
-                      return `${peakAge}岁，${term}格局形成！${formatWealth(peakWealth)}的身家，房贷不愁、想买就买~`;
-                    } else if (peakWealth >= 500) {
-                      return `${peakAge}岁，人生财富巅峰${formatWealth(peakWealth)}！平凡但踏实，这才是真实人生~`;
-                    } else if (peakWealth >= 150) {
-                      return `${peakAge}岁，财富巅峰${formatWealth(peakWealth)}，存款终于有6位数！真实不凡尔赛~`;
-                    } else {
-                      return `${peakAge}岁，巅峰财富${formatWealth(peakWealth)}，穷开心也是一种境界！`;
-                    }
-                  })()}
-                </p>
+                  let content = '';
+                  if (peakWealth >= 8000) {
+                    const term = goodBaziTerms[peakAge % goodBaziTerms.length];
+                    content = `${peakAge}岁，${term}大运驾临！这一年你将见证什么叫"命中带财"。预计身价冲到${formatWealth(peakWealth)}，可能是创业套现、投资翻倍、或者祖坟冒青烟。建议提前学习如何低调炫富~`;
+                  } else if (peakWealth >= 2000) {
+                    const term = goodBaziTerms[(peakAge + 1) % goodBaziTerms.length];
+                    content = `${peakAge}岁，${term}格局形成！虽然不至于富可敌国，但${formatWealth(peakWealth)}的身家足够让你在朋友圈里"不经意"晒一晒。房贷不愁、想买就买，这就是财务自信！`;
+                  } else if (peakWealth >= 500) {
+                    content = `${peakAge}岁，虽然命运没给你暴富的机会，但${formatWealth(peakWealth)}也够在二三线城市买房买车了！人生巅峰可能就是某天发现：诶？存款居然有7位数了！平凡但踏实~`;
+                  } else if (peakWealth >= 150) {
+                    content = `${peakAge}岁，人生财富巅峰${formatWealth(peakWealth)}，可能就是存款终于有6位数那天！好消息是能多吃几顿好的，换个角度：你不用操心"钱多了怎么花"的烦恼~`;
+                  } else {
+                    content = `${peakAge}岁，巅峰财富${formatWealth(peakWealth)}，说出来可能有点扎心。但hey，钱不是万能的！你省去了"该买宾利还是劳斯莱斯"的纠结。穷开心也是一种境界！`;
+                  }
+
+                  // 根据内容长度调整字体大小
+                  const textClass = content.length > 180
+                    ? 'text-base'
+                    : content.length > 100
+                      ? 'text-lg'
+                      : 'text-xl';
+
+                  // 限制最大266字符
+                  const displayContent = content.length > 266 ? content.slice(0, 266) + '...' : content;
+
+                  return (
+                    <p className={`text-text-primary leading-relaxed ${textClass}`}>
+                      {displayContent}
+                    </p>
+                  );
+                })()}
               </div>
 
               {/* 底部网址 */}
@@ -1084,16 +1098,24 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             {/* 人生高光时刻 - 使用与报告一致的 highlightMoment 数据 */}
             {data?.highlightMoment && (
               <div className="bg-gold-400/10 border border-gold-400/30 rounded-xl p-4 mb-4 flex-grow">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">🌟</span>
-                  <span className="text-gold-400 font-bold">人生高光时刻</span>
-                  <span className="px-2 py-0.5 bg-gold-400 text-black rounded-full text-xs font-bold">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">🌟</span>
+                  <span className="text-gold-400 font-bold text-lg">人生高光时刻</span>
+                  <span className="px-2 py-0.5 bg-gold-400 text-black rounded-full text-sm font-bold">
                     {data.highlightMoment.age}岁
                   </span>
-                  <span className="text-text-secondary text-xs">· {data.highlightMoment.title}</span>
+                  <span className="text-text-secondary text-sm">· {data.highlightMoment.title}</span>
                 </div>
-                <p className="text-text-primary text-sm leading-relaxed">
-                  {data.highlightMoment.description}
+                <p className={`text-text-primary leading-relaxed ${
+                  data.highlightMoment.description.length > 180
+                    ? 'text-base'
+                    : data.highlightMoment.description.length > 100
+                      ? 'text-lg'
+                      : 'text-xl'
+                }`}>
+                  {data.highlightMoment.description.length > 266
+                    ? data.highlightMoment.description.slice(0, 266) + '...'
+                    : data.highlightMoment.description}
                 </p>
               </div>
             )}

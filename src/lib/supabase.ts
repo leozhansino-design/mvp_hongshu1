@@ -1078,3 +1078,67 @@ export async function getTotalGenerated(): Promise<number> {
 export async function incrementTotalGenerated(): Promise<number> {
   return await incrementStat('total_generated', 1);
 }
+
+// ============================================
+// 系统配置相关函数
+// ============================================
+
+// 缓存系统配置（避免每次请求都查数据库）
+const systemConfigCache: Record<string, { value: unknown; timestamp: number }> = {};
+const CACHE_TTL = 60 * 1000; // 1分钟缓存
+
+// 获取系统配置值
+export async function getSystemConfig<T = string>(key: string, defaultValue: T): Promise<T> {
+  // 检查缓存
+  const cached = systemConfigCache[key];
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.value as T;
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('system_config')
+      .select('value')
+      .eq('key', key)
+      .single();
+
+    if (error || !data) {
+      console.warn(`System config "${key}" not found, using default:`, defaultValue);
+      return defaultValue;
+    }
+
+    // 解析 JSONB 值
+    let parsedValue: T;
+    if (typeof data.value === 'string') {
+      try {
+        parsedValue = JSON.parse(data.value);
+      } catch {
+        parsedValue = data.value as T;
+      }
+    } else {
+      parsedValue = data.value as T;
+    }
+
+    // 更新缓存
+    systemConfigCache[key] = { value: parsedValue, timestamp: Date.now() };
+
+    return parsedValue;
+  } catch (error) {
+    console.error(`Failed to get system config "${key}":`, error);
+    return defaultValue;
+  }
+}
+
+// 获取精批详解积分价格
+export async function getDetailedPoints(): Promise<number> {
+  const value = await getSystemConfig<string | number>('detailed_points', 200);
+  return typeof value === 'string' ? parseInt(value, 10) : value;
+}
+
+// 获取概览积分价格
+export async function getOverviewPoints(): Promise<number> {
+  const value = await getSystemConfig<string | number>('overview_points', 10);
+  return typeof value === 'string' ? parseInt(value, 10) : value;
+}
