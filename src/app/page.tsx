@@ -145,8 +145,8 @@ function HomePageContent() {
         } else {
           // 生成新结果
           wealthResult = await generateWealthCurve(birthInfo, isPaid);
-          // 保存到缓存
-          saveResultCache({
+          // 保存到缓存（等待完成确保一致性）
+          await saveResultCache({
             cacheKey: cacheResult.cacheKey,
             curveMode,
             isPaid,
@@ -180,8 +180,8 @@ function HomePageContent() {
           } else {
             // 生成新结果
             paidResult = await generatePaidResult(birthInfo);
-            // 保存到缓存
-            saveResultCache({
+            // 保存到缓存（等待完成确保一致性）
+            await saveResultCache({
               cacheKey: cacheResult.cacheKey,
               curveMode,
               isPaid,
@@ -207,8 +207,8 @@ function HomePageContent() {
           } else {
             // 生成新结果
             freeResult = await generateFreeResult(birthInfo);
-            // 保存到缓存
-            saveResultCache({
+            // 保存到缓存（等待完成确保一致性）
+            await saveResultCache({
               cacheKey: cacheResult.cacheKey,
               curveMode,
               isPaid,

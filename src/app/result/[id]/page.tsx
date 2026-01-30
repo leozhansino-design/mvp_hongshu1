@@ -535,31 +535,6 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
                   <span className="text-gold-400 text-sm mt-0.5">▸</span>
                   <div>
-                    <p className="text-sm text-text-primary">63个逐年财富数据点</p>
-                    <p className="text-xs text-text-secondary">精准定位每年财运走势，不再盲目投资</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
-                  <span className="text-gold-400 text-sm mt-0.5">▸</span>
-                  <div>
-                    <p className="text-sm text-text-primary">专业财运详解</p>
-                    <p className="text-xs text-text-secondary">深度分析八字财星格局，解读财富密码</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
-                  <span className="text-gold-400 text-sm mt-0.5">▸</span>
-                  <div>
-                    <p className="text-sm text-text-primary">增运秘诀</p>
-                    <p className="text-xs text-text-secondary">根据命盘定制专属财运提升方案</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 价值点 */}
-              <div className="space-y-3 mb-6">
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
-                  <span className="text-gold-400 text-sm mt-0.5">▸</span>
-                  <div>
                     <p className="text-sm text-text-primary">精准定位每年财运走势</p>
                     <p className="text-xs text-text-secondary">知道哪年该冲、哪年该稳，不再盲目投资</p>
                   </div>
@@ -594,90 +569,64 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             </div>
           )}
 
-          {/* 财富分享图隐藏区域 - 竖屏手机尺寸，带有趣文案利于传播 */}
-          <div ref={wealthShareRef} className="fixed -left-[9999px] w-[750px] p-10 bg-gradient-to-b from-black via-gray-900 to-black">
+          {/* 财富分享图隐藏区域 - 竖屏手机尺寸，曲线图为核心 */}
+          <div ref={wealthShareRef} className="fixed -left-[9999px] w-[750px] p-8 bg-gradient-to-b from-black via-gray-900 to-black">
             {/* 头部标题 */}
-            <div className="text-center mb-6">
-              <p className="text-gold-400 text-4xl font-bold mb-3">💰 我的财富曲线</p>
-              <p className="text-text-secondary text-xl">{birthInfo.name ? `${birthInfo.name}` : ''}</p>
-              <p className="text-text-secondary/70 text-base mt-1">
-                {birthInfo.gender === 'male' ? '乾造' : '坤造'} · {birthInfo.year}年生
-              </p>
+            <div className="text-center mb-4">
+              <p className="text-gold-400 text-3xl font-bold mb-2">💰 我的财富曲线</p>
+              <p className="text-text-secondary text-lg">{birthInfo.name} · {birthInfo.gender === 'male' ? '乾造' : '坤造'}</p>
+              <p className="text-text-secondary/70 text-sm">{birthInfo.year}年生</p>
             </div>
 
-            {/* 财富巅峰数字展示 */}
-            <div className="flex justify-center mb-6">
-              <div className="w-44 h-44 rounded-full border-4 border-gold-400 flex items-center justify-center bg-gold-400/10">
-                <div className="text-center">
-                  <p className="text-gold-400 text-4xl font-bold">
-                    {wealthResult.highlights.peakWealth >= 10000
-                      ? `${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿`
-                      : `${Math.round(wealthResult.highlights.peakWealth)}万`
-                    }
-                  </p>
-                  <p className="text-text-secondary text-lg">财富巅峰</p>
-                  <p className="text-gold-400/70 text-base">{wealthResult.highlights.peakAge}岁</p>
-                </div>
-              </div>
+            {/* 财富曲线图 - 核心内容 */}
+            <div className="bg-black/40 rounded-2xl p-4 mb-4">
+              <WealthChart
+                dataPoints={wealthResult.dataPoints}
+                highlights={wealthResult.highlights}
+                wealthRange={wealthResult.wealthRange}
+                isPaid={isPaid}
+              />
             </div>
 
-            {/* 财富类型标签 */}
-            <div className="text-center mb-6">
-              <span className="inline-block px-6 py-3 bg-gold-400/20 rounded-full text-gold-400 text-2xl font-bold">
-                {wealthResult.wealthType}
-              </span>
-            </div>
-
-            {/* 有趣的高光文案 - 根据财富水平不同调整语气 */}
-            <div className="bg-gold-400/10 border border-gold-400/30 rounded-2xl p-5 mb-6">
-              <p className="text-gold-400 text-xl font-bold mb-3 flex items-center gap-2">
-                <span className="text-2xl">🌟</span> 财富高光时刻
-              </p>
-              <div className="bg-black/30 rounded-xl p-4">
-                <p className="text-gold-400 text-lg font-medium mb-2">
-                  {wealthResult.highlights.peakWealth >= 5000
-                    ? `${wealthResult.highlights.peakAge}岁，命中注定的财富巅峰！`
-                    : wealthResult.highlights.peakWealth >= 1000
-                      ? `${wealthResult.highlights.peakAge}岁，我的"小富"巅峰~`
-                      : wealthResult.highlights.peakWealth >= 300
-                        ? `${wealthResult.highlights.peakAge}岁，平凡人的小确幸`
-                        : wealthResult.highlights.peakWealth >= 100
-                          ? `${wealthResult.highlights.peakAge}岁，我的"巅峰"... 扎心了老铁`
-                          : `${wealthResult.highlights.peakAge}岁，我命由天不由我...`
-                  }
-                </p>
-                <p className="text-text-primary text-base leading-relaxed">
+            {/* 财富巅峰和类型 */}
+            <div className="flex gap-4 mb-4">
+              <div className="flex-1 bg-gold-400/10 border border-gold-400/30 rounded-xl p-4 text-center">
+                <p className="text-gold-400 text-3xl font-bold">
                   {wealthResult.highlights.peakWealth >= 10000
-                    ? `预计身价冲到${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿！"钱对我来说只是数字"的凡尔赛日子要来了~`
-                    : wealthResult.highlights.peakWealth >= 3000
-                      ? `预计身价冲到${Math.round(wealthResult.highlights.peakWealth)}万，可以在朋友圈"不经意"凡尔赛了~`
-                      : wealthResult.highlights.peakWealth >= 1000
-                        ? `预计攒到${Math.round(wealthResult.highlights.peakWealth)}万，房贷不愁、买车不慌，小康生活！`
-                        : wealthResult.highlights.peakWealth >= 300
-                          ? `预计攒到${Math.round(wealthResult.highlights.peakWealth)}万，够在小城市首付买房。平凡的幸福也是幸福~`
-                          : wealthResult.highlights.peakWealth >= 100
-                            ? `预计存款${Math.round(wealthResult.highlights.peakWealth)}万... 虽然不多，但至少不用操心"钱太多花不完"的烦恼！`
-                            : `巅峰存款${Math.round(wealthResult.highlights.peakWealth)}万... 好吧这很扎心。但换个角度：没人会因为你的钱来接近你，都是真爱！`
+                    ? `${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿`
+                    : `${Math.round(wealthResult.highlights.peakWealth)}万`
                   }
                 </p>
+                <p className="text-text-secondary text-sm">财富巅峰 · {wealthResult.highlights.peakAge}岁</p>
+              </div>
+              <div className="flex-1 bg-gold-400/10 border border-gold-400/30 rounded-xl p-4 text-center flex items-center justify-center">
+                <p className="text-gold-400 text-xl font-bold">{wealthResult.wealthType}</p>
               </div>
             </div>
 
-            {/* 底部扫码区域 */}
-            <div className="border-t border-gold-400/30 pt-6 text-center">
-              <p className="text-text-secondary text-lg mb-4">扫码测测你的财富曲线</p>
-              <div className="flex justify-center items-center gap-6">
-                <div className="w-28 h-28 bg-white rounded-xl flex items-center justify-center">
-                  <span className="text-black text-xs">二维码</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-gold-400 text-2xl font-bold">lifecurve.cn</p>
-                  <p className="text-text-secondary text-base mt-1">AI精批命理 · 洞悉天机</p>
-                </div>
+            {/* 有趣的高光文案 */}
+            <div className="bg-gold-400/10 border border-gold-400/30 rounded-xl p-4 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">🌟</span>
+                <span className="text-gold-400 font-bold">财富高光时刻</span>
               </div>
+              <p className="text-text-primary text-base leading-relaxed">
+                {wealthResult.highlights.peakWealth >= 5000
+                  ? `${wealthResult.highlights.peakAge}岁，命中注定的财富巅峰！预计身价冲到${wealthResult.highlights.peakWealth >= 10000 ? `${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿` : `${Math.round(wealthResult.highlights.peakWealth)}万`}~`
+                  : wealthResult.highlights.peakWealth >= 1000
+                    ? `${wealthResult.highlights.peakAge}岁达到小富巅峰，房贷不愁、买车不慌~`
+                    : wealthResult.highlights.peakWealth >= 300
+                      ? `${wealthResult.highlights.peakAge}岁积累到${Math.round(wealthResult.highlights.peakWealth)}万，平凡的幸福也是幸福~`
+                      : `${wealthResult.highlights.peakAge}岁存款${Math.round(wealthResult.highlights.peakWealth)}万，真实不凡尔赛~`
+                }
+              </p>
+            </div>
+
+            {/* 底部网址 */}
+            <div className="text-center pt-2">
+              <p className="text-gold-400 text-xl font-bold">lifecurve.cn</p>
             </div>
           </div>
-        </div>
 
         {/* 充值弹窗 */}
         <RechargeModal
@@ -687,6 +636,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           onSuccess={handleRechargeSuccess}
         />
       </div>
+    </div>
     );
   }
 
@@ -1009,80 +959,62 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           </div>
         )}
 
-        {/* 分享图隐藏区域 - 竖屏手机尺寸 */}
-        <div ref={shareRef} className="fixed -left-[9999px] w-[750px] p-10" style={{ background: 'linear-gradient(180deg, #0D0221 0%, #1A0A2E 50%, #16213E 100%)' }}>
+        {/* 分享图隐藏区域 - 竖屏手机尺寸，曲线图为核心 */}
+        <div ref={shareRef} className="fixed -left-[9999px] w-[750px] p-8" style={{ background: 'linear-gradient(180deg, #0D0221 0%, #1A0A2E 50%, #16213E 100%)' }}>
           {/* 头部标题 */}
-          <div className="text-center mb-6">
-            <p className="text-gold-400 text-4xl font-bold mb-3">✦ 人生曲线 ✦</p>
-            <p className="text-text-secondary text-xl">{birthInfo.name ? `${birthInfo.name}的命盘` : '命盘报告'}</p>
-            <p className="text-text-secondary/70 text-base mt-1">
-              {birthInfo.gender === 'male' ? '乾造' : '坤造'} · {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日
+          <div className="text-center mb-4">
+            <p className="text-gold-400 text-3xl font-bold mb-2">✦ 人生曲线 ✦</p>
+            <p className="text-text-secondary text-lg">{birthInfo.name} · {birthInfo.gender === 'male' ? '乾造' : '坤造'}</p>
+            <p className="text-text-secondary/70 text-sm">
+              {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日
             </p>
           </div>
 
-          {/* 综合评分 */}
-          <div className="flex justify-center mb-6">
-            <div className="w-40 h-40 rounded-full border-4 border-gold-400 flex items-center justify-center bg-gold-400/10">
-              <div className="text-center">
-                <p className="text-gold-400 text-5xl font-bold">{data?.summaryScore}</p>
-                <p className="text-text-secondary text-lg">综合评分</p>
-              </div>
+          {/* 人生曲线图 - 核心内容 */}
+          <div className="bg-black/40 rounded-2xl p-4 mb-4">
+            <LifeCurveChart
+              data={data?.chartPoints || []}
+              currentAge={currentAge}
+              birthYear={birthInfo.year}
+            />
+          </div>
+
+          {/* 综合评分和当前运势 */}
+          <div className="flex gap-4 mb-4">
+            <div className="flex-1 bg-gold-400/10 border border-gold-400/30 rounded-xl p-4 text-center">
+              <p className="text-gold-400 text-4xl font-bold">{data?.summaryScore}</p>
+              <p className="text-text-secondary text-sm">综合评分</p>
+            </div>
+            <div className="flex-1 bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 text-center">
+              <p className="text-gold-400 text-2xl font-bold">
+                {currentPhase === 'rising' && '📈 上升期'}
+                {currentPhase === 'peak' && '⭐ 巅峰期'}
+                {currentPhase === 'stable' && '➡️ 平稳期'}
+                {currentPhase === 'declining' && '📉 调整期'}
+                {currentPhase === 'valley' && '🌙 蓄势期'}
+              </p>
+              <p className="text-text-secondary text-sm">当前运势</p>
             </div>
           </div>
 
-          {/* 当前运势阶段 */}
-          <div className="bg-purple-500/10 border border-purple-500/30 rounded-2xl p-5 mb-6 text-center">
-            <p className="text-text-secondary text-lg mb-2">当前运势阶段</p>
-            <p className="text-gold-400 text-3xl font-bold">
-              {currentPhase === 'rising' && '📈 上升期'}
-              {currentPhase === 'peak' && '⭐ 巅峰期'}
-              {currentPhase === 'stable' && '➡️ 平稳期'}
-              {currentPhase === 'declining' && '📉 调整期'}
-              {currentPhase === 'valley' && '🌙 蓄势期'}
-            </p>
-          </div>
-
-          {/* 人生高光时刻 */}
+          {/* 人生高光时刻 - 使用实际数据 */}
           {data?.highlights && data.highlights.length > 0 && (
-            <div className="bg-gold-400/10 border border-gold-400/30 rounded-2xl p-5 mb-6">
-              <p className="text-gold-400 text-xl font-bold mb-3 flex items-center gap-2">
-                <span className="text-2xl">🌟</span> 人生高光时刻
-              </p>
-              <div className="bg-black/30 rounded-xl p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="px-3 py-1 bg-gold-400 text-black rounded-full text-lg font-bold">
-                    {data.highlights[0].age}岁
-                  </span>
-                  <span className="text-text-secondary">· {data.highlights[0].year}年</span>
-                </div>
-                <p className="text-text-primary text-xl font-medium mb-2">{data.highlights[0].title}</p>
-                <p className="text-text-secondary text-base leading-relaxed">{data.highlights[0].description}</p>
+            <div className="bg-gold-400/10 border border-gold-400/30 rounded-xl p-4 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">🌟</span>
+                <span className="text-gold-400 font-bold">人生高光时刻</span>
+                <span className="px-2 py-0.5 bg-gold-400 text-black rounded-full text-sm font-bold ml-2">
+                  {data.highlights[0].age}岁
+                </span>
               </div>
+              <p className="text-text-primary text-lg font-medium">{data.highlights[0].title}</p>
+              <p className="text-text-secondary text-sm mt-1">{data.highlights[0].description}</p>
             </div>
           )}
 
-          {/* 命理总评精简版 */}
-          {data?.summary && (
-            <div className="bg-black/30 border border-gray-700 rounded-2xl p-5 mb-6">
-              <p className="text-purple-300 text-lg mb-2">命理解读</p>
-              <p className="text-text-primary text-base leading-relaxed line-clamp-3">
-                {data.summary.slice(0, 100)}...
-              </p>
-            </div>
-          )}
-
-          {/* 底部扫码区域 */}
-          <div className="border-t border-purple-500/30 pt-6 text-center">
-            <p className="text-text-secondary text-lg mb-4">扫码探寻你的命数轨迹</p>
-            <div className="flex justify-center items-center gap-6">
-              <div className="w-28 h-28 bg-white rounded-xl flex items-center justify-center">
-                <span className="text-mystic-900 text-xs">二维码</span>
-              </div>
-              <div className="text-left">
-                <p className="text-gold-400 text-2xl font-bold">lifecurve.cn</p>
-                <p className="text-text-secondary text-base mt-1">AI精批命理 · 洞悉天机</p>
-              </div>
-            </div>
+          {/* 底部网址 */}
+          <div className="text-center pt-2">
+            <p className="text-gold-400 text-xl font-bold">lifecurve.cn</p>
           </div>
         </div>
 
