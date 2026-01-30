@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Re-export generateCacheKey from cache-utils for backward compatibility
+export { generateCacheKey } from './cache-utils';
+
 // 数据库类型定义
 export interface DbUser {
   id: string;
@@ -654,5 +657,71 @@ export async function refundPointsFromOrder(
 
   if (logError) {
     throw new Error(`记录退款积分日志失败: ${logError.message}`);
+  }
+}
+
+// ============================================
+// 结果缓存相关操作
+// ============================================
+
+export interface DbResultCache {
+  id: number;
+  cache_key: string;
+  device_id: string;
+  curve_mode: 'life' | 'wealth';
+  is_paid: boolean;
+  result_data: unknown;
+  birth_info: unknown;
+  created_at: string;
+}
+
+/**
+ * 获取缓存的结果
+ */
+export async function getCachedResult(cacheKey: string): Promise<DbResultCache | null> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('result_cache')
+    .select('*')
+    .eq('cache_key', cacheKey)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data as DbResultCache;
+}
+
+/**
+ * 保存结果到缓存
+ */
+export async function saveCachedResult(params: {
+  cacheKey: string;
+  deviceId: string;
+  curveMode: 'life' | 'wealth';
+  isPaid: boolean;
+  resultData: unknown;
+  birthInfo?: unknown;
+}): Promise<void> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { error } = await supabaseAdmin
+    .from('result_cache')
+    .upsert({
+      cache_key: params.cacheKey,
+      device_id: params.deviceId,
+      curve_mode: params.curveMode,
+      is_paid: params.isPaid,
+      result_data: params.resultData,
+      birth_info: params.birthInfo || null,
+    }, {
+      onConflict: 'cache_key',
+    });
+
+  if (error) {
+    console.error('保存缓存结果失败:', error);
+    // 不抛出错误，缓存失败不应影响正常流程
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Gender, BirthInfo, CalendarType } from '@/types';
+import { Gender, BirthInfo, CalendarType, isValidChineseName } from '@/types';
 import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
 import { CHINA_PROVINCES, getCityNamesByProvince } from '@/data/chinaCities';
 
@@ -30,6 +30,7 @@ const SHI_CHEN_OPTIONS = [
 
 export default function BirthForm({ onSubmit, disabled, remainingUsage, points = 0 }: BirthFormProps) {
   const [name, setName] = useState<string>('');
+  const [nameError, setNameError] = useState<string>('');
   const [gender, setGender] = useState<Gender | null>(null);
   const [calendarType, setCalendarType] = useState<CalendarType>('solar');
   const [year, setYear] = useState<number | ''>('');
@@ -40,6 +41,55 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
   const [city, setCity] = useState<string>('');
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
   const [daYunResult, setDaYunResult] = useState<{ startInfo: string; daYunList: DaYunItem[] } | null>(null);
+  // 表单验证错误
+  const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [showErrors, setShowErrors] = useState(false);
+
+  // 姓名校验 - 详细错误提示
+  const validateName = (value: string): string => {
+    if (!value || value.trim().length === 0) {
+      return '请输入姓名';
+    }
+    // 检测空格
+    if (value.includes(' ')) {
+      return '姓名不能包含空格';
+    }
+    // 检测英文
+    if (/[a-zA-Z]/.test(value)) {
+      return '姓名不能包含英文字母';
+    }
+    // 检测数字
+    if (/[0-9]/.test(value)) {
+      return '姓名不能包含数字';
+    }
+    // 检测特殊字符
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(value)) {
+      return '姓名不能包含特殊字符';
+    }
+    // 检测非中文字符
+    if (!/^[\u4e00-\u9fa5]+$/.test(value)) {
+      return '姓名只能包含中文汉字';
+    }
+    // 检测长度
+    if (value.length < 2) {
+      return '姓名至少需要2个汉字';
+    }
+    if (value.length > 4) {
+      return '姓名最多4个汉字';
+    }
+    return '';
+  };
+
+  // 姓名校验
+  const handleNameChange = (value: string) => {
+    setName(value);
+    const error = validateName(value);
+    setNameError(error);
+    if (showErrors) setShowErrors(false);
+  };
+
+  // 姓名是否有效
+  const isNameValid = name.length > 0 && isValidChineseName(name);
 
   const currentYear = new Date().getFullYear();
 
@@ -76,7 +126,78 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
     setCity('');
   };
 
-  const isValid = gender && year && month && day && shiChen !== '';
+  const isValid = isNameValid && gender && year && month && day && shiChen !== '';
+
+  // 获取所有验证错误
+  const getValidationErrors = (): string[] => {
+    const errors: string[] = [];
+
+    // 姓名验证
+    const nameValidationError = validateName(name);
+    if (nameValidationError) {
+      errors.push(nameValidationError);
+    }
+
+    // 性别验证
+    if (!gender) {
+      errors.push('请选择性别');
+    }
+
+    // 年份验证
+    if (!year) {
+      errors.push('请选择出生年份');
+    }
+
+    // 月份验证
+    if (!month) {
+      errors.push('请选择出生月份');
+    }
+
+    // 日期验证
+    if (!day) {
+      errors.push('请选择出生日期');
+    }
+
+    // 时辰验证
+    if (shiChen === '') {
+      errors.push('请选择出生时辰');
+    }
+
+    return errors;
+  };
+
+  // 尝试提交并显示错误
+  const trySubmit = (isPaid: boolean) => {
+    const errors = getValidationErrors();
+    if (errors.length > 0) {
+      setFormErrors(errors);
+      setShowErrors(true);
+      // 如果姓名有问题，同时设置 nameError
+      const nameValidationError = validateName(name);
+      if (nameValidationError) {
+        setNameError(nameValidationError);
+      }
+      return false;
+    }
+
+    setShowErrors(false);
+    setFormErrors([]);
+
+    const birthInfo: BirthInfo = {
+      name,
+      gender: gender!,
+      calendarType,
+      year: year as number,
+      month: month as number,
+      day: day as number,
+      hour: shiChen as number,
+      minute: 0,
+      province: province || undefined,
+      city: city || undefined,
+    };
+    onSubmit(birthInfo, isPaid);
+    return true;
+  };
 
   // 自动计算八字
   useEffect(() => {
@@ -123,7 +244,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
       day: day as number,
       hour: shiChen as number,
       minute: 0,
-      name: name || undefined,
+      name,
       calendarType,
       province: province || undefined,
       city: city || undefined,
@@ -157,15 +278,19 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-text-secondary mb-2">
-            姓名 <span className="text-text-secondary/50">(选填)</span>
+            姓名 <span className="text-kline-down">*</span>
           </label>
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="请输入姓名"
-            className="input-mystic"
+            onChange={(e) => handleNameChange(e.target.value)}
+            placeholder="请输入中文姓名"
+            className={`input-mystic ${nameError ? 'border-red-500' : ''}`}
+            maxLength={4}
           />
+          {nameError && (
+            <p className="text-xs text-red-400 mt-1">{nameError}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm text-text-secondary mb-2">
@@ -397,27 +522,33 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
         </div>
       )}
 
+      {/* 表单错误提示 */}
+      {showErrors && formErrors.length > 0 && (
+        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+          <p className="text-red-400 text-sm font-medium mb-1">请完善以下信息：</p>
+          <ul className="list-disc list-inside space-y-0.5">
+            {formErrors.map((error, idx) => (
+              <li key={idx} className="text-red-400/80 text-xs">{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* 两个按钮选项 */}
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          disabled={!isValid || disabled || (remainingUsage <= 0 && points < 10)}
+          disabled={disabled}
           onClick={() => {
-            if (!isValid || disabled) return;
-            if (remainingUsage <= 0 && points < 10) return;
-            const birthInfo: BirthInfo = {
-              name: name || undefined,
-              gender: gender!,
-              calendarType,
-              year: year as number,
-              month: month as number,
-              day: day as number,
-              hour: shiChen as number,
-              minute: 0,
-              province: province || undefined,
-              city: city || undefined,
-            };
-            onSubmit(birthInfo, false);
+            if (disabled) return;
+            // 先验证表单
+            if (!trySubmit(false)) return;
+            // 再检查积分
+            if (remainingUsage <= 0 && points < 10) {
+              setFormErrors(['免费次数已用完，积分不足']);
+              setShowErrors(true);
+              return;
+            }
           }}
           className="btn-outline py-3 text-base font-serif"
         >
@@ -425,31 +556,36 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
         </button>
         <button
           type="button"
-          disabled={!isValid || disabled || points < 50}
+          disabled={disabled}
           onClick={() => {
-            if (!isValid || disabled || points < 50) return;
-            const birthInfo: BirthInfo = {
-              name: name || undefined,
-              gender: gender!,
-              calendarType,
-              year: year as number,
-              month: month as number,
-              day: day as number,
-              hour: shiChen as number,
-              minute: 0,
-              province: province || undefined,
-              city: city || undefined,
-            };
-            onSubmit(birthInfo, true);
+            if (disabled) return;
+            // 先验证表单
+            const errors = getValidationErrors();
+            if (errors.length > 0) {
+              setFormErrors(errors);
+              setShowErrors(true);
+              const nameValidationError = validateName(name);
+              if (nameValidationError) {
+                setNameError(nameValidationError);
+              }
+              return;
+            }
+            // 再检查积分
+            if (points < 50) {
+              setFormErrors(['积分不足，需要50积分解锁精批详解']);
+              setShowErrors(true);
+              return;
+            }
+            trySubmit(true);
           }}
-          className={`py-3 text-base font-serif ${points >= 50 ? 'btn-gold' : 'btn-gold opacity-50 cursor-not-allowed'}`}
+          className={`py-3 text-base font-serif ${points >= 50 ? 'btn-gold' : 'btn-gold opacity-50'}`}
         >
           精批详解
         </button>
       </div>
 
       {/* 积分不足提示 - 只在积分不够时显示 */}
-      {points < 50 && (
+      {points < 50 && !showErrors && (
         <p className="text-center text-xs text-text-secondary/70 mt-2">
           需要50积分解锁精批详解
         </p>

@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import html2canvas from 'html2canvas';
-import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagram, DetailedDaYunTable, WealthChart, WealthAnalysis } from '@/components';
+import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagram, DetailedDaYunTable, WealthChart, WealthAnalysis, RechargeModal } from '@/components';
 import UnlockLoader from '@/components/UnlockLoader';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult, generateWealthCurve } from '@/services/api';
 import { calculateDaYun } from '@/lib/bazi';
 import { getOrCreateAnalytics, trackEvent, trackPageView, trackButtonClick } from '@/services/analytics';
+import { checkUsageStatus, consumeUsage } from '@/lib/device';
 import {
   StoredResult,
   PHASE_LABELS,
@@ -280,6 +281,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const [shareLoading, setShareLoading] = useState(false);
   const [showDaYun, setShowDaYun] = useState(false);
   const [curveMode, setCurveMode] = useState<CurveMode>('life');
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [currentPoints, setCurrentPoints] = useState(0);
   const shareRef = useRef<HTMLDivElement>(null);
   const wealthShareRef = useRef<HTMLDivElement>(null);
 
@@ -320,8 +323,47 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     trackButtonClick('unlock', 'result', { curveMode, isPaid: false });
     // 追踪点击解锁事件（旧分析系统）
     trackEvent(resolvedParams.id, 'click_unlock', { curveMode, isPaid: false });
-    setUpgrading(true);
-    setUnlockComplete(false);
+
+    // 检查用户积分
+    try {
+      const usageStatus = await checkUsageStatus(curveMode);
+      setCurrentPoints(usageStatus.points);
+
+      // 解锁详细版需要50积分
+      const requiredPoints = 50;
+      if (usageStatus.points < requiredPoints) {
+        // 积分不足，显示充值弹窗
+        setShowRechargeModal(true);
+        return;
+      }
+
+      // 积分足够，先扣除积分
+      const consumeResult = await consumeUsage(
+        'detailed',
+        result.birthInfo as unknown as Record<string, unknown>,
+        resolvedParams.id,
+        curveMode
+      );
+
+      if (!consumeResult.success) {
+        alert(consumeResult.error || '积分扣除失败');
+        return;
+      }
+
+      // 扣费成功，开始解锁流程
+      setUpgrading(true);
+      setUnlockComplete(false);
+    } catch (error) {
+      console.error('检查积分失败:', error);
+      alert('网络错误，请重试');
+    }
+  };
+
+  // 充值成功后的回调
+  const handleRechargeSuccess = async () => {
+    // 刷新积分状态
+    const usageStatus = await checkUsageStatus(curveMode);
+    setCurrentPoints(usageStatus.points);
   };
 
   const handleUnlockComplete = async () => {
@@ -552,60 +594,98 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             </div>
           )}
 
-          {/* 财富分享图隐藏区域 - 带有趣文案利于传播 */}
-          <div ref={wealthShareRef} className="fixed -left-[9999px] w-[1080px] p-12 bg-gradient-to-b from-black via-gray-900 to-black">
+          {/* 财富分享图隐藏区域 - 竖屏手机尺寸，带有趣文案利于传播 */}
+          <div ref={wealthShareRef} className="fixed -left-[9999px] w-[750px] p-10 bg-gradient-to-b from-black via-gray-900 to-black">
+            {/* 头部标题 */}
             <div className="text-center mb-6">
-              <p className="text-gold-400 text-4xl font-bold mb-2">我的财富曲线</p>
-              <p className="text-text-secondary text-lg">{birthInfo.name ? `${birthInfo.name}` : ''} {birthInfo.year}年生</p>
+              <p className="text-gold-400 text-4xl font-bold mb-3">💰 我的财富曲线</p>
+              <p className="text-text-secondary text-xl">{birthInfo.name ? `${birthInfo.name}` : ''}</p>
+              <p className="text-text-secondary/70 text-base mt-1">
+                {birthInfo.gender === 'male' ? '乾造' : '坤造'} · {birthInfo.year}年生
+              </p>
             </div>
 
-            {/* 有趣的高光文案 - 根据财富水平不同调整语气，低财富也要有趣 */}
-            <div className="bg-gold-400/10 border border-gold-400/30 rounded-2xl p-6 mb-6">
-              <p className="text-gold-400 text-xl font-medium mb-2">
-                {wealthResult.highlights.peakWealth >= 5000
-                  ? `${wealthResult.highlights.peakAge}岁，命中注定的财富巅峰！`
-                  : wealthResult.highlights.peakWealth >= 1000
-                    ? `${wealthResult.highlights.peakAge}岁，我的"小富"巅峰~`
-                    : wealthResult.highlights.peakWealth >= 300
-                      ? `${wealthResult.highlights.peakAge}岁，平凡人的小确幸`
-                      : wealthResult.highlights.peakWealth >= 100
-                        ? `${wealthResult.highlights.peakAge}岁，我的"巅峰"... 扎心了老铁`
-                        : `${wealthResult.highlights.peakAge}岁，我命由天不由我...`
-                }
-              </p>
-              <p className="text-text-primary text-lg leading-relaxed">
-                {wealthResult.highlights.peakWealth >= 10000
-                  ? `预计身价冲到${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿！"钱对我来说只是数字"的凡尔赛日子要来了~`
-                  : wealthResult.highlights.peakWealth >= 3000
-                    ? `预计身价冲到${Math.round(wealthResult.highlights.peakWealth)}万，可以在朋友圈"不经意"凡尔赛了~`
-                    : wealthResult.highlights.peakWealth >= 1000
-                      ? `预计攒到${Math.round(wealthResult.highlights.peakWealth)}万，房贷不愁、买车不慌，小康生活！`
-                      : wealthResult.highlights.peakWealth >= 300
-                        ? `预计攒到${Math.round(wealthResult.highlights.peakWealth)}万，够在小城市首付买房。平凡的幸福也是幸福~`
-                        : wealthResult.highlights.peakWealth >= 100
-                          ? `预计存款${Math.round(wealthResult.highlights.peakWealth)}万... 虽然不多，但至少不用操心"钱太多花不完"的烦恼！转发让朋友看看什么叫真实~`
-                          : `巅峰存款${Math.round(wealthResult.highlights.peakWealth)}万... 好吧这很扎心。但换个角度：没人会因为你的钱来接近你，都是真爱！转发此图，看看有没有比我更惨的~`
-                }
-              </p>
+            {/* 财富巅峰数字展示 */}
+            <div className="flex justify-center mb-6">
+              <div className="w-44 h-44 rounded-full border-4 border-gold-400 flex items-center justify-center bg-gold-400/10">
+                <div className="text-center">
+                  <p className="text-gold-400 text-4xl font-bold">
+                    {wealthResult.highlights.peakWealth >= 10000
+                      ? `${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿`
+                      : `${Math.round(wealthResult.highlights.peakWealth)}万`
+                    }
+                  </p>
+                  <p className="text-text-secondary text-lg">财富巅峰</p>
+                  <p className="text-gold-400/70 text-base">{wealthResult.highlights.peakAge}岁</p>
+                </div>
+              </div>
             </div>
 
             {/* 财富类型标签 */}
             <div className="text-center mb-6">
-              <span className="inline-block px-6 py-3 bg-gold-400/20 rounded-full text-gold-400 text-xl">
+              <span className="inline-block px-6 py-3 bg-gold-400/20 rounded-full text-gold-400 text-2xl font-bold">
                 {wealthResult.wealthType}
               </span>
             </div>
 
-            {/* 扫码区域 */}
-            <div className="border-t border-gold-400/30 pt-6 text-center">
-              <p className="text-text-secondary mb-4">扫码测测你的财富曲线</p>
-              <div className="w-32 h-32 bg-white mx-auto rounded-lg flex items-center justify-center">
-                <span className="text-black text-xs">二维码</span>
+            {/* 有趣的高光文案 - 根据财富水平不同调整语气 */}
+            <div className="bg-gold-400/10 border border-gold-400/30 rounded-2xl p-5 mb-6">
+              <p className="text-gold-400 text-xl font-bold mb-3 flex items-center gap-2">
+                <span className="text-2xl">🌟</span> 财富高光时刻
+              </p>
+              <div className="bg-black/30 rounded-xl p-4">
+                <p className="text-gold-400 text-lg font-medium mb-2">
+                  {wealthResult.highlights.peakWealth >= 5000
+                    ? `${wealthResult.highlights.peakAge}岁，命中注定的财富巅峰！`
+                    : wealthResult.highlights.peakWealth >= 1000
+                      ? `${wealthResult.highlights.peakAge}岁，我的"小富"巅峰~`
+                      : wealthResult.highlights.peakWealth >= 300
+                        ? `${wealthResult.highlights.peakAge}岁，平凡人的小确幸`
+                        : wealthResult.highlights.peakWealth >= 100
+                          ? `${wealthResult.highlights.peakAge}岁，我的"巅峰"... 扎心了老铁`
+                          : `${wealthResult.highlights.peakAge}岁，我命由天不由我...`
+                  }
+                </p>
+                <p className="text-text-primary text-base leading-relaxed">
+                  {wealthResult.highlights.peakWealth >= 10000
+                    ? `预计身价冲到${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿！"钱对我来说只是数字"的凡尔赛日子要来了~`
+                    : wealthResult.highlights.peakWealth >= 3000
+                      ? `预计身价冲到${Math.round(wealthResult.highlights.peakWealth)}万，可以在朋友圈"不经意"凡尔赛了~`
+                      : wealthResult.highlights.peakWealth >= 1000
+                        ? `预计攒到${Math.round(wealthResult.highlights.peakWealth)}万，房贷不愁、买车不慌，小康生活！`
+                        : wealthResult.highlights.peakWealth >= 300
+                          ? `预计攒到${Math.round(wealthResult.highlights.peakWealth)}万，够在小城市首付买房。平凡的幸福也是幸福~`
+                          : wealthResult.highlights.peakWealth >= 100
+                            ? `预计存款${Math.round(wealthResult.highlights.peakWealth)}万... 虽然不多，但至少不用操心"钱太多花不完"的烦恼！`
+                            : `巅峰存款${Math.round(wealthResult.highlights.peakWealth)}万... 好吧这很扎心。但换个角度：没人会因为你的钱来接近你，都是真爱！`
+                  }
+                </p>
               </div>
-              <p className="text-gold-400 mt-4 text-xl">lifecurve.cn</p>
+            </div>
+
+            {/* 底部扫码区域 */}
+            <div className="border-t border-gold-400/30 pt-6 text-center">
+              <p className="text-text-secondary text-lg mb-4">扫码测测你的财富曲线</p>
+              <div className="flex justify-center items-center gap-6">
+                <div className="w-28 h-28 bg-white rounded-xl flex items-center justify-center">
+                  <span className="text-black text-xs">二维码</span>
+                </div>
+                <div className="text-left">
+                  <p className="text-gold-400 text-2xl font-bold">lifecurve.cn</p>
+                  <p className="text-text-secondary text-base mt-1">AI精批命理 · 洞悉天机</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* 充值弹窗 */}
+        <RechargeModal
+          isOpen={showRechargeModal}
+          onClose={() => setShowRechargeModal(false)}
+          currentPoints={currentPoints}
+          onSuccess={handleRechargeSuccess}
+        />
       </div>
     );
   }
@@ -929,26 +1009,90 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           </div>
         )}
 
-        {/* 分享图隐藏区域 */}
-        <div ref={shareRef} className="fixed -left-[9999px] w-[1080px] p-12" style={{ background: 'linear-gradient(180deg, #0D0221 0%, #1A0A2E 50%, #16213E 100%)' }}>
-          <div className="text-center mb-8">
-            <p className="text-gold-400 text-3xl mb-2">✦ 人生曲线 ✦</p>
-            <p className="text-text-secondary">{birthInfo.name || '命盘报告'}</p>
-          </div>
-          <div className="text-center mb-8">
-            <p className="text-gold-400 text-2xl">综合评分：{data?.summaryScore}</p>
-            <p className="text-text-primary text-xl mt-4">
-              当前正值「{currentPhase ? PHASE_LABELS[currentPhase] : ''}」
+        {/* 分享图隐藏区域 - 竖屏手机尺寸 */}
+        <div ref={shareRef} className="fixed -left-[9999px] w-[750px] p-10" style={{ background: 'linear-gradient(180deg, #0D0221 0%, #1A0A2E 50%, #16213E 100%)' }}>
+          {/* 头部标题 */}
+          <div className="text-center mb-6">
+            <p className="text-gold-400 text-4xl font-bold mb-3">✦ 人生曲线 ✦</p>
+            <p className="text-text-secondary text-xl">{birthInfo.name ? `${birthInfo.name}的命盘` : '命盘报告'}</p>
+            <p className="text-text-secondary/70 text-base mt-1">
+              {birthInfo.gender === 'male' ? '乾造' : '坤造'} · {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日
             </p>
           </div>
-          <div className="border-t border-purple-500/30 pt-8 text-center">
-            <p className="text-text-secondary mb-4">扫码探寻你的命数轨迹</p>
-            <div className="w-32 h-32 bg-white mx-auto rounded-lg flex items-center justify-center">
-              <span className="text-mystic-900 text-xs">二维码</span>
+
+          {/* 综合评分 */}
+          <div className="flex justify-center mb-6">
+            <div className="w-40 h-40 rounded-full border-4 border-gold-400 flex items-center justify-center bg-gold-400/10">
+              <div className="text-center">
+                <p className="text-gold-400 text-5xl font-bold">{data?.summaryScore}</p>
+                <p className="text-text-secondary text-lg">综合评分</p>
+              </div>
             </div>
-            <p className="text-gold-400 mt-4">lifecurve.cn</p>
+          </div>
+
+          {/* 当前运势阶段 */}
+          <div className="bg-purple-500/10 border border-purple-500/30 rounded-2xl p-5 mb-6 text-center">
+            <p className="text-text-secondary text-lg mb-2">当前运势阶段</p>
+            <p className="text-gold-400 text-3xl font-bold">
+              {currentPhase === 'rising' && '📈 上升期'}
+              {currentPhase === 'peak' && '⭐ 巅峰期'}
+              {currentPhase === 'stable' && '➡️ 平稳期'}
+              {currentPhase === 'declining' && '📉 调整期'}
+              {currentPhase === 'valley' && '🌙 蓄势期'}
+            </p>
+          </div>
+
+          {/* 人生高光时刻 */}
+          {data?.highlights && data.highlights.length > 0 && (
+            <div className="bg-gold-400/10 border border-gold-400/30 rounded-2xl p-5 mb-6">
+              <p className="text-gold-400 text-xl font-bold mb-3 flex items-center gap-2">
+                <span className="text-2xl">🌟</span> 人生高光时刻
+              </p>
+              <div className="bg-black/30 rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="px-3 py-1 bg-gold-400 text-black rounded-full text-lg font-bold">
+                    {data.highlights[0].age}岁
+                  </span>
+                  <span className="text-text-secondary">· {data.highlights[0].year}年</span>
+                </div>
+                <p className="text-text-primary text-xl font-medium mb-2">{data.highlights[0].title}</p>
+                <p className="text-text-secondary text-base leading-relaxed">{data.highlights[0].description}</p>
+              </div>
+            </div>
+          )}
+
+          {/* 命理总评精简版 */}
+          {data?.summary && (
+            <div className="bg-black/30 border border-gray-700 rounded-2xl p-5 mb-6">
+              <p className="text-purple-300 text-lg mb-2">命理解读</p>
+              <p className="text-text-primary text-base leading-relaxed line-clamp-3">
+                {data.summary.slice(0, 100)}...
+              </p>
+            </div>
+          )}
+
+          {/* 底部扫码区域 */}
+          <div className="border-t border-purple-500/30 pt-6 text-center">
+            <p className="text-text-secondary text-lg mb-4">扫码探寻你的命数轨迹</p>
+            <div className="flex justify-center items-center gap-6">
+              <div className="w-28 h-28 bg-white rounded-xl flex items-center justify-center">
+                <span className="text-mystic-900 text-xs">二维码</span>
+              </div>
+              <div className="text-left">
+                <p className="text-gold-400 text-2xl font-bold">lifecurve.cn</p>
+                <p className="text-text-secondary text-base mt-1">AI精批命理 · 洞悉天机</p>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* 充值弹窗 */}
+        <RechargeModal
+          isOpen={showRechargeModal}
+          onClose={() => setShowRechargeModal(false)}
+          currentPoints={currentPoints}
+          onSuccess={handleRechargeSuccess}
+        />
       </div>
     </div>
   );

@@ -11,8 +11,8 @@ import {
   getTotalGeneratedCount,
 } from '@/services/storage';
 import { trackPageView, trackButtonClick } from '@/services/analytics';
-import { checkUsageStatus, consumeUsage, UsageStatus } from '@/lib/device';
-import { BirthInfo, StoredResult, CurveMode, CURVE_MODE_LABELS } from '@/types';
+import { checkUsageStatus, consumeUsage, UsageStatus, checkResultCache, saveResultCache } from '@/lib/device';
+import { BirthInfo, StoredResult, CurveMode, CURVE_MODE_LABELS, FreeVersionResult, PaidVersionResult, WealthCurveData } from '@/types';
 import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
 
 // 基础统计数（运营初始值）
@@ -74,11 +74,20 @@ function HomePageContent() {
     const handleFocus = () => {
       refreshUsageStatus(curveMode);
     };
+    // pageshow 事件在浏览器后退时也会触发（包括从 bfcache 恢复时）
+    const handlePageShow = (event: PageTransitionEvent) => {
+      // persisted 为 true 表示页面从 bfcache 恢复
+      if (event.persisted) {
+        refreshUsageStatus(curveMode);
+      }
+    };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('pageshow', handlePageShow);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('pageshow', handlePageShow);
     };
   }, [curveMode, refreshUsageStatus]);
 
@@ -112,9 +121,39 @@ function HomePageContent() {
         return;
       }
 
+      // 检查缓存（确保同一用户同样信息返回一致结果）
+      const cacheParams = {
+        name: birthInfo.name,
+        year: birthInfo.year,
+        month: birthInfo.month,
+        day: birthInfo.day,
+        hour: birthInfo.hour,
+        gender: birthInfo.gender,
+        isLunar: birthInfo.calendarType === 'lunar',
+        curveMode,
+        isPaid,
+      };
+      const cacheResult = await checkResultCache(cacheParams);
+
       if (curveMode === 'wealth') {
         // 财富曲线模式
-        const wealthResult = await generateWealthCurve(birthInfo, isPaid);
+        let wealthResult: WealthCurveData;
+
+        if (cacheResult.found && cacheResult.resultData) {
+          // 使用缓存结果
+          wealthResult = cacheResult.resultData as WealthCurveData;
+        } else {
+          // 生成新结果
+          wealthResult = await generateWealthCurve(birthInfo, isPaid);
+          // 保存到缓存
+          saveResultCache({
+            cacheKey: cacheResult.cacheKey,
+            curveMode,
+            isPaid,
+            resultData: wealthResult,
+            birthInfo,
+          });
+        }
 
         // 存储财富曲线结果
         const storedResult: StoredResult = {
@@ -133,7 +172,24 @@ function HomePageContent() {
         let storedResult: StoredResult;
 
         if (isPaid) {
-          const paidResult = await generatePaidResult(birthInfo);
+          let paidResult: PaidVersionResult;
+
+          if (cacheResult.found && cacheResult.resultData) {
+            // 使用缓存结果
+            paidResult = cacheResult.resultData as PaidVersionResult;
+          } else {
+            // 生成新结果
+            paidResult = await generatePaidResult(birthInfo);
+            // 保存到缓存
+            saveResultCache({
+              cacheKey: cacheResult.cacheKey,
+              curveMode,
+              isPaid,
+              resultData: paidResult,
+              birthInfo,
+            });
+          }
+
           storedResult = {
             id: resultId,
             birthInfo,
@@ -143,7 +199,24 @@ function HomePageContent() {
             createdAt: Date.now(),
           };
         } else {
-          const freeResult = await generateFreeResult(birthInfo);
+          let freeResult: FreeVersionResult;
+
+          if (cacheResult.found && cacheResult.resultData) {
+            // 使用缓存结果
+            freeResult = cacheResult.resultData as FreeVersionResult;
+          } else {
+            // 生成新结果
+            freeResult = await generateFreeResult(birthInfo);
+            // 保存到缓存
+            saveResultCache({
+              cacheKey: cacheResult.cacheKey,
+              curveMode,
+              isPaid,
+              resultData: freeResult,
+              birthInfo,
+            });
+          }
+
           storedResult = {
             id: resultId,
             birthInfo,
