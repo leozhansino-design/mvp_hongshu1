@@ -732,14 +732,14 @@ export async function saveCachedResult(params: {
 
 import { MasterDB, ConsultationDB, ConsultationStatus } from '@/types/master';
 
-// 获取大师列表
+// 获取大师列表（按价格自动排序）
 export async function getMasters(includeInactive = false): Promise<MasterDB[]> {
   const supabaseAdmin = getSupabaseAdmin();
 
   let query = supabaseAdmin
     .from('masters')
     .select('*')
-    .order('sort_order', { ascending: true });
+    .order('price', { ascending: true }); // 按价格从低到高排序
 
   if (!includeInactive) {
     query = query.eq('is_active', true);
