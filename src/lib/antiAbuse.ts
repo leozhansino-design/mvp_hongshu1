@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { getSupabaseAdmin } from './supabase';
 
 interface AntiAbuseConfig {
   maxRegistrationsPerIp: number;
@@ -7,21 +7,30 @@ interface AntiAbuseConfig {
 
 // 获取防刷配置
 async function getAntiAbuseConfig(): Promise<AntiAbuseConfig> {
-  const { data: maxRegData } = await supabase
+  const supabase = getSupabaseAdmin();
+
+  const { data: maxRegData } = await getSupabaseAdmin()
     .from('system_config')
     .select('value')
     .eq('key', 'anti_abuse_max_registrations_per_ip')
     .single();
 
-  const { data: maxFreeData } = await supabase
+  const { data: maxFreeData } = await getSupabaseAdmin()
     .from('system_config')
     .select('value')
     .eq('key', 'anti_abuse_max_free_per_device')
     .single();
 
+  // JSONB 值可能是字符串或数字，需要正确处理
+  const parseValue = (val: unknown, defaultVal: number): number => {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') return parseInt(val, 10) || defaultVal;
+    return defaultVal;
+  };
+
   return {
-    maxRegistrationsPerIp: parseInt(maxRegData?.value || '3', 10),
-    maxFreePerDevice: parseInt(maxFreeData?.value || '1', 10),
+    maxRegistrationsPerIp: parseValue(maxRegData?.value, 3),
+    maxFreePerDevice: parseValue(maxFreeData?.value, 1),
   };
 }
 
@@ -33,7 +42,7 @@ export async function checkDeviceCanRegister(fingerprint: string): Promise<{
   const config = await getAntiAbuseConfig();
 
   // 检查设备指纹是否已经注册过
-  const { data: deviceData } = await supabase
+  const { data: deviceData } = await getSupabaseAdmin()
     .from('device_fingerprints')
     .select('user_ids, is_blocked, block_reason')
     .eq('fingerprint', fingerprint)
@@ -68,7 +77,7 @@ export async function checkIpCanRegister(ipAddress: string): Promise<{
 }> {
   const config = await getAntiAbuseConfig();
 
-  const { data: ipData } = await supabase
+  const { data: ipData } = await getSupabaseAdmin()
     .from('ip_tracking')
     .select('registration_count, is_blocked, block_reason')
     .eq('ip_address', ipAddress)
@@ -105,7 +114,7 @@ export async function checkCanUseFree(
 }> {
   // 如果有用户ID，检查用户的免费使用次数
   if (userId) {
-    const { data: userData } = await supabase
+    const { data: userData } = await getSupabaseAdmin()
       .from('users')
       .select('free_used, free_used_wealth')
       .eq('id', userId)
@@ -118,7 +127,7 @@ export async function checkCanUseFree(
   }
 
   // 检查设备指纹是否已经使用过免费
-  const { data: deviceData } = await supabase
+  const { data: deviceData } = await getSupabaseAdmin()
     .from('device_fingerprints')
     .select('free_used, is_blocked, block_reason')
     .eq('fingerprint', fingerprint)
@@ -152,7 +161,7 @@ export async function recordDeviceFingerprint(
   deviceInfo?: Record<string, unknown>
 ): Promise<void> {
   // 检查设备指纹是否已存在
-  const { data: existingDevice } = await supabase
+  const { data: existingDevice } = await getSupabaseAdmin()
     .from('device_fingerprints')
     .select('id, ip_addresses, user_ids')
     .eq('fingerprint', fingerprint)
@@ -171,7 +180,7 @@ export async function recordDeviceFingerprint(
       userIds.push(userId);
     }
 
-    await supabase
+    await getSupabaseAdmin()
       .from('device_fingerprints')
       .update({
         ip_addresses: ipAddresses,
@@ -182,7 +191,7 @@ export async function recordDeviceFingerprint(
       .eq('id', existingDevice.id);
   } else {
     // 创建新记录
-    await supabase
+    await getSupabaseAdmin()
       .from('device_fingerprints')
       .insert({
         fingerprint,
@@ -200,7 +209,7 @@ export async function recordIpAddress(
   userId?: string,
   isRegistration: boolean = false
 ): Promise<void> {
-  const { data: existingIp } = await supabase
+  const { data: existingIp } = await getSupabaseAdmin()
     .from('ip_tracking')
     .select('id, fingerprints, user_ids, registration_count')
     .eq('ip_address', ipAddress)
@@ -218,7 +227,7 @@ export async function recordIpAddress(
       userIds.push(userId);
     }
 
-    await supabase
+    await getSupabaseAdmin()
       .from('ip_tracking')
       .update({
         fingerprints,
@@ -230,7 +239,7 @@ export async function recordIpAddress(
       })
       .eq('id', existingIp.id);
   } else {
-    await supabase
+    await getSupabaseAdmin()
       .from('ip_tracking')
       .insert({
         ip_address: ipAddress,
@@ -243,7 +252,7 @@ export async function recordIpAddress(
 
 // 标记设备已使用免费
 export async function markDeviceFreeUsed(fingerprint: string): Promise<void> {
-  await supabase
+  await getSupabaseAdmin()
     .from('device_fingerprints')
     .update({ free_used: true })
     .eq('fingerprint', fingerprint);
@@ -251,7 +260,7 @@ export async function markDeviceFreeUsed(fingerprint: string): Promise<void> {
 
 // 检查设备是否已使用免费（供新用户注册时检查）
 export async function hasDeviceUsedFree(fingerprint: string): Promise<boolean> {
-  const { data } = await supabase
+  const { data } = await getSupabaseAdmin()
     .from('device_fingerprints')
     .select('free_used')
     .eq('fingerprint', fingerprint)

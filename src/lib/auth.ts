@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { supabase } from './supabase';
+import { getSupabaseAdmin } from './supabase';
 import { User } from '@/types/auth';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'lifecurve-jwt-secret-change-in-production';
@@ -50,7 +50,7 @@ export function generateUserId(): string {
 
 // 通过手机号查找用户
 export async function findUserByPhone(phone: string): Promise<User | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseAdmin()
     .from('users')
     .select('*')
     .eq('phone', phone)
@@ -72,7 +72,7 @@ export async function findUserByPhone(phone: string): Promise<User | null> {
 
 // 通过ID查找用户
 export async function findUserById(userId: string): Promise<User | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseAdmin()
     .from('users')
     .select('*')
     .eq('id', userId)
@@ -98,7 +98,7 @@ export async function createUser(
   passwordHash: string,
   fingerprint?: string
 ): Promise<User | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseAdmin()
     .from('users')
     .insert({
       phone,
@@ -131,7 +131,7 @@ export async function createUser(
 
 // 获取用户密码哈希
 export async function getUserPasswordHash(phone: string): Promise<string | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseAdmin()
     .from('users')
     .select('password_hash')
     .eq('phone', phone)
@@ -143,7 +143,7 @@ export async function getUserPasswordHash(phone: string): Promise<string | null>
 
 // 更新用户最后登录时间
 export async function updateLastLogin(userId: string): Promise<void> {
-  await supabase
+  await getSupabaseAdmin()
     .from('users')
     .update({ last_login_at: new Date().toISOString() })
     .eq('id', userId);
@@ -151,7 +151,7 @@ export async function updateLastLogin(userId: string): Promise<void> {
 
 // 更新用户积分
 export async function updateUserPoints(userId: string, points: number): Promise<void> {
-  await supabase
+  await getSupabaseAdmin()
     .from('users')
     .update({ points })
     .eq('id', userId);
@@ -168,7 +168,7 @@ export async function updateUserFreeUsed(
     update.free_used_wealth = freeUsedWealth;
   }
 
-  await supabase
+  await getSupabaseAdmin()
     .from('users')
     .update(update)
     .eq('id', userId);
@@ -184,7 +184,7 @@ export async function saveUserSession(
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7); // 7天后过期
 
-  await supabase
+  await getSupabaseAdmin()
     .from('user_sessions')
     .insert({
       user_id: userId,
@@ -197,7 +197,7 @@ export async function saveUserSession(
 
 // 撤销用户会话
 export async function revokeUserSession(tokenHash: string): Promise<void> {
-  await supabase
+  await getSupabaseAdmin()
     .from('user_sessions')
     .update({ is_revoked: true })
     .eq('token_hash', tokenHash);
