@@ -43,10 +43,10 @@ export default function MastersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen flex flex-col bg-black text-white">
       <Header />
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
         {/* Page Header */}
         <div className="text-center mb-12">
           <h1 className="text-3xl font-serif mb-4">大师测算</h1>
