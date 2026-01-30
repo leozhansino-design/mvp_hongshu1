@@ -114,7 +114,7 @@ export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderP
 
         {/* 模块进度列表 */}
         {queuePosition === 0 && (
-          <div className="grid grid-cols-4 gap-2 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
             {displayModules.map((module, index) => {
               const isCompleted = index < currentModuleIndex;
               const isCurrent = index === currentModuleIndex;
@@ -122,7 +122,7 @@ export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderP
               return (
                 <div
                   key={module.id}
-                  className={`flex items-center gap-1 p-2 rounded text-xs transition-all border ${
+                  className={`flex items-center justify-center gap-1 px-2 py-2 rounded text-xs transition-all border ${
                     isCompleted
                       ? 'bg-white/10 text-white border-white/30'
                       : isCurrent
@@ -131,8 +131,8 @@ export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderP
                   }`}
                 >
                   <span>{module.icon}</span>
-                  <span className="truncate">{module.name}</span>
-                  {isCompleted && <span className="ml-auto">✓</span>}
+                  <span className="whitespace-nowrap">{module.name}</span>
+                  {isCompleted && <span className="ml-1 flex-shrink-0">✓</span>}
                 </div>
               );
             })}
