@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAuthToken } from '@/services/auth';
 import { getDeviceId } from '@/lib/device';
@@ -93,14 +94,20 @@ export default function PointsHistoryModal({ isOpen, onClose }: PointsHistoryMod
 
   const totalPages = Math.ceil(total / pageSize);
 
-  return (
+  // 使用 portal 渲染到 body，避免被 header 遮挡
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
           onClick={onClose}
         >
           <motion.div
@@ -210,4 +217,8 @@ export default function PointsHistoryModal({ isOpen, onClose }: PointsHistoryMod
       )}
     </AnimatePresence>
   );
+
+  // 客户端渲染时使用 portal
+  if (!mounted) return null;
+  return createPortal(modalContent, document.body);
 }
