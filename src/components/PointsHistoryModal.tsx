@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAuthToken } from '@/services/auth';
+import { getDeviceId } from '@/lib/device';
 
 interface PointsLog {
   id: number;
@@ -40,7 +41,18 @@ export default function PointsHistoryModal({ isOpen, onClose }: PointsHistoryMod
 
     try {
       const token = getAuthToken();
-      const res = await fetch(`/api/user/points-history?page=${page}&pageSize=${pageSize}`, {
+      const deviceId = getDeviceId();
+
+      // 传递 deviceId 以查询设备绑定的积分记录
+      const params = new URLSearchParams({
+        page: page.toString(),
+        pageSize: pageSize.toString(),
+      });
+      if (deviceId) {
+        params.set('deviceId', deviceId);
+      }
+
+      const res = await fetch(`/api/user/points-history?${params.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -81,24 +93,23 @@ export default function PointsHistoryModal({ isOpen, onClose }: PointsHistoryMod
 
   const totalPages = Math.ceil(total / pageSize);
 
-  if (!isOpen) return null;
-
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
+      {isOpen && (
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-mystic-900 rounded-2xl border border-gold-400/20 w-full max-w-lg max-h-[80vh] overflow-hidden shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={onClose}
         >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="bg-mystic-900 rounded-2xl border border-gold-400/20 w-full max-w-lg max-h-[80vh] overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
           {/* 标题栏 */}
           <div className="flex items-center justify-between p-4 border-b border-gold-400/10">
             <h2 className="text-lg font-bold text-white">积分使用记录</h2>
@@ -194,8 +205,9 @@ export default function PointsHistoryModal({ isOpen, onClose }: PointsHistoryMod
               </div>
             </div>
           )}
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </AnimatePresence>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, maskPhone } from '@/types/auth';
 import { logout } from '@/services/auth';
+import { checkUsageStatus } from '@/lib/device';
 import PointsHistoryModal from './PointsHistoryModal';
 
 interface UserMenuProps {
@@ -15,7 +16,17 @@ interface UserMenuProps {
 export default function UserMenu({ user, onLogout, onRecharge }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [devicePoints, setDevicePoints] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // 获取设备积分（这是实际使用的积分）
+  useEffect(() => {
+    const fetchDevicePoints = async () => {
+      const status = await checkUsageStatus();
+      setDevicePoints(status.points);
+    };
+    fetchDevicePoints();
+  }, []);
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -86,7 +97,7 @@ export default function UserMenu({ user, onLogout, onRecharge }: UserMenuProps) 
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-text-secondary">当前积分</p>
-                    <p className="text-2xl font-bold text-gold-400">{user.points}</p>
+                    <p className="text-2xl font-bold text-gold-400">{devicePoints ?? user.points}</p>
                   </div>
                   <button
                     onClick={() => {

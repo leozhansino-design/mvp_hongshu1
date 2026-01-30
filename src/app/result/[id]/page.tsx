@@ -691,7 +691,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             {/* 底部网址 - 更醒目 */}
             <div className="text-center pt-2 pb-1">
               <p className="text-gold-400 text-2xl font-bold tracking-wider">lifecurve.cn</p>
-              <p className="text-text-secondary/60 text-xs mt-1">扫码测算你的财富曲线</p>
+              <p className="text-text-secondary/60 text-xs mt-1">测算你的财富曲线</p>
             </div>
           </div>
 
@@ -1084,7 +1084,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           {/* 底部网址 - 更醒目 */}
           <div className="text-center pt-2 pb-1">
             <p className="text-gold-400 text-2xl font-bold tracking-wider">lifecurve.cn</p>
-            <p className="text-text-secondary/60 text-xs mt-1">扫码测算你的人生曲线</p>
+            <p className="text-text-secondary/60 text-xs mt-1">测算你的人生曲线</p>
           </div>
         </div>
 
