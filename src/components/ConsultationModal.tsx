@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef, Fragment } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Master, formatPrice, formatFollowUps } from '@/types/master';
 import { getAuthToken } from '@/services/auth';
 import QRCode from 'qrcode';
+import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
 
 interface ConsultationModalProps {
   isOpen: boolean;
@@ -48,6 +49,22 @@ export default function ConsultationModal({
   const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
   const minutes = ['00', '15', '30', '45'];
 
+  // Calculate bazi when birth info changes
+  const baziResult = useMemo(() => {
+    if (!birthYear || !birthMonth || !birthDay) return null;
+    const hour = birthHour ? parseInt(birthHour) : 12;
+    const minute = birthMinute ? parseInt(birthMinute) : 0;
+    return calculateBazi(birthYear, birthMonth, birthDay, hour, minute, false);
+  }, [birthYear, birthMonth, birthDay, birthHour, birthMinute]);
+
+  // Calculate dayun when bazi and gender are available
+  const daYunResult = useMemo(() => {
+    if (!birthYear || !birthMonth || !birthDay) return null;
+    const hour = birthHour ? parseInt(birthHour) : 12;
+    const minute = birthMinute ? parseInt(birthMinute) : 0;
+    return calculateDaYun(birthYear, birthMonth, birthDay, hour, minute, gender, false);
+  }, [birthYear, birthMonth, birthDay, birthHour, birthMinute, gender]);
+
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -74,6 +91,16 @@ export default function ConsultationModal({
 
   const handleSubmit = async () => {
     // Validation
+    if (!name.trim()) {
+      setError('请输入您的姓名');
+      return;
+    }
+
+    if (!birthHour || !birthMinute) {
+      setError('请选择完整的出生时间');
+      return;
+    }
+
     if (!question.trim() || question.trim().length < 10) {
       setError('问题描述至少10个字');
       return;
@@ -104,9 +131,19 @@ export default function ConsultationModal({
           birthDay,
           birthTime,
           gender,
-          name: name.trim() || undefined,
+          name: name.trim(),
           question: question.trim(),
           payMethod,
+          // Include bazi data for master reference
+          baziData: baziResult ? {
+            eightChar: baziResult.eightChar,
+            lunar: baziResult.lunar,
+            dayMasterElement: baziResult.dayMasterElement,
+          } : undefined,
+          daYunData: daYunResult ? {
+            startInfo: daYunResult.startInfo,
+            daYunList: daYunResult.daYunList.slice(0, 5), // First 5 大运
+          } : undefined,
         }),
       });
 
@@ -147,9 +184,17 @@ export default function ConsultationModal({
         {/* Header */}
         <div className="sticky top-0 bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gold-400/30 to-purple-500/30 flex items-center justify-center text-lg font-serif text-gold-400">
-              {master.name.charAt(0)}
-            </div>
+            {master.avatar ? (
+              <img
+                src={master.avatar}
+                alt={master.name}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gold-400/30 to-purple-500/30 flex items-center justify-center text-lg font-serif text-gold-400">
+                {master.name.charAt(0)}
+              </div>
+            )}
             <div>
               <h3 className="text-lg font-medium text-white">{master.name}</h3>
               <p className="text-sm text-text-secondary">
@@ -223,6 +268,54 @@ export default function ConsultationModal({
               </div>
             </div>
 
+            {/* Bazi Display */}
+            {baziResult && (
+              <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                <div className="text-sm text-text-secondary mb-3">您的八字</div>
+                <div className="grid grid-cols-4 gap-2 text-center mb-4">
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">年柱</div>
+                    <div className="text-gold-400 font-medium">{baziResult.eightChar.year}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">月柱</div>
+                    <div className="text-gold-400 font-medium">{baziResult.eightChar.month}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">日柱</div>
+                    <div className="text-gold-400 font-medium">{baziResult.eightChar.day}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">时柱</div>
+                    <div className="text-gold-400 font-medium">{baziResult.eightChar.hour}</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-400">
+                  <span>农历: {baziResult.lunar.monthCn}月{baziResult.lunar.dayCn}</span>
+                  <span>日主: {baziResult.dayMasterElement}</span>
+                </div>
+              </div>
+            )}
+
+            {/* DaYun Display */}
+            {daYunResult && daYunResult.daYunList.length > 0 && (
+              <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                <div className="text-sm text-text-secondary mb-3">大运流年</div>
+                <div className="text-xs text-gray-400 mb-3">{daYunResult.startInfo}</div>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {daYunResult.daYunList.slice(0, 6).map((daYun, index) => (
+                    <div
+                      key={index}
+                      className="flex-shrink-0 px-3 py-2 bg-gray-700/50 rounded-lg text-center min-w-[60px]"
+                    >
+                      <div className="text-gold-400 font-medium text-sm">{daYun.ganZhi}</div>
+                      <div className="text-gray-500 text-xs mt-1">{daYun.startAge}-{daYun.endAge}岁</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Gender */}
             <div className="mb-6">
               <label className="block text-sm text-text-secondary mb-3">性别</label>
@@ -252,16 +345,16 @@ export default function ConsultationModal({
               </div>
             </div>
 
-            {/* Name (optional) */}
+            {/* Name (required) */}
             <div className="mb-6">
               <label className="block text-sm text-text-secondary mb-3">
-                您的姓名 <span className="text-gray-500">(选填)</span>
+                您的姓名 <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="请输入您的姓名"
+                placeholder="请输入您的姓名（必填）"
                 maxLength={20}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:border-gold-400 focus:outline-none"
               />

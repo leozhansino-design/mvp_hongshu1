@@ -11,14 +11,16 @@ export default function Footer() {
             <span className="text-gold-400 text-sm font-medium">关注公众号「人生曲线AI」获取更多命理资讯</span>
           </div>
 
+          {/* Contact info - more prominent */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mb-2">
+            <span className="text-sm text-white font-medium">客服微信: <span className="text-gold-400">lifecurve_ai</span></span>
+            <span className="hidden sm:inline text-gray-600">|</span>
+            <span className="text-sm text-white font-medium">邮箱: <span className="text-gold-400">lifecurve@163.com</span></span>
+          </div>
+
           <p className="text-xs text-gray-400">
             海口波塔科技有限责任公司
           </p>
-          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-xs text-gray-500">
-            <span>客服微信: lifecurve_ai</span>
-            <span className="hidden sm:inline">|</span>
-            <span>邮箱: lifecurve@163.com</span>
-          </div>
           <p className="text-xs text-gray-600 mt-1">
             &copy; {new Date().getFullYear()} 海口波塔科技有限责任公司 All Rights Reserved
           </p>
