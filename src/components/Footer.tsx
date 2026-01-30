@@ -13,7 +13,7 @@ export default function Footer() {
 
           {/* Contact info - more prominent */}
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mb-2">
-            <span className="text-sm text-white font-medium">客服微信: <span className="text-gold-400">lifecurve_ai</span></span>
+            <span className="text-sm text-white font-medium">客服微信: <span className="text-gold-400">lifecurveai</span></span>
             <span className="hidden sm:inline text-gray-600">|</span>
             <span className="text-sm text-white font-medium">邮箱: <span className="text-gold-400">lifecurve@163.com</span></span>
           </div>

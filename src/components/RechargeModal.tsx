@@ -399,7 +399,7 @@ export default function RechargeModal({
 
               {/* Refund notice */}
               <p className="text-center text-xs text-gray-500 mt-3">
-                如有退款需求，请联系客服微信：lifecurve_ai
+                如有退款需求，请联系客服微信：lifecurveai
               </p>
             </>
           )}
