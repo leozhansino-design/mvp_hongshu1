@@ -14,6 +14,7 @@ export default function TestPage() {
   });
 
   const [birthInfo, setBirthInfo] = useState<BirthInfo>({
+    name: '测试',
     gender: 'male',
     year: 1990,
     month: 6,

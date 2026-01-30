@@ -96,6 +96,100 @@ export async function checkUsageStatus(curveMode: 'life' | 'wealth' = 'life'): P
   };
 }
 
+// 结果缓存相关类型
+export interface CacheCheckResult {
+  found: boolean;
+  cacheKey: string;
+  resultData?: unknown;
+}
+
+// 检查结果缓存
+export async function checkResultCache(params: {
+  name: string;
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  gender: string;
+  isLunar: boolean;
+  curveMode: 'life' | 'wealth';
+  isPaid: boolean;
+}): Promise<CacheCheckResult> {
+  const deviceId = getDeviceId();
+
+  if (!deviceId) {
+    return { found: false, cacheKey: '' };
+  }
+
+  try {
+    const queryParams = new URLSearchParams({
+      deviceId,
+      name: params.name,
+      year: params.year.toString(),
+      month: params.month.toString(),
+      day: params.day.toString(),
+      hour: params.hour.toString(),
+      gender: params.gender,
+      isLunar: params.isLunar.toString(),
+      curveMode: params.curveMode,
+      isPaid: params.isPaid.toString(),
+    });
+
+    const response = await fetch(`/api/result/cache?${queryParams.toString()}`, {
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      return { found: false, cacheKey: '' };
+    }
+
+    const data = await response.json();
+    return {
+      found: data.found,
+      cacheKey: data.cacheKey,
+      resultData: data.resultData,
+    };
+  } catch (error) {
+    console.error('Failed to check cache:', error);
+    return { found: false, cacheKey: '' };
+  }
+}
+
+// 保存结果到缓存
+export async function saveResultCache(params: {
+  cacheKey: string;
+  curveMode: 'life' | 'wealth';
+  isPaid: boolean;
+  resultData: unknown;
+  birthInfo?: unknown;
+}): Promise<boolean> {
+  const deviceId = getDeviceId();
+
+  if (!deviceId || !params.cacheKey) {
+    return false;
+  }
+
+  try {
+    const response = await fetch('/api/result/cache', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cacheKey: params.cacheKey,
+        deviceId,
+        curveMode: params.curveMode,
+        isPaid: params.isPaid,
+        resultData: params.resultData,
+        birthInfo: params.birthInfo,
+      }),
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.error('Failed to save cache:', error);
+    return false;
+  }
+}
+
 // 消耗使用次数/积分
 export async function consumeUsage(
   action: 'free_overview' | 'paid_overview' | 'detailed',

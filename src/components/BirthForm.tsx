@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Gender, BirthInfo, CalendarType } from '@/types';
+import { Gender, BirthInfo, CalendarType, isValidChineseName } from '@/types';
 import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
 import { CHINA_PROVINCES, getCityNamesByProvince } from '@/data/chinaCities';
 
@@ -30,6 +30,7 @@ const SHI_CHEN_OPTIONS = [
 
 export default function BirthForm({ onSubmit, disabled, remainingUsage, points = 0 }: BirthFormProps) {
   const [name, setName] = useState<string>('');
+  const [nameError, setNameError] = useState<string>('');
   const [gender, setGender] = useState<Gender | null>(null);
   const [calendarType, setCalendarType] = useState<CalendarType>('solar');
   const [year, setYear] = useState<number | ''>('');
@@ -40,6 +41,21 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
   const [city, setCity] = useState<string>('');
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
   const [daYunResult, setDaYunResult] = useState<{ startInfo: string; daYunList: DaYunItem[] } | null>(null);
+
+  // 姓名校验
+  const handleNameChange = (value: string) => {
+    setName(value);
+    if (!value) {
+      setNameError('请输入姓名');
+    } else if (!isValidChineseName(value)) {
+      setNameError('请输入2-4个中文汉字');
+    } else {
+      setNameError('');
+    }
+  };
+
+  // 姓名是否有效
+  const isNameValid = name.length > 0 && isValidChineseName(name);
 
   const currentYear = new Date().getFullYear();
 
@@ -76,7 +92,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
     setCity('');
   };
 
-  const isValid = gender && year && month && day && shiChen !== '';
+  const isValid = isNameValid && gender && year && month && day && shiChen !== '';
 
   // 自动计算八字
   useEffect(() => {
@@ -123,7 +139,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
       day: day as number,
       hour: shiChen as number,
       minute: 0,
-      name: name || undefined,
+      name,
       calendarType,
       province: province || undefined,
       city: city || undefined,
@@ -157,15 +173,19 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-text-secondary mb-2">
-            姓名 <span className="text-text-secondary/50">(选填)</span>
+            姓名 <span className="text-kline-down">*</span>
           </label>
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="请输入姓名"
-            className="input-mystic"
+            onChange={(e) => handleNameChange(e.target.value)}
+            placeholder="请输入中文姓名"
+            className={`input-mystic ${nameError ? 'border-red-500' : ''}`}
+            maxLength={4}
           />
+          {nameError && (
+            <p className="text-xs text-red-400 mt-1">{nameError}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm text-text-secondary mb-2">
@@ -406,7 +426,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
             if (!isValid || disabled) return;
             if (remainingUsage <= 0 && points < 10) return;
             const birthInfo: BirthInfo = {
-              name: name || undefined,
+              name,
               gender: gender!,
               calendarType,
               year: year as number,
@@ -429,7 +449,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
           onClick={() => {
             if (!isValid || disabled || points < 50) return;
             const birthInfo: BirthInfo = {
-              name: name || undefined,
+              name,
               gender: gender!,
               calendarType,
               year: year as number,

@@ -211,11 +211,19 @@ export interface BirthInfo {
   day: number;
   hour: number;
   minute: number;
-  name?: string;
+  name: string;              // 姓名（必填，2-4个中文汉字）
   calendarType?: CalendarType;
   birthPlace?: string;
   province?: string;  // 出生省份
   city?: string;      // 出生城市
+}
+
+// 中文姓名正则校验（2-4个汉字）
+export const CHINESE_NAME_REGEX = /^[\u4e00-\u9fa5]{2,4}$/;
+
+// 验证姓名是否有效
+export function isValidChineseName(name: string): boolean {
+  return CHINESE_NAME_REGEX.test(name);
 }
 
 export interface StoredResult {

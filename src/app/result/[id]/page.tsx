@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import html2canvas from 'html2canvas';
-import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagram, DetailedDaYunTable, WealthChart, WealthAnalysis } from '@/components';
+import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagram, DetailedDaYunTable, WealthChart, WealthAnalysis, RechargeModal } from '@/components';
 import UnlockLoader from '@/components/UnlockLoader';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult, generateWealthCurve } from '@/services/api';
 import { calculateDaYun } from '@/lib/bazi';
 import { getOrCreateAnalytics, trackEvent, trackPageView, trackButtonClick } from '@/services/analytics';
+import { checkUsageStatus, consumeUsage } from '@/lib/device';
 import {
   StoredResult,
   PHASE_LABELS,
@@ -280,6 +281,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const [shareLoading, setShareLoading] = useState(false);
   const [showDaYun, setShowDaYun] = useState(false);
   const [curveMode, setCurveMode] = useState<CurveMode>('life');
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [currentPoints, setCurrentPoints] = useState(0);
   const shareRef = useRef<HTMLDivElement>(null);
   const wealthShareRef = useRef<HTMLDivElement>(null);
 
@@ -320,8 +323,47 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     trackButtonClick('unlock', 'result', { curveMode, isPaid: false });
     // 追踪点击解锁事件（旧分析系统）
     trackEvent(resolvedParams.id, 'click_unlock', { curveMode, isPaid: false });
-    setUpgrading(true);
-    setUnlockComplete(false);
+
+    // 检查用户积分
+    try {
+      const usageStatus = await checkUsageStatus(curveMode);
+      setCurrentPoints(usageStatus.points);
+
+      // 解锁详细版需要50积分
+      const requiredPoints = 50;
+      if (usageStatus.points < requiredPoints) {
+        // 积分不足，显示充值弹窗
+        setShowRechargeModal(true);
+        return;
+      }
+
+      // 积分足够，先扣除积分
+      const consumeResult = await consumeUsage(
+        'detailed',
+        result.birthInfo as unknown as Record<string, unknown>,
+        resolvedParams.id,
+        curveMode
+      );
+
+      if (!consumeResult.success) {
+        alert(consumeResult.error || '积分扣除失败');
+        return;
+      }
+
+      // 扣费成功，开始解锁流程
+      setUpgrading(true);
+      setUnlockComplete(false);
+    } catch (error) {
+      console.error('检查积分失败:', error);
+      alert('网络错误，请重试');
+    }
+  };
+
+  // 充值成功后的回调
+  const handleRechargeSuccess = async () => {
+    // 刷新积分状态
+    const usageStatus = await checkUsageStatus(curveMode);
+    setCurrentPoints(usageStatus.points);
   };
 
   const handleUnlockComplete = async () => {
@@ -606,6 +648,14 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             </div>
           </div>
         </div>
+
+        {/* 充值弹窗 */}
+        <RechargeModal
+          isOpen={showRechargeModal}
+          onClose={() => setShowRechargeModal(false)}
+          currentPoints={currentPoints}
+          onSuccess={handleRechargeSuccess}
+        />
       </div>
     );
   }
@@ -949,6 +999,14 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             <p className="text-gold-400 mt-4">lifecurve.cn</p>
           </div>
         </div>
+
+        {/* 充值弹窗 */}
+        <RechargeModal
+          isOpen={showRechargeModal}
+          onClose={() => setShowRechargeModal(false)}
+          currentPoints={currentPoints}
+          onSuccess={handleRechargeSuccess}
+        />
       </div>
     </div>
   );

@@ -29,6 +29,7 @@ export default function DevPage() {
   const [promptVersion, setPromptVersion] = useState<'free' | 'paid'>('free');
 
   const [testBirthInfo, setTestBirthInfo] = useState<BirthInfo>({
+    name: '测试',
     gender: 'male',
     year: 1990,
     month: 6,

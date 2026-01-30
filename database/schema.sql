@@ -110,7 +110,26 @@ CREATE TABLE IF NOT EXISTS admin_sessions (
 );
 
 -- ============================================
--- 7. RLS (行级安全策略)
+-- 7. 结果缓存表 (result_cache)
+-- 用于存储相同设备+信息的测算结果，确保一致性
+-- ============================================
+CREATE TABLE IF NOT EXISTS result_cache (
+  id              SERIAL PRIMARY KEY,
+  cache_key       TEXT UNIQUE NOT NULL,      -- SHA256(deviceId + name + birthInfo + curveMode + isPaid)
+  device_id       TEXT NOT NULL,             -- 设备ID
+  curve_mode      TEXT NOT NULL,             -- 'life' 或 'wealth'
+  is_paid         BOOLEAN DEFAULT FALSE,     -- 是否付费版本
+  result_data     JSONB NOT NULL,            -- 完整的生成结果
+  birth_info      JSONB,                     -- 用于调试的原始输入
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 结果缓存索引
+CREATE INDEX IF NOT EXISTS idx_result_cache_key ON result_cache(cache_key);
+CREATE INDEX IF NOT EXISTS idx_result_cache_device_id ON result_cache(device_id);
+
+-- ============================================
+-- 8. RLS (行级安全策略)
 -- ============================================
 
 -- 启用 RLS
@@ -120,6 +139,7 @@ ALTER TABLE device_usage ENABLE ROW LEVEL SECURITY;
 ALTER TABLE points_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usage_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE result_cache ENABLE ROW LEVEL SECURITY;
 
 -- 服务端策略（允许服务端完全访问）
 CREATE POLICY "Service role full access on users" ON users
@@ -140,8 +160,11 @@ CREATE POLICY "Service role full access on usage_log" ON usage_log
 CREATE POLICY "Service role full access on admin_sessions" ON admin_sessions
   FOR ALL USING (auth.role() = 'service_role');
 
+CREATE POLICY "Service role full access on result_cache" ON result_cache
+  FOR ALL USING (auth.role() = 'service_role');
+
 -- ============================================
--- 8. 函数：生成卡密
+-- 9. 函数：生成卡密
 -- ============================================
 CREATE OR REPLACE FUNCTION generate_key_code()
 RETURNS TEXT AS $$
@@ -164,7 +187,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================
--- 9. 函数：批量生成卡密
+-- 10. 函数：批量生成卡密
 -- ============================================
 CREATE OR REPLACE FUNCTION batch_generate_keys(
   p_points INTEGER,
@@ -194,7 +217,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================
--- 10. 视图：卡密统计
+-- 11. 视图：卡密统计
 -- ============================================
 CREATE OR REPLACE VIEW keys_stats AS
 SELECT
