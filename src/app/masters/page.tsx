@@ -121,9 +121,6 @@ function MasterCard({
     }
   };
 
-  // 价格转积分（1元=10积分）
-  const priceInPoints = Math.round(master.price / 100 * 10);
-
   return (
     <div className="bg-gray-900/50 rounded-xl p-6 border border-gray-800 hover:border-gray-700 transition-all hover:bg-gray-900/70">
       <div className="flex items-start gap-4">
@@ -147,10 +144,7 @@ function MasterCard({
           <div className="flex items-center gap-3 mb-2">
             <h3 className="text-lg font-medium text-white">{master.name}</h3>
             <span className="text-xl font-medium text-gold-400">
-              {priceInPoints}积分
-            </span>
-            <span className="text-sm text-gray-500">
-              (¥{formatPrice(master.price)})
+              ¥{formatPrice(master.price)}
             </span>
           </div>
 
