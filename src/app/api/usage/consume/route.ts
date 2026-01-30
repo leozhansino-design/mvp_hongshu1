@@ -4,6 +4,7 @@ import {
   incrementDeviceUsage,
   consumePoints,
   logUsage,
+  getDetailedPoints,
 } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -82,15 +83,17 @@ export async function POST(request: NextRequest) {
         );
       }
     } else if (action === 'detailed') {
-      // 精批详解 - 需要50积分
-      if (device.points < 50) {
+      // 精批详解 - 从系统配置获取积分价格
+      const detailedPrice = await getDetailedPoints();
+
+      if (device.points < detailedPrice) {
         return NextResponse.json(
-          { error: '积分不足，需要50积分', code: 'INSUFFICIENT_POINTS', required: 50, current: device.points },
+          { error: `积分不足，需要${detailedPrice}积分`, code: 'INSUFFICIENT_POINTS', required: detailedPrice, current: device.points },
           { status: 400 }
         );
       }
 
-      const result = await consumePoints(deviceId, 50, '精批详解');
+      const result = await consumePoints(deviceId, detailedPrice, '精批详解');
       if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest) {
       await logUsage({
         deviceId,
         action: 'detailed',
-        pointsCost: 50,
+        pointsCost: detailedPrice,
         birthInfo,
         resultId,
         curveMode,
@@ -107,8 +110,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         type: 'points',
-        pointsUsed: 50,
-        points: device.points - 50,
+        pointsUsed: detailedPrice,
+        points: device.points - detailedPrice,
       });
     }
 
