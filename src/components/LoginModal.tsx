@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { login } from '@/services/auth';
+import { login as authLogin, getAuthUser } from '@/services/auth';
 import { isValidPhone, isValidPassword } from '@/types/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (isNewUser: boolean) => void;
+  onSuccess?: (isNewUser: boolean) => void;
   redirectMessage?: string;
 }
 
@@ -18,6 +19,7 @@ export default function LoginModal({
   onSuccess,
   redirectMessage,
 }: LoginModalProps) {
+  const { login: contextLogin } = useAuth();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,10 +67,15 @@ export default function LoginModal({
     setLoading(true);
 
     try {
-      const result = await login(phone.trim(), password);
+      const result = await authLogin(phone.trim(), password);
 
       if (result.success) {
-        onSuccess(result.isNewUser || false);
+        // 更新全局 AuthContext 状态
+        const user = getAuthUser();
+        if (user) {
+          contextLogin(user);
+        }
+        onSuccess?.(result.isNewUser || false);
         onClose();
       } else {
         setError(result.message || '登录失败');

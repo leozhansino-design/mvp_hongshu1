@@ -23,6 +23,15 @@ interface PageParams {
   id: string;
 }
 
+// 名字脱敏函数 - 保护用户隐私
+function maskName(name: string): string {
+  if (!name || name.length === 0) return '匿名';
+  if (name.length === 1) return name + '*';
+  if (name.length === 2) return name[0] + '*';
+  // 3个字及以上，保留首尾，中间用*
+  return name[0] + '*'.repeat(name.length - 2) + name[name.length - 1];
+}
+
 // 有趣的财富高光时刻组件
 function WealthFunHighlights({
   highlights,
@@ -298,11 +307,13 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
     }
     setResult(storedResult);
     setLoading(false);
-    // 从URL设置初始模式
-    const mode = urlMode === 'wealth' ? 'wealth' : 'life';
-    if (urlMode === 'wealth') {
-      setCurveMode('wealth');
-    }
+
+    // 优先使用存储的 curveMode，其次使用 URL 参数
+    // 这样从"我的报告"点击查看时能正确显示对应的曲线类型
+    const storedMode = storedResult.curveMode;
+    const mode = storedMode || (urlMode === 'wealth' ? 'wealth' : 'life');
+    setCurveMode(mode);
+
     // 追踪页面访问（新埋点系统）
     trackPageView('result', mode);
     // 初始化分析记录并追踪查看事件
@@ -329,8 +340,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
       const usageStatus = await checkUsageStatus(curveMode);
       setCurrentPoints(usageStatus.points);
 
-      // 解锁详细版需要50积分
-      const requiredPoints = 50;
+      // 解锁详细版需要200积分
+      const requiredPoints = 200;
       if (usageStatus.points < requiredPoints) {
         // 积分不足，显示充值弹窗
         setShowRechargeModal(true);
@@ -470,6 +481,48 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   const data = isPaid ? paidResult : freeResult;
   const currentPhase = data?.currentPhase as PhaseType | undefined;
 
+  // 财富曲线模式但没有数据时的处理
+  if (isWealthMode && !wealthResult) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
+        <Header showModeSelector curveMode={curveMode} onModeChange={handleModeChange} />
+        <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
+          <div className="mystic-card text-center py-12">
+            <p className="text-gold-400 text-xl mb-4">💰 财富曲线数据加载中...</p>
+            <p className="text-text-secondary mb-6">如果长时间无法加载，请返回首页重新生成</p>
+            <button
+              onClick={() => router.push('/?mode=wealth')}
+              className="btn-gold"
+            >
+              重新生成财富曲线
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 人生曲线模式但没有数据时的处理
+  if (!isWealthMode && !data) {
+    return (
+      <div className="min-h-screen">
+        <Header showModeSelector curveMode={curveMode} onModeChange={handleModeChange} />
+        <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
+          <div className="mystic-card text-center py-12">
+            <p className="text-gold-400 text-xl mb-4">✦ 人生曲线数据加载中...</p>
+            <p className="text-text-secondary mb-6">如果长时间无法加载，请返回首页重新生成</p>
+            <button
+              onClick={() => router.push('/')}
+              className="btn-gold"
+            >
+              重新生成人生曲线
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // 财富曲线模式的渲染
   if (isWealthMode && wealthResult) {
     return (
@@ -557,13 +610,10 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
               <div className="text-center">
                 <button onClick={handleUpgrade} className="btn-gold px-10 py-3 text-lg">
-                  ¥19.9 解锁完整版
+                  200积分 解锁完整版
                 </button>
                 <p className="text-xs text-text-secondary mt-3">
                   一次购买，永久查看 · 支持多次生成
-                </p>
-                <p className="text-xs text-gold-400/50 mt-2">
-                  （MVP演示版 - 点击直接体验）
                 </p>
               </div>
             </div>
@@ -574,7 +624,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             {/* 头部标题 */}
             <div className="text-center mb-4">
               <p className="text-gold-400 text-3xl font-bold mb-2">💰 我的财富曲线</p>
-              <p className="text-text-secondary text-lg">{birthInfo.name} · {birthInfo.gender === 'male' ? '乾造' : '坤造'}</p>
+              <p className="text-text-secondary text-lg">{maskName(birthInfo.name || '')} · {birthInfo.gender === 'male' ? '乾造' : '坤造'}</p>
               <p className="text-text-secondary/70 text-sm">{birthInfo.year}年生</p>
             </div>
 
@@ -935,7 +985,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
         {!isPaid && (
           <div className="mystic-card-gold text-center">
             <h2 className="font-serif text-xl text-gold-400 mb-2">欲知天机全貌？</h2>
-            <p className="text-text-secondary mb-6">解锁完整命数 · ¥19.9</p>
+            <p className="text-text-secondary mb-6">解锁完整命数 · 200积分</p>
             <ul className="text-left mb-6 space-y-2 max-w-xs mx-auto">
               <li className="flex items-center gap-2 text-text-primary">
                 <span className="text-gold-400">✦</span> 百年逐年运势详图
@@ -953,9 +1003,6 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
             <button onClick={handleUpgrade} className="btn-gold px-8 py-3">
               洞悉全局
             </button>
-            <p className="text-xs text-text-secondary mt-3">
-              （MVP演示版 - 点击直接体验付费版效果）
-            </p>
           </div>
         )}
 
@@ -964,7 +1011,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
           {/* 头部标题 */}
           <div className="text-center mb-4">
             <p className="text-gold-400 text-3xl font-bold mb-2">✦ 人生曲线 ✦</p>
-            <p className="text-text-secondary text-lg">{birthInfo.name} · {birthInfo.gender === 'male' ? '乾造' : '坤造'}</p>
+            <p className="text-text-secondary text-lg">{maskName(birthInfo.name || '')} · {birthInfo.gender === 'male' ? '乾造' : '坤造'}</p>
             <p className="text-text-secondary/70 text-sm">
               {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日
             </p>

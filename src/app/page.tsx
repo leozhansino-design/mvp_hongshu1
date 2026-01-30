@@ -8,7 +8,6 @@ import Header from '@/components/Header';
 import { generateFreeResult, generatePaidResult, generateWealthCurve } from '@/services/api';
 import {
   saveResult,
-  getTotalGeneratedCount,
 } from '@/services/storage';
 import { trackPageView, trackButtonClick } from '@/services/analytics';
 import { checkUsageStatus, consumeUsage, UsageStatus, checkResultCache, saveResultCache } from '@/lib/device';
@@ -16,8 +15,9 @@ import { BirthInfo, StoredResult, CurveMode, CURVE_MODE_LABELS, FreeVersionResul
 import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
 import { useAuth } from '@/contexts/AuthContext';
 
-// 基础统计数（运营初始值）
-const BASE_GENERATED_COUNT = 23847;
+// 基础统计数（运营初始值，数据库中已初始化为 41512）
+// 如果数据库不可用，使用此值作为后备
+const FALLBACK_GENERATED_COUNT = 41512;
 
 // 主页面内容组件
 function HomePageContent() {
@@ -26,7 +26,7 @@ function HomePageContent() {
   const { user, isLoggedIn, setShowLoginModal, setLoginRedirectMessage, updateFreeUsed, updatePoints } = useAuth();
   const [remainingUsage, setRemainingUsage] = useState(3);
   const [points, setPoints] = useState(0);
-  const [totalGenerated, setTotalGenerated] = useState(BASE_GENERATED_COUNT);
+  const [totalGenerated, setTotalGenerated] = useState(FALLBACK_GENERATED_COUNT);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [curveMode, setCurveMode] = useState<CurveMode>('life');
@@ -70,7 +70,20 @@ function HomePageContent() {
 
   // 初始加载 + 曲线模式变化时刷新
   useEffect(() => {
-    setTotalGenerated(BASE_GENERATED_COUNT + getTotalGeneratedCount());
+    // 从数据库获取总生成次数
+    const fetchTotalGenerated = async () => {
+      try {
+        const response = await fetch('/api/stats');
+        const data = await response.json();
+        if (data.success && data.totalGenerated) {
+          setTotalGenerated(data.totalGenerated);
+        }
+      } catch (error) {
+        console.error('获取总生成次数失败:', error);
+        // 保持默认值
+      }
+    };
+    fetchTotalGenerated();
     refreshUsageStatus(curveMode);
   }, [curveMode, refreshUsageStatus]);
 
@@ -190,6 +203,10 @@ function HomePageContent() {
         };
 
         saveResult(storedResult);
+
+        // 增加数据库中的总生成次数（异步，不阻塞跳转）
+        fetch('/api/stats', { method: 'POST' }).catch(console.error);
+
         router.push(`/result/${resultId}?mode=wealth`);
       } else {
         // 人生曲线模式
@@ -251,6 +268,10 @@ function HomePageContent() {
         }
 
         saveResult(storedResult);
+
+        // 增加数据库中的总生成次数（异步，不阻塞跳转）
+        fetch('/api/stats', { method: 'POST' }).catch(console.error);
+
         router.push(`/result/${resultId}`);
       }
 

@@ -1025,3 +1025,56 @@ export async function getConsultationStats(): Promise<{
     todayOrders,
   };
 }
+
+// ============================================
+// 全站统计相关操作
+// ============================================
+
+// 获取统计值
+export async function getStat(statKey: string): Promise<number> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { data, error } = await supabaseAdmin
+    .from('site_stats')
+    .select('stat_value')
+    .eq('stat_key', statKey)
+    .single();
+
+  if (error) {
+    // 如果表不存在或记录不存在，返回默认值
+    console.error(`获取统计 ${statKey} 失败:`, error.message);
+    return 0;
+  }
+
+  return data?.stat_value || 0;
+}
+
+// 增加统计值（使用数据库原子操作防止并发问题）
+export async function incrementStat(statKey: string, increment: number = 1): Promise<number> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  // 使用 RPC 调用原子增加函数
+  const { data, error } = await supabaseAdmin.rpc('increment_stat', {
+    p_stat_key: statKey,
+    p_increment: increment,
+  });
+
+  if (error) {
+    console.error(`增加统计 ${statKey} 失败:`, error.message);
+    // 如果 RPC 失败，尝试直接更新
+    const current = await getStat(statKey);
+    return current;
+  }
+
+  return data || 0;
+}
+
+// 获取总生成次数
+export async function getTotalGenerated(): Promise<number> {
+  return await getStat('total_generated');
+}
+
+// 增加总生成次数
+export async function incrementTotalGenerated(): Promise<number> {
+  return await incrementStat('total_generated', 1);
+}

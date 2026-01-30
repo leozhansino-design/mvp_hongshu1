@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { CurveMode, CURVE_MODE_LABELS } from '@/types';
-import { User } from '@/types/auth';
-import { getAuthUser, isAuthenticated, refreshUserInfo } from '@/services/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import LoginModal from './LoginModal';
 import UserMenu from './UserMenu';
 import RechargeModal from './RechargeModal';
@@ -14,80 +13,51 @@ interface HeaderProps {
   curveMode?: CurveMode;
   onModeChange?: (mode: CurveMode) => void;
   showModeSelector?: boolean;
-  onAuthChange?: (user: User | null) => void;
 }
 
 export default function Header({
   curveMode = 'life',
   onModeChange,
   showModeSelector = false,
-  onAuthChange,
 }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRechargeModal, setShowRechargeModal] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
 
+  // 使用全局 AuthContext
+  const {
+    user,
+    isLoading: authLoading,
+    isLoggedIn,
+    logout,
+    refreshUser,
+    showLoginModal,
+    setShowLoginModal,
+  } = useAuth();
+
   const navItems = [
     { href: '/', label: '首页' },
-    { href: '/masters', label: '大师测算' },
     { href: '/my', label: '我的报告' },
   ];
-
-  // 检查登录状态
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (isAuthenticated()) {
-        const cachedUser = getAuthUser();
-        setUser(cachedUser);
-
-        // 后台刷新用户信息
-        const freshUser = await refreshUserInfo();
-        if (freshUser) {
-          setUser(freshUser);
-          onAuthChange?.(freshUser);
-        } else {
-          setUser(null);
-          onAuthChange?.(null);
-        }
-      }
-      setAuthLoading(false);
-    };
-
-    checkAuth();
-  }, [onAuthChange]);
 
   const handleModeChange = (mode: CurveMode) => {
     onModeChange?.(mode);
   };
 
-  const handleLoginSuccess = (isNewUser: boolean) => {
-    const newUser = getAuthUser();
-    setUser(newUser);
-    onAuthChange?.(newUser);
-
-    if (isNewUser) {
-      // 可以显示欢迎消息
-    }
+  const handleLoginSuccess = () => {
+    // 登录成功后 AuthContext 会自动更新状态
+    // 不需要手动处理
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    onAuthChange?.(null);
+  const handleLogout = async () => {
+    await logout();
     router.refresh();
   };
 
   const handleRechargeSuccess = () => {
     // 刷新用户信息
-    refreshUserInfo().then((freshUser) => {
-      if (freshUser) {
-        setUser(freshUser);
-        onAuthChange?.(freshUser);
-      }
-    });
+    refreshUser();
   };
 
   return (
@@ -95,8 +65,8 @@ export default function Header({
       <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-sm border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
-            {/* Logo with Tab Switcher */}
-            <div className="flex items-center gap-1">
+            {/* Logo with Tab Switcher + 大师测算 */}
+            <div className="flex items-center gap-2 md:gap-4">
               {showModeSelector ? (
                 // 水平标签切换器
                 <div className="flex items-center bg-gray-900/50 rounded-lg p-1">
@@ -104,7 +74,7 @@ export default function Header({
                     <button
                       key={mode}
                       onClick={() => handleModeChange(mode)}
-                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+                      className={`px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all ${
                         curveMode === mode
                           ? mode === 'wealth'
                             ? 'bg-gradient-to-r from-gold-400/30 to-amber-500/30 text-gold-400 shadow-sm'
@@ -118,9 +88,21 @@ export default function Header({
                 </div>
               ) : (
                 <Link href="/" className="flex items-center gap-2">
-                  <span className="font-serif text-lg text-white">人生曲线</span>
+                  <span className="font-serif text-base md:text-lg text-white">人生曲线</span>
                 </Link>
               )}
+
+              {/* 大师测算链接 - 紧挨着模式切换器 */}
+              <Link
+                href="/masters"
+                className={`px-3 md:px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all border ${
+                  pathname === '/masters'
+                    ? 'bg-gold-400/20 text-gold-400 border-gold-400/50'
+                    : 'text-text-secondary hover:text-gold-400 border-gray-700 hover:border-gold-400/50'
+                }`}
+              >
+                大师测算
+              </Link>
             </div>
 
             {/* Desktop Nav + User */}
