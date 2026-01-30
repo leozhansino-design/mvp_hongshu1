@@ -365,45 +365,36 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
           出生日期 <span className="text-kline-down">*</span>
         </label>
         <div className="grid grid-cols-3 gap-2">
-          <div className="flex items-center gap-1">
-            <select
-              value={year}
-              onChange={(e) => setYear(e.target.value ? parseInt(e.target.value) : '')}
-              className="select-mystic"
-            >
-              <option value="">年</option>
-              {years.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <span className="text-text-secondary">年</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <select
-              value={month}
-              onChange={(e) => setMonth(e.target.value ? parseInt(e.target.value) : '')}
-              className="select-mystic"
-            >
-              <option value="">月</option>
-              {months.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-            <span className="text-text-secondary">月</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <select
-              value={day}
-              onChange={(e) => setDay(e.target.value ? parseInt(e.target.value) : '')}
-              className="select-mystic"
-            >
-              <option value="">日</option>
-              {days.map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
-            <span className="text-text-secondary">日</span>
-          </div>
+          <select
+            value={year}
+            onChange={(e) => setYear(e.target.value ? parseInt(e.target.value) : '')}
+            className="select-mystic w-full"
+          >
+            <option value="">选择年</option>
+            {years.map((y) => (
+              <option key={y} value={y}>{y}年</option>
+            ))}
+          </select>
+          <select
+            value={month}
+            onChange={(e) => setMonth(e.target.value ? parseInt(e.target.value) : '')}
+            className="select-mystic w-full"
+          >
+            <option value="">选择月</option>
+            {months.map((m) => (
+              <option key={m} value={m}>{m}月</option>
+            ))}
+          </select>
+          <select
+            value={day}
+            onChange={(e) => setDay(e.target.value ? parseInt(e.target.value) : '')}
+            className="select-mystic w-full"
+          >
+            <option value="">选择日</option>
+            {days.map((d) => (
+              <option key={d} value={d}>{d}日</option>
+            ))}
+          </select>
         </div>
       </div>
 

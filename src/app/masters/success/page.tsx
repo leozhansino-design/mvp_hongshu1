@@ -107,7 +107,7 @@ function SuccessContent() {
           <div className="bg-gray-900/50 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-center gap-2">
               <span className="text-text-secondary">请添加客服微信：</span>
-              <span className="text-gold-400 font-medium">lifecurve_ai</span>
+              <span className="text-gold-400 font-medium">lifecurveai</span>
             </div>
             <div className="flex items-center justify-center gap-2">
               <span className="text-text-secondary">或关注公众号：</span>
@@ -125,7 +125,7 @@ function SuccessContent() {
                 1
               </div>
               <div className="flex-1">
-                <p className="text-white">添加客服微信 <span className="text-gold-400">lifecurve_ai</span></p>
+                <p className="text-white">添加客服微信 <span className="text-gold-400">lifecurveai</span></p>
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -179,7 +179,7 @@ function SuccessContent() {
 
         {/* Footer Note */}
         <p className="text-center text-text-secondary text-sm mt-6">
-          如有问题请联系客服微信：lifecurve_ai
+          如有问题请联系客服微信：lifecurveai
         </p>
 
         {/* Back Button */}
