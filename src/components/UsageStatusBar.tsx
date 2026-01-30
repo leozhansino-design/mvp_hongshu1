@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { checkUsageStatus, UsageStatus } from '@/lib/device';
+import { useAuth } from '@/contexts/AuthContext';
 import RechargeModal from './RechargeModal';
 
 interface UsageStatusBarProps {
@@ -11,9 +12,19 @@ interface UsageStatusBarProps {
 }
 
 export default function UsageStatusBar({ curveMode = 'life', onStatusChange, refreshKey = 0 }: UsageStatusBarProps) {
+  const { isLoggedIn, setShowLoginModal, setLoginRedirectMessage } = useAuth();
   const [status, setStatus] = useState<UsageStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRechargeModal, setShowRechargeModal] = useState(false);
+
+  const handleRechargeClick = () => {
+    if (!isLoggedIn) {
+      setLoginRedirectMessage('请先登录后再充值积分');
+      setShowLoginModal(true);
+      return;
+    }
+    setShowRechargeModal(true);
+  };
 
   const loadStatus = async () => {
     try {
@@ -99,7 +110,7 @@ export default function UsageStatusBar({ curveMode = 'life', onStatusChange, ref
 
           {/* 充值积分按钮 */}
           <button
-            onClick={() => setShowRechargeModal(true)}
+            onClick={handleRechargeClick}
             className="px-4 py-2 bg-gold-400/20 hover:bg-gold-400/30 text-gold-400 text-sm rounded-lg transition-colors border border-gold-400/30"
           >
             充值积分

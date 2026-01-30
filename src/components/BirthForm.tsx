@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Gender, BirthInfo, CalendarType, isValidChineseName } from '@/types';
 import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
 import { CHINA_PROVINCES, getCityNamesByProvince } from '@/data/chinaCities';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BirthFormProps {
   onSubmit: (birthInfo: BirthInfo, isPaid?: boolean) => void;
@@ -29,6 +30,7 @@ const SHI_CHEN_OPTIONS = [
 ];
 
 export default function BirthForm({ onSubmit, disabled, remainingUsage, points = 0 }: BirthFormProps) {
+  const { isLoggedIn, setShowLoginModal, setLoginRedirectMessage } = useAuth();
   const [name, setName] = useState<string>('');
   const [nameError, setNameError] = useState<string>('');
   const [gender, setGender] = useState<Gender | null>(null);
@@ -541,6 +543,12 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
           disabled={disabled}
           onClick={() => {
             if (disabled) return;
+            // 检查登录状态
+            if (!isLoggedIn) {
+              setLoginRedirectMessage('请先登录后再生成报告');
+              setShowLoginModal(true);
+              return;
+            }
             // 先验证表单
             if (!trySubmit(false)) return;
             // 再检查积分
@@ -559,6 +567,12 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
           disabled={disabled}
           onClick={() => {
             if (disabled) return;
+            // 检查登录状态
+            if (!isLoggedIn) {
+              setLoginRedirectMessage('请先登录后再生成报告');
+              setShowLoginModal(true);
+              return;
+            }
             // 先验证表单
             const errors = getValidationErrors();
             if (errors.length > 0) {
