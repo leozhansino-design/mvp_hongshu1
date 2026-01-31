@@ -46,6 +46,7 @@ export default function ConsultationModal({
   const [shiChen, setShiChen] = useState<number | ''>('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [name, setName] = useState('');
+  const [wechatId, setWechatId] = useState('');
   const [question, setQuestion] = useState('');
 
   // Payment state
@@ -149,6 +150,11 @@ export default function ConsultationModal({
       return;
     }
 
+    if (!wechatId.trim()) {
+      setError('请输入您的微信号');
+      return;
+    }
+
     if (shiChen === '') {
       setError('请选择出生时辰');
       return;
@@ -187,6 +193,7 @@ export default function ConsultationModal({
           birthTime,
           gender,
           name: name.trim(),
+          wechatId: wechatId.trim(),
           question: question.trim(),
           payMethod,
           // Include bazi data for master reference
@@ -406,36 +413,38 @@ export default function ConsultationModal({
               </div>
             )}
 
-            {/* Gender + Name in one row */}
-            <div className="mb-4 flex gap-3">
-              <div className="flex-shrink-0">
-                <label className="block text-xs text-text-secondary mb-1.5">性别</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setGender('male')}
-                    className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
-                      gender === 'male'
-                        ? 'bg-gold-400/20 border-gold-400 text-gold-400'
-                        : 'border-gray-700 text-text-secondary hover:border-gray-600'
-                    }`}
-                  >
-                    男
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setGender('female')}
-                    className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
-                      gender === 'female'
-                        ? 'bg-gold-400/20 border-gold-400 text-gold-400'
-                        : 'border-gray-700 text-text-secondary hover:border-gray-600'
-                    }`}
-                  >
-                    女
-                  </button>
-                </div>
+            {/* Gender */}
+            <div className="mb-4">
+              <label className="block text-xs text-text-secondary mb-1.5">性别 <span className="text-red-400">*</span></label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setGender('male')}
+                  className={`flex-1 py-2 rounded-lg border text-sm transition-colors ${
+                    gender === 'male'
+                      ? 'bg-gold-400/20 border-gold-400 text-gold-400'
+                      : 'border-gray-700 text-text-secondary hover:border-gray-600'
+                  }`}
+                >
+                  男
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGender('female')}
+                  className={`flex-1 py-2 rounded-lg border text-sm transition-colors ${
+                    gender === 'female'
+                      ? 'bg-gold-400/20 border-gold-400 text-gold-400'
+                      : 'border-gray-700 text-text-secondary hover:border-gray-600'
+                  }`}
+                >
+                  女
+                </button>
               </div>
-              <div className="flex-1">
+            </div>
+
+            {/* Name + WeChat ID */}
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              <div>
                 <label className="block text-xs text-text-secondary mb-1.5">
                   姓名 <span className="text-red-400">*</span>
                 </label>
@@ -445,6 +454,19 @@ export default function ConsultationModal({
                   onChange={(e) => setName(e.target.value)}
                   placeholder="请输入姓名"
                   maxLength={20}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:border-gold-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-text-secondary mb-1.5">
+                  微信号 <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={wechatId}
+                  onChange={(e) => setWechatId(e.target.value)}
+                  placeholder="用于交付报告"
+                  maxLength={30}
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:border-gold-400 focus:outline-none"
                 />
               </div>
@@ -461,8 +483,9 @@ export default function ConsultationModal({
                 rows={4}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:border-gold-400 focus:outline-none resize-none"
               />
-              <div className="text-right text-[10px] text-text-secondary mt-1">
-                {question.length}/500字
+              <div className="flex justify-between text-[10px] mt-1">
+                <span className="text-amber-400/80">💡 如涉及感情问题，提供对方生辰可获更准确解读</span>
+                <span className="text-text-secondary">{question.length}/500字</span>
               </div>
             </div>
 

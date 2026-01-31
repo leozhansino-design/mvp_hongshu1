@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
       birthTime,
       gender,
       name,
+      wechatId,
       question,
       payMethod,
     } = body;
@@ -38,6 +39,10 @@ export async function POST(request: NextRequest) {
 
     if (!gender || !['male', 'female'].includes(gender)) {
       return NextResponse.json({ error: '请选择性别' }, { status: 400 });
+    }
+
+    if (!wechatId || !wechatId.trim()) {
+      return NextResponse.json({ error: '请填写微信号' }, { status: 400 });
     }
 
     if (!question || question.trim().length < 10) {
@@ -107,6 +112,7 @@ export async function POST(request: NextRequest) {
       birth_time: birthTime || undefined,
       gender,
       name: name || undefined,
+      wechat_id: wechatId.trim(),
       question: question.trim(),
       focus_hint: focusHintText,
       pay_method: payMethod,

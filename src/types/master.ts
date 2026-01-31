@@ -116,6 +116,7 @@ export interface Consultation {
   birthTime?: string;
   gender?: string;
   name?: string;
+  wechatId?: string;  // 用户微信号（用于交付报告）
   question?: string;
   focusHint?: string;  // 关注重点提示
   payMethod?: string;
@@ -152,6 +153,7 @@ export interface ConsultationDB {
   birth_time?: string;
   gender?: string;
   name?: string;
+  wechat_id?: string;  // 用户微信号（用于交付报告）
   question?: string;
   focus_hint?: string;  // 关注重点提示
   pay_method?: string;
@@ -182,6 +184,7 @@ export function dbToConsultation(db: ConsultationDB): Consultation {
     birthTime: db.birth_time,
     gender: db.gender,
     name: db.name,
+    wechatId: db.wechat_id,
     question: db.question,
     focusHint: db.focus_hint,
     payMethod: db.pay_method,

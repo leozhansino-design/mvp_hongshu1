@@ -381,15 +381,26 @@ export default function ConsultationManagement() {
                 </div>
               </div>
 
-              {/* Birth Info */}
+              {/* User Info */}
               <div className="border-t border-gray-700 pt-4">
-                <h4 className="text-sm text-gray-400 mb-3">用户生辰</h4>
-                <div className="text-white">
-                  {selectedConsultation.birthYear}年{selectedConsultation.birthMonth}月{selectedConsultation.birthDay}日
-                  {selectedConsultation.birthTime && ` ${selectedConsultation.birthTime}`}
-                  {' '}
-                  {selectedConsultation.gender === 'male' ? '男' : '女'}
-                  {selectedConsultation.name && ` · ${selectedConsultation.name}`}
+                <h4 className="text-sm text-gray-400 mb-3">用户信息</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4 text-white text-sm">
+                    <span>姓名: {selectedConsultation.name || '未填写'}</span>
+                    <span>性别: {selectedConsultation.gender === 'male' ? '男' : '女'}</span>
+                  </div>
+                  {selectedConsultation.wechatId && (
+                    <div className="flex items-center gap-2 text-green-400 text-sm">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.295.295a.328.328 0 0 0 .166-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.833.403c.235 0 .465-.013.693-.027a5.913 5.913 0 0 1-.333-1.96c0-3.558 3.389-6.444 7.568-6.444.3 0 .594.017.884.047C16.87 4.689 13.104 2.188 8.691 2.188z"/>
+                      </svg>
+                      <span>微信: {selectedConsultation.wechatId}</span>
+                    </div>
+                  )}
+                  <div className="text-white text-sm">
+                    生辰: {selectedConsultation.birthYear}年{selectedConsultation.birthMonth}月{selectedConsultation.birthDay}日
+                    {selectedConsultation.birthTime && ` ${selectedConsultation.birthTime}`}
+                  </div>
                 </div>
               </div>
 
