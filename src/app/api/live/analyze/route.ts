@@ -50,7 +50,7 @@ const WUXING_TRAITS: Record<string, { positive: string[]; challenge: string[]; a
 };
 
 // 根据年龄和性别获取共情内容
-function getEmotionalContent(age: number, gender: 'male' | 'female', focusType: FocusHint): {
+function getEmotionalContent(age: number, gender: 'male' | 'female', _focusType: FocusHint): {
   hook: string;
   phrases: string[];
   topics: string[];
@@ -119,7 +119,7 @@ function getEmotionalContent(age: number, gender: 'male' | 'female', focusType: 
 }
 
 // 生成运势曲线数据
-function generateCurveData(baziResult: BaziResult, daYunResult: any, age: number, type: 'life' | 'wealth') {
+function generateCurveData(baziResult: BaziResult, daYunResult: { startInfo: string; daYunList: DaYunItem[] } | null, age: number, type: 'life' | 'wealth') {
   const dataPoints = [];
   const dayMaster = baziResult.dayMasterElement;
 
@@ -205,7 +205,7 @@ function generateCurveData(baziResult: BaziResult, daYunResult: any, age: number
 // 生成主播稿子
 function generateStreamerScript(
   baziResult: BaziResult,
-  daYunResult: any,
+  daYunResult: { startInfo: string; daYunList: DaYunItem[] } | null,
   age: number,
   gender: 'male' | 'female',
   focusHint: { type: FocusHint; label: string; description: string }

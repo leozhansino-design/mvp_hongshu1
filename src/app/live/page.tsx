@@ -1,11 +1,108 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BirthInfo, Gender, CalendarType, PROVINCES, CITIES_BY_PROVINCE } from '@/types';
+import { BirthInfo, Gender, CalendarType } from '@/types';
+import { CHINA_PROVINCES, getCityNamesByProvince } from '@/data/chinaCities';
 import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
 import { getFocusHint } from '@/types/master';
-import LifeCurveChart from '@/components/LifeCurveChart';
-import WealthChart from '@/components/WealthChart';
+// Simple chart component for live mode
+function SimpleCurve({
+  dataPoints,
+  highlights,
+  type
+}: {
+  dataPoints: { age: number; score: number; event: string }[] | { age: number; wealth: number; event: string }[];
+  highlights: { peakAge: number; peakScore?: number; peakWealth?: number; currentAge?: number; currentScore?: number };
+  type: 'life' | 'wealth';
+}) {
+  const width = 600;
+  const height = 300;
+  const padding = { top: 30, right: 30, bottom: 40, left: 50 };
+
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+
+  const values = dataPoints.map(p => type === 'life' ? (p as { score: number }).score : (p as { wealth: number }).wealth);
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  const range = maxVal - minVal || 1;
+
+  const points = dataPoints.map((p, i) => {
+    const x = padding.left + (i / (dataPoints.length - 1)) * chartWidth;
+    const val = type === 'life' ? (p as { score: number }).score : (p as { wealth: number }).wealth;
+    const y = padding.top + chartHeight - ((val - minVal) / range) * chartHeight;
+    return { x, y, ...p };
+  });
+
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+  return (
+    <div className="relative">
+      <svg width={width} height={height} className="w-full h-auto">
+        {/* Background */}
+        <rect x={padding.left} y={padding.top} width={chartWidth} height={chartHeight} fill="#1a1a2e" rx="4" />
+
+        {/* Grid lines */}
+        {[0, 25, 50, 75, 100].map((pct) => {
+          const y = padding.top + (1 - pct / 100) * chartHeight;
+          return (
+            <g key={pct}>
+              <line x1={padding.left} y1={y} x2={padding.left + chartWidth} y2={y} stroke="#333" strokeDasharray="4" />
+              <text x={padding.left - 8} y={y + 4} fill="#666" fontSize="10" textAnchor="end">
+                {type === 'life' ? `${Math.round(minVal + (pct / 100) * range)}` : `${Math.round(minVal + (pct / 100) * range)}万`}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* X-axis labels */}
+        {points.filter((_, i) => i % 2 === 0).map((p) => (
+          <text key={p.age} x={p.x} y={height - 10} fill="#666" fontSize="10" textAnchor="middle">
+            {p.age}岁
+          </text>
+        ))}
+
+        {/* Curve */}
+        <path d={pathD} fill="none" stroke="#f59e0b" strokeWidth="2" />
+
+        {/* Points */}
+        {points.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r="4" fill="#f59e0b" stroke="#000" strokeWidth="1" />
+        ))}
+
+        {/* Peak marker */}
+        {highlights.peakAge && (
+          <g>
+            {(() => {
+              const peakPoint = points.find(p => p.age === highlights.peakAge);
+              if (!peakPoint) return null;
+              return (
+                <>
+                  <circle cx={peakPoint.x} cy={peakPoint.y} r="8" fill="none" stroke="#22c55e" strokeWidth="2" />
+                  <text x={peakPoint.x} y={peakPoint.y - 15} fill="#22c55e" fontSize="11" textAnchor="middle" fontWeight="bold">
+                    巅峰
+                  </text>
+                </>
+              );
+            })()}
+          </g>
+        )}
+      </svg>
+
+      {/* Legend */}
+      <div className="flex justify-center gap-6 mt-4 text-xs text-gray-400">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-amber-500" />
+          <span>{type === 'life' ? '运势指数' : '财富积累'}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full border-2 border-green-500" />
+          <span>巅峰时期 ({highlights.peakAge}岁)</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // 直播密码
 const LIVE_PASSWORD = 'lifecurve2024';
@@ -55,7 +152,10 @@ export default function LivePage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
   const [daYunResult, setDaYunResult] = useState<{ startInfo: string; daYunList: DaYunItem[] } | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [analysisResult, setAnalysisResult] = useState<{
+    lifeCurve?: { dataPoints: { age: number; score: number; event: string }[]; highlights: { peakAge: number; peakScore: number; troughAge: number; troughScore: number; currentAge: number; currentScore: number } };
+    wealthCurve?: { dataPoints: { age: number; wealth: number; event: string }[]; highlights: { peakAge: number; peakWealth: number; maxGrowthAge: number; maxGrowthAmount: number } };
+  } | null>(null);
   const [streamerScript, setStreamerScript] = useState<StreamerScript | null>(null);
   const [activeTab, setActiveTab] = useState<'life' | 'wealth'>('life');
 
@@ -83,7 +183,7 @@ export default function LivePage() {
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
-  const cities = province ? CITIES_BY_PROVINCE[province] || [] : [];
+  const cities = province ? getCityNamesByProvince(province) : [];
 
   // Calculate bazi when form changes
   useEffect(() => {
@@ -134,7 +234,7 @@ export default function LivePage() {
         day: day as number,
         hour: shiChen as number,
         minute: 0,
-        name: name || undefined,
+        name: name || '',
         province: province || undefined,
         city: city || undefined,
       };
@@ -365,8 +465,8 @@ export default function LivePage() {
                 className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-white text-sm focus:border-gold-400 focus:outline-none"
               >
                 <option value="">选择省份</option>
-                {PROVINCES.map((p) => (
-                  <option key={p} value={p}>{p}</option>
+                {CHINA_PROVINCES.map((p) => (
+                  <option key={p.name} value={p.name}>{p.name}</option>
                 ))}
               </select>
               <select
@@ -425,15 +525,17 @@ export default function LivePage() {
           {analysisResult && (
             <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800">
               {activeTab === 'life' && analysisResult.lifeCurve && (
-                <LifeCurveChart
-                  data={analysisResult.lifeCurve.dataPoints}
+                <SimpleCurve
+                  dataPoints={analysisResult.lifeCurve.dataPoints}
                   highlights={analysisResult.lifeCurve.highlights}
+                  type="life"
                 />
               )}
               {activeTab === 'wealth' && analysisResult.wealthCurve && (
-                <WealthChart
-                  data={analysisResult.wealthCurve.dataPoints}
+                <SimpleCurve
+                  dataPoints={analysisResult.wealthCurve.dataPoints}
                   highlights={analysisResult.wealthCurve.highlights}
+                  type="wealth"
                 />
               )}
             </div>
@@ -452,7 +554,7 @@ export default function LivePage() {
           {!streamerScript ? (
             <div className="text-center py-20">
               <div className="text-6xl mb-4">🎙️</div>
-              <p className="text-gray-400">输入用户信息并点击"开始分析"</p>
+              <p className="text-gray-400">输入用户信息并点击&quot;开始分析&quot;</p>
               <p className="text-gray-500 text-sm mt-2">分析结果将在此处显示主播稿子</p>
             </div>
           ) : (
@@ -473,7 +575,7 @@ export default function LivePage() {
                 <h3 className="text-purple-400 font-medium mb-2 flex items-center gap-2">
                   <span>🎯</span> 开场白
                 </h3>
-                <p className="text-white text-lg leading-relaxed">"{streamerScript.openingLine}"</p>
+                <p className="text-white text-lg leading-relaxed">&quot;{streamerScript.openingLine}&quot;</p>
               </div>
 
               {/* Emotional Hook */}
@@ -524,7 +626,7 @@ export default function LivePage() {
                 <div className="space-y-3">
                   {streamerScript.suggestedPhrases.map((phrase, index) => (
                     <div key={index} className="bg-gray-900/50 rounded p-3 text-white italic">
-                      "{phrase}"
+                      &quot;{phrase}&quot;
                     </div>
                   ))}
                 </div>
