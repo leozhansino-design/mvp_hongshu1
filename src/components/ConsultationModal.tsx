@@ -123,7 +123,7 @@ export default function ConsultationModal({
 
         const data = await response.json();
 
-        if (response.ok && data.consultation?.paymentStatus === 'paid') {
+        if (response.ok && data.consultation?.paidAt) {
           // Payment confirmed, redirect to success page
           router.push(`/masters/success?id=${consultationId}`);
           onClose();
@@ -256,8 +256,8 @@ export default function ConsultationModal({
         throw new Error(data.message || '查询订单失败');
       }
 
-      // Check if payment is completed
-      if (data.consultation?.paymentStatus === 'paid') {
+      // Check if payment is completed (paidAt exists means payment is done)
+      if (data.consultation?.paidAt) {
         router.push(`/masters/success?id=${consultationId}`);
         onClose();
       } else {
