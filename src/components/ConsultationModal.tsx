@@ -107,10 +107,11 @@ export default function ConsultationModal({
     const checkPaymentStatus = async () => {
       try {
         const token = getAuthToken();
-        const response = await fetch(`/api/consultations/${consultationId}`, {
+        const response = await fetch(`/api/consultations/${consultationId}?t=${Date.now()}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          cache: 'no-store',
         });
 
         const data = await response.json();
@@ -229,10 +230,11 @@ export default function ConsultationModal({
 
     try {
       const token = getAuthToken();
-      const response = await fetch(`/api/consultations/${consultationId}`, {
+      const response = await fetch(`/api/consultations/${consultationId}?t=${Date.now()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        cache: 'no-store',
       });
 
       const data = await response.json();
