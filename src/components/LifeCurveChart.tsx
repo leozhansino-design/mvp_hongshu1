@@ -3,10 +3,17 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { ChartPoint, PaidChartPoint } from '@/types';
 
+interface DaYunInfo {
+  ganZhi: string;
+  startAge: number;
+  endAge: number;
+}
+
 interface ChartProps {
   data: ChartPoint[] | PaidChartPoint[];
   currentAge?: number;
   birthYear: number;
+  daYunList?: DaYunInfo[];
 }
 
 interface InterpolatedPoint {
@@ -30,7 +37,19 @@ function cubicInterpolate(y0: number, y1: number, y2: number, y3: number, t: num
   return a * t3 + b * t2 + c * t + d;
 }
 
-export default function LifeCurveChart({ data, currentAge = 0, birthYear }: ChartProps) {
+// 根据年龄获取对应的大运
+function getDaYunForAge(age: number, daYunList?: DaYunInfo[]): string {
+  if (!daYunList || daYunList.length === 0) return '';
+  for (const daYun of daYunList) {
+    if (age >= daYun.startAge && age <= daYun.endAge) {
+      return daYun.ganZhi;
+    }
+  }
+  // 如果超出范围，返回最后一个大运
+  return daYunList[daYunList.length - 1]?.ganZhi || '';
+}
+
+export default function LifeCurveChart({ data, currentAge = 0, birthYear, daYunList }: ChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -41,15 +60,19 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
 
     // 付费版直接使用
     if (data.length >= 50) {
-      return data.map((point) => ({
-        age: point.age,
-        year: birthYear + point.age - 1,
-        score: point.score,
-        daYun: point.daYun,
-        ganZhi: point.ganZhi,
-        reason: point.reason,
-        isKeyPoint: true,
-      }));
+      return data.map((point) => {
+        // 如果有传入daYunList，使用它来获取正确的大运
+        const correctDaYun = daYunList ? getDaYunForAge(point.age, daYunList) : point.daYun;
+        return {
+          age: point.age,
+          year: birthYear + point.age - 1,
+          score: point.score,
+          daYun: correctDaYun || point.daYun,
+          ganZhi: point.ganZhi,
+          reason: point.reason,
+          isKeyPoint: true,
+        };
+      });
     }
 
     // 免费版：插值
@@ -69,12 +92,15 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
 
       const keyPoint = sortedData.find(p => p.age === age);
 
+      // 优先使用daYunList获取正确的大运，否则fallback到chartPoints中的大运
+      const correctDaYun = daYunList ? getDaYunForAge(age, daYunList) : (keyPoint?.daYun || currentPoint.daYun);
+
       if (keyPoint) {
         result.push({
           age,
           year: birthYear + age - 1,
           score: keyPoint.score,
-          daYun: keyPoint.daYun,
+          daYun: correctDaYun || keyPoint.daYun,
           ganZhi: keyPoint.ganZhi,
           reason: keyPoint.reason,
           isKeyPoint: true,
@@ -110,14 +136,15 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
         const scoreWithFluctuation = interpolatedScore + totalFluctuation;
         const score = Math.max(30, Math.min(95, Math.round(scoreWithFluctuation)));
 
-        // 生成该大运阶段的通用描述
-        const daYunDescription = `${currentPoint.daYun}大运期间，${currentPoint.reason.slice(0, 15)}`;
+        // 生成该大运阶段的通用描述 - 使用正确的大运
+        const displayDaYun = correctDaYun || currentPoint.daYun;
+        const daYunDescription = `${displayDaYun}大运期间，${currentPoint.reason.slice(0, 15)}`;
 
         result.push({
           age,
           year: birthYear + age - 1,
           score,
-          daYun: currentPoint.daYun,
+          daYun: displayDaYun,
           ganZhi: `流年${age}岁`,
           reason: daYunDescription,
           isKeyPoint: false,
@@ -126,7 +153,7 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear }: Char
     }
 
     return result;
-  }, [data, birthYear]);
+  }, [data, birthYear, daYunList]);
 
   // 大运分组
   const daYunGroups = useMemo(() => {
