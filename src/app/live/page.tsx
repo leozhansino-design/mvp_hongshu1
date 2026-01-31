@@ -1,228 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import html2canvas from 'html2canvas';
 import { BirthForm, AnalysisLoader, BaziChartDisplay, LifeCurveChart, WealthChart, WealthAnalysis, FiveElementsDiagram } from '@/components';
-import { generateFreeResult, generateWealthCurve } from '@/services/api';
-import { BirthInfo, CurveMode, CURVE_MODE_LABELS, FreeVersionResult, WealthCurveData } from '@/types';
+import { generateFreeResult, generateWealthCurve, generateStreamerScript } from '@/services/api';
+import { BirthInfo, CurveMode, CURVE_MODE_LABELS, FreeVersionResult, WealthCurveData, PHASE_LABELS, PhaseType, StreamerScriptResult } from '@/types';
 import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
 import { getFocusHint, FocusHint } from '@/types/master';
-import { BaziResult, DaYunItem, calculateBazi, calculateDaYun } from '@/lib/bazi';
+import { DaYunItem, calculateDaYun } from '@/lib/bazi';
 
 // 直播密码
 const LIVE_PASSWORD = 'lifecurve2024';
-
-// 五行特质映射
-const WUXING_TRAITS: Record<string, { positive: string[]; challenge: string[]; advice: string }> = {
-  '木': {
-    positive: ['有创造力', '善于成长', '富有生机', '正直仁慈'],
-    challenge: ['容易急躁', '过于理想化', '有时固执'],
-    advice: '适合从事创意、教育、医疗等行业'
-  },
-  '火': {
-    positive: ['热情开朗', '有领导力', '积极进取', '光明磊落'],
-    challenge: ['性子急', '容易冲动', '有时过于张扬'],
-    advice: '适合从事营销、演艺、公关等行业'
-  },
-  '土': {
-    positive: ['稳重踏实', '值得信赖', '有耐心', '重诚信'],
-    challenge: ['思维保守', '变通不足', '有时过于固执'],
-    advice: '适合从事管理、金融、房地产等稳定行业'
-  },
-  '金': {
-    positive: ['意志坚定', '有决断力', '讲义气', '执行力强'],
-    challenge: ['过于刚硬', '不够圆滑', '有时过于严厉'],
-    advice: '适合从事法律、军警、金融等行业'
-  },
-  '水': {
-    positive: ['聪明灵活', '善于变通', '洞察力强', '有智慧'],
-    challenge: ['想法多变', '有时缺乏坚持', '过于圆滑'],
-    advice: '适合从事科研、咨询、贸易等行业'
-  },
-};
-
-// 主播稿子接口
-interface StreamerScript {
-  openingLine: string;
-  emotionalHook: string;
-  keyPoints: string[];
-  talkingPoints: string[];
-  suggestedPhrases: string[];
-  backgroundKnowledge: string;
-}
-
-// 生成主播稿子
-function generateStreamerScript(
-  baziResult: BaziResult,
-  daYunResult: { startInfo: string; daYunList: DaYunItem[] } | null,
-  age: number,
-  gender: 'male' | 'female',
-  focusHint: { type: FocusHint; label: string; description: string },
-  name: string,
-  freeResult?: FreeVersionResult | null,
-  wealthResult?: WealthCurveData | null
-): StreamerScript {
-  const dayMaster = baziResult.dayMasterElement;
-  const traits = WUXING_TRAITS[dayMaster] || WUXING_TRAITS['土'];
-
-  // 获取当前大运
-  const currentDaYun = daYunResult?.daYunList.find((dy, index) => {
-    const startAge = index * 10 + 1;
-    const endAge = startAge + 9;
-    return age >= startAge && age <= endAge;
-  });
-
-  // 从结果中提取关键信息
-  const getHighlightInfo = () => {
-    if (freeResult) {
-      const highlights = freeResult.highlights || [];
-      const warnings = freeResult.warnings || [];
-      return {
-        peakYears: highlights.slice(0, 2).map(h => `${h.age}岁(${h.title})`).join('、'),
-        warningYears: warnings.slice(0, 2).map(w => `${w.age}岁`).join('、'),
-        currentPhase: freeResult.currentPhase,
-        summaryScore: freeResult.summaryScore,
-      };
-    }
-    if (wealthResult) {
-      const h = wealthResult.highlights;
-      return {
-        peakYears: `${h.peakAge}岁(财富巅峰)`,
-        warningYears: h.maxLossAge ? `${h.maxLossAge}岁` : '无',
-        wealthType: wealthResult.wealthType,
-        peakWealth: h.peakWealth,
-      };
-    }
-    return null;
-  };
-
-  const highlightInfo = getHighlightInfo();
-
-  // 根据年龄和性别生成开场白
-  const getOpeningLine = () => {
-    if (age < 18) {
-      return `从你的八字来看，${name || '这位小朋友'}是一个${traits.positive[0]}的人，天生就有${traits.positive[1]}的特质，未来发展潜力很大...`;
-    }
-    if (age >= 60) {
-      return `从你的八字来看，${name || '您'}是一个${traits.positive[0]}的人，一生积累了很多${traits.positive[2]}的智慧，晚年福运不错...`;
-    }
-    if (gender === 'male') {
-      return `从你的八字来看，你是一个${traits.positive[0]}的人，但内心深处可能一直在寻找一个答案...`;
-    }
-    return `从你的八字来看，你是一个${traits.positive[0]}的人，对感情很认真，内心渴望真正的理解和陪伴...`;
-  };
-
-  // 共情切入点
-  const getEmotionalHook = () => {
-    if (age < 18) {
-      return `作为家长，您一定非常关心孩子的未来发展。每个孩子都有自己独特的天赋，关键是找到适合他的发展方向。`;
-    }
-    if (age >= 60) {
-      return `人生走到这个阶段，健康和家庭和睦是最重要的。您的八字显示晚年有福，但也需要注意一些养生细节。`;
-    }
-    if (gender === 'male') {
-      return `作为男人，事业和财运是您最关心的话题。您的八字显示您有${traits.positive[3]}的特质，但可能在某些方面还需要把握时机。`;
-    }
-    return `作为女人，感情和家庭是您内心最柔软的部分。您的八字显示您${traits.positive[2]}，但感情路上可能经历过一些波折。`;
-  };
-
-  // 讲解要点 - 根据实际结果生成
-  const getKeyPoints = () => {
-    const points = [
-      `核心特质：${dayMaster}命日主，${traits.positive.slice(0, 3).join('、')}`,
-      `当前运势：${age}岁正处于${currentDaYun ? currentDaYun.ganZhi + '大运' : '关键运势期'}`,
-      `重点关注：${focusHint.label}方面是您当前最需要关注的领域`,
-    ];
-
-    if (highlightInfo) {
-      if (highlightInfo.peakYears) {
-        points.push(`高光时刻：${highlightInfo.peakYears}`);
-      }
-      if (freeResult && highlightInfo.summaryScore) {
-        points.push(`综合评分：${highlightInfo.summaryScore}分，${highlightInfo.currentPhase === 'rising' ? '上升期' : highlightInfo.currentPhase === 'peak' ? '巅峰期' : highlightInfo.currentPhase === 'stable' ? '平稳期' : '蓄势期'}`);
-      }
-      if (wealthResult && highlightInfo.peakWealth) {
-        points.push(`财富类型：${highlightInfo.wealthType}，巅峰约${Math.round(highlightInfo.peakWealth)}万`);
-      }
-    }
-
-    return points;
-  };
-
-  // 可以延伸的话题
-  const getTalkingPoints = () => {
-    const basePoints = [
-      '五行平衡与调理建议',
-      '流年运势的关键节点',
-    ];
-
-    if (age < 18) {
-      return ['适合什么样的学习方式', '性格特点和相处之道', '未来适合的发展方向', ...basePoints];
-    }
-    if (age >= 60) {
-      return ['健康养生的注意事项', '子女运势和家庭和睦', '晚年福运和贵人运', ...basePoints];
-    }
-    if (gender === 'male') {
-      return ['事业发展的最佳时机', '财运走势和投资建议', '贵人运和合作运', ...basePoints];
-    }
-    return ['感情中的注意事项', '正缘出现的时间段', '婚姻家庭的经营建议', ...basePoints];
-  };
-
-  // 推荐话术 - 根据实际结果生成
-  const getSuggestedPhrases = () => {
-    const phrases: string[] = [];
-
-    if (age < 18) {
-      phrases.push(`这个孩子天生就有善于${traits.positive[1]}方面的潜质，好好培养会很有出息`);
-      phrases.push(`学业上可能会在${traits.challenge[0]}阶段遇到一些挑战，但这恰恰是成长的机会`);
-      phrases.push(`建议重点关注有责任心方面的培养，这是他的优势所在`);
-    } else if (age >= 60) {
-      phrases.push(`您的八字显示晚年有福，子女运势也不错`);
-      const healthFocus = dayMaster === '火' ? '心血管' : dayMaster === '木' ? '肝胆' : dayMaster === '土' ? '脾胃' : dayMaster === '金' ? '肺部' : '肾脏';
-      phrases.push(`健康方面要注意${healthFocus}的调理`);
-      phrases.push(`这个年纪最重要的是心态平和，您的福报会越来越好`);
-    } else if (gender === 'male') {
-      if (highlightInfo?.peakYears) {
-        phrases.push(`你的财运其实不差，关键是要把握住${highlightInfo.peakYears}这个时机`);
-      }
-      phrases.push(`事业上可能会遇到一些${traits.challenge[0]}的情况，但这恰恰是突破的机会`);
-      phrases.push(`贵人运还是有的，${traits.advice}`);
-    } else {
-      phrases.push(`你的感情运其实不错，但可能之前遇人不淑，正缘还在后面`);
-      phrases.push(`你${traits.positive[2]}的特质会吸引到对的人，但要注意不要太${traits.challenge[1]}`);
-      phrases.push(`从八字看，你的婚姻宫还是不错的，关键是要选对时机`);
-    }
-
-    return phrases;
-  };
-
-  // 背景知识
-  const getBackgroundKnowledge = () => {
-    const yearPillar = baziResult.eightChar.year;
-    const monthPillar = baziResult.eightChar.month;
-    const dayPillar = baziResult.eightChar.day;
-    const hourPillar = baziResult.eightChar.hour;
-
-    let extra = '';
-    if (freeResult) {
-      extra = `当前处于${freeResult.currentPhase === 'rising' ? '上升期，运势正在走高' : freeResult.currentPhase === 'peak' ? '巅峰期，好好把握' : freeResult.currentPhase === 'stable' ? '平稳期，稳中求进' : '蓄势期，积蓄力量'}。`;
-    }
-    if (wealthResult) {
-      extra = `财富类型属于"${wealthResult.wealthType}"，${wealthResult.analysis.summary.slice(0, 50)}...`;
-    }
-
-    return `${dayMaster}命的人在五行中属于${dayMaster}，${traits.advice}。${yearPillar}年柱代表祖上和16岁前的运势；${monthPillar}月柱代表父母和16-32岁的运势；${dayPillar}日柱代表自己和配偶；${hourPillar}时柱代表子女和晚年。${extra}`;
-  };
-
-  return {
-    openingLine: getOpeningLine(),
-    emotionalHook: getEmotionalHook(),
-    keyPoints: getKeyPoints(),
-    talkingPoints: getTalkingPoints(),
-    suggestedPhrases: getSuggestedPhrases(),
-    backgroundKnowledge: getBackgroundKnowledge(),
-  };
-}
 
 // 直播页面内容组件
 function LivePageContent() {
@@ -242,12 +31,17 @@ function LivePageContent() {
   const [birthInfo, setBirthInfo] = useState<BirthInfo | null>(null);
   const [freeResult, setFreeResult] = useState<FreeVersionResult | null>(null);
   const [wealthResult, setWealthResult] = useState<WealthCurveData | null>(null);
-  const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
   const [daYunResult, setDaYunResult] = useState<{ startInfo: string; daYunList: DaYunItem[] } | null>(null);
 
   // 主播稿子
-  const [streamerScript, setStreamerScript] = useState<StreamerScript | null>(null);
+  const [streamerScript, setStreamerScript] = useState<StreamerScriptResult | null>(null);
+  const [scriptLoading, setScriptLoading] = useState(false);
   const [focusHint, setFocusHint] = useState<{ type: FocusHint; label: string; description: string } | null>(null);
+
+  // 分享相关
+  const [shareLoading, setShareLoading] = useState(false);
+  const shareRef = useRef<HTMLDivElement>(null);
+  const wealthShareRef = useRef<HTMLDivElement>(null);
 
   // 从 URL 读取模式参数
   useEffect(() => {
@@ -278,6 +72,29 @@ function LivePageContent() {
     }
   }, []);
 
+  // 分享功能
+  const handleShare = async () => {
+    const ref = curveMode === 'wealth' ? wealthShareRef.current : shareRef.current;
+    if (!ref) return;
+    setShareLoading(true);
+    try {
+      const canvas = await html2canvas(ref, {
+        backgroundColor: curveMode === 'wealth' ? '#0a0a0a' : '#0D0221',
+        scale: 2,
+        useCORS: true,
+      });
+      const link = document.createElement('a');
+      link.download = `live-${curveMode === 'wealth' ? 'wealth' : 'life'}-curve-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('生成分享图失败:', error);
+      alert('生成分享图失败');
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
   // 提交处理 - 使用和首页一样的API
   const handleSubmit = useCallback(async (info: BirthInfo, _isPaid: boolean = false) => {
     setIsLoading(true);
@@ -290,18 +107,6 @@ function LivePageContent() {
     setStreamerScript(null);
 
     try {
-      // 计算八字 (gender: 0=male, 1=female)
-      const genderNum = info.gender === 'male' ? 0 : 1;
-      const bazi = calculateBazi(
-        info.year,
-        info.month,
-        info.day,
-        info.hour,
-        genderNum,
-        info.calendarType === 'lunar'
-      );
-      setBaziResult(bazi);
-
       // 计算大运
       const daYun = calculateDaYun(
         info.year,
@@ -314,34 +119,43 @@ function LivePageContent() {
       );
       setDaYunResult(daYun);
 
-      // 计算年龄
-      const currentYear = new Date().getFullYear();
-      const age = currentYear - info.year;
-
       // 计算关注重点
       const hint = getFocusHint(info.year, info.gender);
       setFocusHint(hint);
 
-      let resultFree: FreeVersionResult | null = null;
-      let resultWealth: WealthCurveData | null = null;
-
       if (curveMode === 'wealth') {
         // 财富曲线模式 - 调用和首页一样的API
-        resultWealth = await generateWealthCurve(info, false);
+        const resultWealth = await generateWealthCurve(info, false);
         setWealthResult(resultWealth);
       } else {
         // 人生曲线模式 - 调用和首页一样的API
-        resultFree = await generateFreeResult(info);
+        const resultFree = await generateFreeResult(info);
         setFreeResult(resultFree);
       }
 
-      // 生成主播稿子
-      if (bazi) {
-        const script = generateStreamerScript(bazi, daYun, age, info.gender, hint, info.name, resultFree, resultWealth);
+      setIsLoading(false);
+
+      // 异步生成主播稿子 - 使用AI API
+      setScriptLoading(true);
+      try {
+        // 根据关注重点确定focusType
+        const focusTypeMap: Record<string, 'career' | 'relationship' | 'future' | 'health'> = {
+          'career': 'career',
+          'relationship': 'relationship',
+          'future': 'future',
+          'health': 'health'
+        };
+        const focusType = focusTypeMap[hint.type] || 'career';
+
+        const script = await generateStreamerScript(info, focusType);
         setStreamerScript(script);
+      } catch (scriptErr) {
+        console.error('生成主播稿子失败:', scriptErr);
+        // 主播稿子失败不阻塞主流程
+      } finally {
+        setScriptLoading(false);
       }
 
-      setIsLoading(false);
     } catch (err) {
       console.error('生成失败:', err);
       setError(err instanceof Error ? err.message : '天机运算失败，请稍后再试');
@@ -484,8 +298,8 @@ function LivePageContent() {
             {/* 结果展示 */}
             {hasResult && (
               <div className="space-y-6">
-                {/* 重新分析按钮 */}
-                <div className="flex justify-center">
+                {/* 顶部操作栏 */}
+                <div className="flex justify-between items-center">
                   <button
                     onClick={() => {
                       setFreeResult(null);
@@ -493,40 +307,63 @@ function LivePageContent() {
                       setStreamerScript(null);
                       setBirthInfo(null);
                     }}
-                    className="px-6 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                    className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors text-sm"
                   >
                     ← 重新分析
                   </button>
+                  <button
+                    onClick={handleShare}
+                    disabled={shareLoading}
+                    className="px-4 py-2 bg-gold-400/20 text-gold-400 border border-gold-400/50 rounded-lg hover:bg-gold-400/30 transition-colors text-sm"
+                  >
+                    {shareLoading ? '生成中...' : '📤 分享图片'}
+                  </button>
                 </div>
 
-                {/* 八字排盘 - 使用和结果页一样的组件 */}
-                {freeResult && birthInfo && (
-                  <div className="mystic-card p-4">
-                    <h3 className="text-gold-400 font-serif text-lg mb-4">八字排盘</h3>
-                    <BaziChartDisplay chart={freeResult.baziChart} showDetails={true} />
-                    <div className="flex justify-end mt-2">
-                      <span className="text-sm text-gray-500">日主: {freeResult.dayMaster.element}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* 大运流年 */}
-                {daYunResult && (
-                  <div className="mystic-card p-4">
-                    <h3 className="text-gold-400 font-serif text-lg mb-4">大运流年</h3>
-                    <p className="text-sm text-gray-400 mb-3">{daYunResult.startInfo}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {daYunResult.daYunList.slice(0, 6).map((dy, index) => (
-                        <div key={index} className="px-3 py-2 bg-gray-800/50 rounded-lg text-center">
-                          <div className="text-gold-400 font-medium">{dy.ganZhi}</div>
-                          <div className="text-xs text-gray-500">{dy.startAge}-{dy.endAge}岁</div>
+                {/* 人生高光时刻 - 最优先显示 */}
+                {freeResult?.highlightMoment && !isWealthMode && (
+                  <div className="mystic-card-gold p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="text-4xl">🌟</div>
+                      <div className="flex-1">
+                        <h3 className="text-gold-400 font-serif text-lg mb-2">人生高光时刻</h3>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="px-2 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
+                            {freeResult.highlightMoment.age}岁
+                          </span>
+                          <span className="text-text-secondary text-sm">· {freeResult.highlightMoment.title}</span>
                         </div>
-                      ))}
+                        <p className="text-text-primary leading-relaxed text-sm">{freeResult.highlightMoment.description}</p>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* 图表展示 - 使用和结果页一样的组件 */}
+                {/* 财富高光 */}
+                {wealthResult && isWealthMode && (
+                  <div className="mystic-card-gold p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="text-4xl">💰</div>
+                      <div className="flex-1">
+                        <h3 className="text-gold-400 font-serif text-lg mb-2">财富巅峰</h3>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="px-2 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
+                            {wealthResult.highlights.peakAge}岁
+                          </span>
+                          <span className="text-text-secondary text-sm">· {wealthResult.wealthType}</span>
+                        </div>
+                        <p className="text-text-primary leading-relaxed text-sm">
+                          预计财富巅峰约{wealthResult.highlights.peakWealth >= 10000
+                            ? `${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿`
+                            : `${Math.round(wealthResult.highlights.peakWealth)}万`
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 图表展示 */}
                 <div className="mystic-card p-4">
                   {!isWealthMode && freeResult && birthInfo && (
                     <LifeCurveChart
@@ -536,24 +373,74 @@ function LivePageContent() {
                     />
                   )}
                   {isWealthMode && wealthResult && birthInfo && (
-                    <>
-                      <WealthChart
-                        dataPoints={wealthResult.dataPoints}
-                        highlights={wealthResult.highlights}
-                        wealthRange={wealthResult.wealthRange}
-                        isPaid={false}
-                      />
-                      <div className="mt-4">
-                        <WealthAnalysis analysis={wealthResult.analysis} isPaid={false} />
-                      </div>
-                    </>
+                    <WealthChart
+                      dataPoints={wealthResult.dataPoints}
+                      highlights={wealthResult.highlights}
+                      wealthRange={wealthResult.wealthRange}
+                      isPaid={false}
+                    />
                   )}
                 </div>
+
+                {/* 八字排盘 */}
+                {freeResult && birthInfo && !isWealthMode && (
+                  <div className="mystic-card p-4">
+                    <h3 className="text-gold-400 font-serif text-lg mb-4">四柱八字</h3>
+                    <BaziChartDisplay chart={freeResult.baziChart} showDetails={true} />
+                  </div>
+                )}
+
+                {/* 命理总评 */}
+                {freeResult && !isWealthMode && (
+                  <div className="mystic-card p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="text-gold-400 font-serif text-lg">命理总评</h3>
+                      <div className="text-2xl font-mono text-gold-400">{freeResult.summaryScore}分</div>
+                    </div>
+                    <p className="text-text-primary text-sm leading-relaxed mb-3">{freeResult.summary}</p>
+                    {freeResult.currentPhase && (
+                      <div className="p-2 rounded-lg bg-gray-800/50 flex items-center gap-2">
+                        <span className="text-lg">
+                          {freeResult.currentPhase === 'rising' && '📈'}
+                          {freeResult.currentPhase === 'peak' && '⭐'}
+                          {freeResult.currentPhase === 'stable' && '➡️'}
+                          {freeResult.currentPhase === 'declining' && '📉'}
+                          {freeResult.currentPhase === 'valley' && '🌙'}
+                        </span>
+                        <span className="text-sm text-text-secondary">当前运势：</span>
+                        <span className="text-gold-400 text-sm">{PHASE_LABELS[freeResult.currentPhase as PhaseType]}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 财富分析 */}
+                {wealthResult && isWealthMode && (
+                  <div className="mystic-card p-4">
+                    <WealthAnalysis analysis={wealthResult.analysis} isPaid={false} />
+                  </div>
+                )}
+
+                {/* 大运流年 */}
+                {daYunResult && (
+                  <div className="mystic-card p-4">
+                    <h3 className="text-gold-400 font-serif text-lg mb-3">大运流年</h3>
+                    <p className="text-xs text-gray-400 mb-3">{daYunResult.startInfo}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {daYunResult.daYunList.slice(0, 8).map((dy, index) => (
+                        <div key={index} className="px-3 py-2 bg-gray-800/50 rounded-lg text-center min-w-[60px]">
+                          <div className="text-gold-400 font-medium text-sm">{dy.ganZhi}</div>
+                          <div className="text-xs text-gray-500">{dy.startAge}-{dy.endAge}岁</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* 五行分析 */}
                 {freeResult && !isWealthMode && (
                   <div className="mystic-card p-4">
-                    <h3 className="text-gold-400 font-serif text-lg mb-4">五行分布</h3>
+                    <h3 className="text-gold-400 font-serif text-lg mb-4">五行生克</h3>
                     <FiveElementsDiagram
                       wood={freeResult.fiveElements.wood}
                       fire={freeResult.fiveElements.fire}
@@ -561,6 +448,90 @@ function LivePageContent() {
                       metal={freeResult.fiveElements.metal}
                       water={freeResult.fiveElements.water}
                     />
+                  </div>
+                )}
+
+                {/* 日主分析 */}
+                {freeResult?.dayMaster && !isWealthMode && (
+                  <div className="mystic-card p-4">
+                    <h3 className="text-gold-400 font-serif text-lg mb-3">日主分析</h3>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="px-3 py-1 rounded-lg bg-gradient-to-r from-purple-500/30 to-gold-400/30 text-gold-400 font-serif">
+                        {freeResult.dayMaster.stem}{freeResult.dayMaster.element}
+                      </span>
+                      <span className="px-2 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs">
+                        {freeResult.dayMaster.strength}
+                      </span>
+                    </div>
+                    <p className="text-text-primary text-sm leading-relaxed">{freeResult.dayMaster.description}</p>
+                  </div>
+                )}
+
+                {/* 高光年份 */}
+                {freeResult?.highlights && freeResult.highlights.length > 0 && !isWealthMode && (
+                  <div className="mystic-card p-4">
+                    <h3 className="text-gold-400 font-serif text-lg mb-3">✦ 高光之年</h3>
+                    <div className="space-y-3">
+                      {freeResult.highlights.slice(0, 3).map((h, i) => (
+                        <div key={i} className="p-3 rounded-lg bg-gradient-to-r from-gold-400/10 to-transparent border-l-2 border-gold-400">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-gold-400 font-mono">{h.age}岁</span>
+                            <span className="text-text-secondary text-xs">({h.year}年)</span>
+                          </div>
+                          <p className="text-sm text-text-primary">{h.title}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 警示年份 */}
+                {freeResult?.warnings && freeResult.warnings.length > 0 && !isWealthMode && (
+                  <div className="mystic-card p-4">
+                    <h3 className="text-red-400 font-serif text-lg mb-3">◆ 谨慎之年</h3>
+                    <div className="space-y-3">
+                      {freeResult.warnings.slice(0, 2).map((w, i) => (
+                        <div key={i} className="p-3 rounded-lg bg-red-500/5 border-l-2 border-red-400">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-red-400 font-mono">{w.age}岁</span>
+                            <span className="text-text-secondary text-xs">({w.year}年)</span>
+                          </div>
+                          <p className="text-sm text-text-primary">{w.title}</p>
+                          {w.advice && (
+                            <p className="text-xs text-text-secondary mt-1">化解：{w.advice}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 开运指南 */}
+                {freeResult?.luckyInfo && !isWealthMode && (
+                  <div className="mystic-card p-4">
+                    <h3 className="text-gold-400 font-serif text-lg mb-3">开运指南</h3>
+                    <div className="grid grid-cols-4 gap-2">
+                      <div className="p-2 rounded-lg bg-gray-800/50 text-center">
+                        <p className="text-lg mb-1">🧭</p>
+                        <p className="text-xs text-gray-400">方位</p>
+                        <p className="text-purple-300 text-xs">{freeResult.luckyInfo.direction}</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-gray-800/50 text-center">
+                        <p className="text-lg mb-1">🎨</p>
+                        <p className="text-xs text-gray-400">颜色</p>
+                        <p className="text-purple-300 text-xs">{freeResult.luckyInfo.color}</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-gray-800/50 text-center">
+                        <p className="text-lg mb-1">🔢</p>
+                        <p className="text-xs text-gray-400">数字</p>
+                        <p className="text-purple-300 text-xs">{freeResult.luckyInfo.number}</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-gray-800/50 text-center">
+                        <p className="text-lg mb-1">💼</p>
+                        <p className="text-xs text-gray-400">行业</p>
+                        <p className="text-purple-300 text-xs">{freeResult.luckyInfo.industry}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -576,81 +547,179 @@ function LivePageContent() {
               <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">用户不可见</span>
             </div>
 
-            {!streamerScript ? (
+            {scriptLoading ? (
+              <div className="text-center py-20">
+                <div className="text-6xl mb-4 animate-pulse">🔮</div>
+                <p className="text-purple-400">AI正在生成主播稿子...</p>
+                <p className="text-gray-500 text-sm mt-2">根据八字命理深度分析中</p>
+                <div className="mt-4 flex justify-center gap-1">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
+              </div>
+            ) : !streamerScript ? (
               <div className="text-center py-20">
                 <div className="text-6xl mb-4">🎙️</div>
                 <p className="text-gray-400">输入用户信息并点击&quot;开始分析&quot;</p>
                 <p className="text-gray-500 text-sm mt-2">分析结果将在此处显示主播稿子</p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Focus Hint */}
                 {focusHint && (
-                  <div className="bg-gold-400/10 border border-gold-400/30 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
+                  <div className="bg-gold-400/10 border border-gold-400/30 rounded-lg p-3">
+                    <div className="flex items-center gap-2">
                       <span className="text-gold-400 font-medium">{focusHint.label}</span>
-                      <span className="text-xs text-gold-400/70">解读侧重</span>
+                      <span className="text-xs text-gold-400/70 px-2 py-0.5 bg-gold-400/20 rounded">解读侧重</span>
                     </div>
-                    <p className="text-gray-400 text-sm">{focusHint.description}</p>
+                    <p className="text-gray-400 text-sm mt-1">{focusHint.description}</p>
                   </div>
                 )}
 
                 {/* Opening Line */}
-                <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+                <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
                   <h3 className="text-purple-400 font-medium mb-2 flex items-center gap-2">
                     <span>🎯</span> 开场白
                   </h3>
-                  <p className="text-white text-lg leading-relaxed">&quot;{streamerScript.openingLine}&quot;</p>
+                  <p className="text-white leading-relaxed">&quot;{streamerScript.openingLine}&quot;</p>
                 </div>
 
                 {/* Emotional Hook */}
-                <div className="bg-pink-500/10 border border-pink-500/30 rounded-lg p-4">
+                <div className="bg-pink-500/10 border border-pink-500/30 rounded-lg p-3">
                   <h3 className="text-pink-400 font-medium mb-2 flex items-center gap-2">
-                    <span>💝</span> 共情切入点
+                    <span>💝</span> 共情切入
                   </h3>
-                  <p className="text-gray-300 leading-relaxed">{streamerScript.emotionalHook}</p>
+                  <p className="text-gray-300 text-sm leading-relaxed">{streamerScript.emotionalHook}</p>
                 </div>
 
                 {/* Key Points */}
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                  <h3 className="text-blue-400 font-medium mb-3 flex items-center gap-2">
-                    <span>📋</span> 讲解要点
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                  <h3 className="text-blue-400 font-medium mb-2 flex items-center gap-2">
+                    <span>📋</span> 要点速览
                   </h3>
-                  <ol className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
                     {streamerScript.keyPoints.map((point, index) => (
-                      <li key={index} className="flex items-start gap-2 text-gray-300">
-                        <span className="flex-shrink-0 w-5 h-5 bg-blue-500/30 rounded-full flex items-center justify-center text-xs text-blue-400">
-                          {index + 1}
-                        </span>
+                      <span key={index} className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded">
                         {point}
-                      </li>
+                      </span>
                     ))}
-                  </ol>
+                  </div>
+                </div>
+
+                {/* ========== 四维详细分析 ========== */}
+                <div className="border-t border-gray-700 pt-4">
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <span>🔮</span> 四维详批（有理有据）
+                  </h3>
+
+                  {/* 健康分析 */}
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-red-400 font-medium flex items-center gap-2">
+                        <span>🏥</span> {streamerScript.healthAnalysis.title}
+                      </h4>
+                      <span className="text-xs px-2 py-0.5 bg-red-500/20 text-red-300 rounded">{streamerScript.healthAnalysis.baziReason}</span>
+                    </div>
+                    <p className="text-white font-medium mb-2">&quot;{streamerScript.healthAnalysis.mainPoint}&quot;</p>
+                    <ul className="space-y-1 mb-2">
+                      {streamerScript.healthAnalysis.details.map((d, i) => (
+                        <li key={i} className="text-gray-300 text-sm flex items-start gap-1">
+                          <span className="text-red-400">▸</span>{d}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="bg-red-900/30 rounded p-2 text-xs text-red-200">
+                      <strong>建议：</strong>{streamerScript.healthAnalysis.advice}
+                    </div>
+                  </div>
+
+                  {/* 事业分析 */}
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-amber-400 font-medium flex items-center gap-2">
+                        <span>💼</span> {streamerScript.careerAnalysis.title}
+                      </h4>
+                      <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded">{streamerScript.careerAnalysis.baziReason}</span>
+                    </div>
+                    <p className="text-white font-medium mb-2">&quot;{streamerScript.careerAnalysis.mainPoint}&quot;</p>
+                    <ul className="space-y-1 mb-2">
+                      {streamerScript.careerAnalysis.details.map((d, i) => (
+                        <li key={i} className="text-gray-300 text-sm flex items-start gap-1">
+                          <span className="text-amber-400">▸</span>{d}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="bg-amber-900/30 rounded p-2 text-xs text-amber-200">
+                      <strong>建议：</strong>{streamerScript.careerAnalysis.advice}
+                    </div>
+                  </div>
+
+                  {/* 感情分析 */}
+                  <div className="bg-pink-500/10 border border-pink-500/30 rounded-lg p-3 mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-pink-400 font-medium flex items-center gap-2">
+                        <span>💕</span> {streamerScript.relationshipAnalysis.title}
+                      </h4>
+                      <span className="text-xs px-2 py-0.5 bg-pink-500/20 text-pink-300 rounded">{streamerScript.relationshipAnalysis.baziReason}</span>
+                    </div>
+                    <p className="text-white font-medium mb-2">&quot;{streamerScript.relationshipAnalysis.mainPoint}&quot;</p>
+                    <ul className="space-y-1 mb-2">
+                      {streamerScript.relationshipAnalysis.details.map((d, i) => (
+                        <li key={i} className="text-gray-300 text-sm flex items-start gap-1">
+                          <span className="text-pink-400">▸</span>{d}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="bg-pink-900/30 rounded p-2 text-xs text-pink-200">
+                      <strong>建议：</strong>{streamerScript.relationshipAnalysis.advice}
+                    </div>
+                  </div>
+
+                  {/* 前程分析 */}
+                  <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-cyan-400 font-medium flex items-center gap-2">
+                        <span>🚀</span> {streamerScript.futureAnalysis.title}
+                      </h4>
+                      <span className="text-xs px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded">{streamerScript.futureAnalysis.baziReason}</span>
+                    </div>
+                    <p className="text-white font-medium mb-2">&quot;{streamerScript.futureAnalysis.mainPoint}&quot;</p>
+                    <ul className="space-y-1 mb-2">
+                      {streamerScript.futureAnalysis.details.map((d, i) => (
+                        <li key={i} className="text-gray-300 text-sm flex items-start gap-1">
+                          <span className="text-cyan-400">▸</span>{d}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="bg-cyan-900/30 rounded p-2 text-xs text-cyan-200">
+                      <strong>建议：</strong>{streamerScript.futureAnalysis.advice}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Talking Points */}
-                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                  <h3 className="text-green-400 font-medium mb-3 flex items-center gap-2">
-                    <span>💬</span> 可以延伸的话题
+                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                  <h3 className="text-green-400 font-medium mb-2 flex items-center gap-2">
+                    <span>💬</span> 延伸话题
                   </h3>
-                  <ul className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
                     {streamerScript.talkingPoints.map((point, index) => (
-                      <li key={index} className="flex items-start gap-2 text-gray-300">
-                        <span className="text-green-400">•</span>
+                      <span key={index} className="text-xs px-2 py-1 bg-green-500/20 text-green-300 rounded">
                         {point}
-                      </li>
+                      </span>
                     ))}
-                  </ul>
+                  </div>
                 </div>
 
                 {/* Suggested Phrases */}
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-                  <h3 className="text-amber-400 font-medium mb-3 flex items-center gap-2">
-                    <span>🗣️</span> 推荐话术
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                  <h3 className="text-amber-400 font-medium mb-2 flex items-center gap-2">
+                    <span>🗣️</span> 金句话术
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {streamerScript.suggestedPhrases.map((phrase, index) => (
-                      <div key={index} className="bg-gray-900/50 rounded p-3 text-white italic">
+                      <div key={index} className="bg-gray-900/50 rounded p-2 text-white text-sm italic border-l-2 border-amber-400">
                         &quot;{phrase}&quot;
                       </div>
                     ))}
@@ -658,11 +727,11 @@ function LivePageContent() {
                 </div>
 
                 {/* Background Knowledge */}
-                <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
-                  <h3 className="text-gray-400 font-medium mb-3 flex items-center gap-2">
-                    <span>📚</span> 知识补充
+                <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+                  <h3 className="text-gray-400 font-medium mb-2 flex items-center gap-2">
+                    <span>📚</span> 背景知识
                   </h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">{streamerScript.backgroundKnowledge}</p>
+                  <p className="text-gray-400 text-xs leading-relaxed">{streamerScript.backgroundKnowledge}</p>
                 </div>
               </div>
             )}
