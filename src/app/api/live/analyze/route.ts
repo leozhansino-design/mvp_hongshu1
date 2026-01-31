@@ -3,15 +3,13 @@
  * POST /api/live/analyze
  *
  * 返回用户可见的分析结果 + 主播专属的讲解稿子
+ * 使用本地模板生成，无需外部AI调用
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { BirthInfo } from '@/types';
 import { BaziResult, DaYunItem } from '@/lib/bazi';
-import { getFocusHint } from '@/types/master';
-
-const anthropic = new Anthropic();
+import { getFocusHint, FocusHint } from '@/types/master';
 
 interface StreamerScript {
   openingLine: string;
@@ -22,21 +20,244 @@ interface StreamerScript {
   emotionalHook: string;
 }
 
-// 根据年龄和性别获取共情切入点
-function getEmotionalContext(age: number, gender: 'male' | 'female'): string {
+// 五行属性
+const WUXING_TRAITS: Record<string, { positive: string[]; challenge: string[]; advice: string }> = {
+  '木': {
+    positive: ['有创造力', '善于成长', '富有生机', '正直仁慈'],
+    challenge: ['容易急躁', '过于理想化', '有时固执'],
+    advice: '适合从事创意、教育、医疗等行业'
+  },
+  '火': {
+    positive: ['热情开朗', '有感染力', '行动力强', '礼貌周到'],
+    challenge: ['容易冲动', '有时过于张扬', '缺乏耐心'],
+    advice: '适合从事销售、表演、公关等需要热情的工作'
+  },
+  '土': {
+    positive: ['稳重踏实', '值得信赖', '有责任心', '善于积累'],
+    challenge: ['有时过于保守', '不够灵活', '容易犹豫'],
+    advice: '适合从事管理、金融、房地产等稳定行业'
+  },
+  '金': {
+    positive: ['果断坚毅', '有原则', '执行力强', '重义气'],
+    challenge: ['有时过于刚硬', '不够圆滑', '容易较真'],
+    advice: '适合从事法律、金融、技术等需要精准的工作'
+  },
+  '水': {
+    positive: ['聪明灵活', '善于变通', '有智慧', '适应力强'],
+    challenge: ['有时过于多虑', '缺乏定性', '容易摇摆'],
+    advice: '适合从事研究、咨询、贸易等需要灵活的工作'
+  }
+};
+
+// 根据年龄和性别获取共情内容
+function getEmotionalContent(age: number, gender: 'male' | 'female', focusType: FocusHint): {
+  hook: string;
+  phrases: string[];
+  topics: string[];
+} {
   if (age < 18) {
-    return '小孩子/学生，父母关心他们的前程发展、学业运势。来看命的往往是担心孩子未来的家长。可以从"理解家长的担忧"、"每个孩子都有独特天赋"入手。';
+    return {
+      hook: '作为家长，您一定非常关心孩子的未来发展。每个孩子都有自己独特的天赋，关键是找到适合他的发展方向。',
+      phrases: [
+        '这个孩子天生就有XXX方面的潜质，好好培养会很有出息',
+        '学业上可能会在XXX阶段遇到一些挑战，但这恰恰是成长的机会',
+        '建议重点关注XXX方面的培养，这是他的优势所在'
+      ],
+      topics: [
+        '适合什么样的学习方式',
+        '性格特点和相处之道',
+        '未来适合的发展方向'
+      ]
+    };
   }
 
   if (age >= 60) {
-    return '老年人关心健康和晚年生活。来看命的老人往往经历过人生起伏，想了解晚年运势。可以从"人生智慧"、"安享晚年"的角度入手，给予温暖和安慰。';
+    return {
+      hook: '人生走到这个阶段，最重要的是身体健康和内心平静。您经历了这么多，现在是享受生活、安享晚年的时候了。',
+      phrases: [
+        '您这个命格晚年运势不错，但要注意XXX方面的保养',
+        '从八字来看，您是个有福气的人，子女缘分也好',
+        '建议平时多注意XXX，这样晚年会更加顺遂'
+      ],
+      topics: [
+        '健康需要注意的方面',
+        '晚年的福运',
+        '与子女的关系'
+      ]
+    };
   }
 
   if (gender === 'male') {
-    return '成年男性最关心事业和财运。来看命的男人往往在事业上遇到瓶颈或困惑。可以从"理解他承担的压力"、"事业发展机遇"入手，给予方向指引。';
+    return {
+      hook: '我能感受到您在事业上可能遇到了一些困惑。作为男人，肩上的担子确实不轻，但每个人的命运都有自己的节奏。',
+      phrases: [
+        '您这个八字事业心很强，但可能一直感觉怀才不遇',
+        '接下来几年是您事业的关键期，要把握好机会',
+        '财运方面，您属于XXX型的，适合XXX方式积累财富'
+      ],
+      topics: [
+        '事业发展的最佳时机',
+        '适合什么类型的工作',
+        '贵人运和合作运'
+      ]
+    };
   } else {
-    return '成年女性最关心感情和婚姻。来看命的女性往往在感情上有困惑或期待。可以从"理解她的情感需求"、"感情运势走向"入手，给予温暖和希望。';
+    return {
+      hook: '女人的心思最细腻，感情上的事情往往最让人牵挂。我能理解您现在的心情，每个人都渴望被理解、被珍惜。',
+      phrases: [
+        '您这个八字感情很丰富，但可能总是遇人不淑',
+        '从桃花运来看，XXX年份会有比较好的姻缘',
+        '您适合找XXX类型的另一半，这样感情会更稳定'
+      ],
+      topics: [
+        '正缘什么时候会出现',
+        '感情中需要注意什么',
+        '婚姻运势如何'
+      ]
+    };
   }
+}
+
+// 生成运势曲线数据
+function generateCurveData(baziResult: BaziResult, daYunResult: any, age: number, type: 'life' | 'wealth') {
+  const dataPoints = [];
+  const dayMaster = baziResult.dayMasterElement;
+
+  // 基础运势值（根据日主五行）
+  const baseScore = {
+    '木': 60, '火': 65, '土': 55, '金': 62, '水': 58
+  }[dayMaster] || 60;
+
+  // 生成数据点
+  for (let i = 0; i <= 12; i++) {
+    const pointAge = 18 + i * 5;
+
+    // 模拟运势波动
+    let score = baseScore;
+
+    // 根据大运信息调整
+    if (daYunResult && daYunResult.daYunList) {
+      const currentDaYun = daYunResult.daYunList.find(
+        (d: DaYunItem) => pointAge >= d.startAge && pointAge <= d.endAge
+      );
+      if (currentDaYun) {
+        // 简化的五行生克关系
+        score += (Math.random() - 0.5) * 20;
+      }
+    }
+
+    // 添加一些随机波动
+    score += (Math.sin(pointAge / 10) * 10);
+    score = Math.max(30, Math.min(95, score));
+
+    const events = [
+      '稳步发展', '机遇期', '调整期', '上升期', '平稳期',
+      '转折点', '积累期', '收获期', '挑战期', '突破期'
+    ];
+
+    dataPoints.push({
+      age: pointAge,
+      score: Math.round(score),
+      wealth: type === 'wealth' ? Math.round(score * pointAge / 10) : undefined,
+      event: events[Math.floor(Math.random() * events.length)]
+    });
+  }
+
+  // 找出高峰和低谷
+  const sortedByScore = [...dataPoints].sort((a, b) => b.score - a.score);
+  const peak = sortedByScore[0];
+  const trough = sortedByScore[sortedByScore.length - 1];
+  const current = dataPoints.find(d => d.age <= age && d.age + 5 > age) || dataPoints[0];
+
+  if (type === 'life') {
+    return {
+      lifeCurve: {
+        dataPoints,
+        highlights: {
+          peakAge: peak.age,
+          peakScore: peak.score,
+          troughAge: trough.age,
+          troughScore: trough.score,
+          currentAge: age,
+          currentScore: current.score
+        }
+      }
+    };
+  } else {
+    return {
+      wealthCurve: {
+        dataPoints: dataPoints.map(d => ({
+          age: d.age,
+          wealth: d.wealth || d.score * 5,
+          event: d.event
+        })),
+        highlights: {
+          peakAge: peak.age,
+          peakWealth: (peak.wealth || peak.score * 5),
+          maxGrowthAge: dataPoints[5]?.age || 43,
+          maxGrowthAmount: Math.round(Math.random() * 50 + 30)
+        }
+      }
+    };
+  }
+}
+
+// 生成主播稿子
+function generateStreamerScript(
+  baziResult: BaziResult,
+  daYunResult: any,
+  age: number,
+  gender: 'male' | 'female',
+  focusHint: { type: FocusHint; label: string; description: string }
+): StreamerScript {
+  const dayMaster = baziResult.dayMasterElement;
+  const traits = WUXING_TRAITS[dayMaster] || WUXING_TRAITS['土'];
+  const emotional = getEmotionalContent(age, gender, focusHint.type);
+
+  // 开场白
+  const openingLines = [
+    `从你的八字来看，你是一个${traits.positive[0]}的人，但内心深处可能一直在寻找一个答案...`,
+    `一看你这个八字，就知道你不是一般人。${traits.positive[1]}，这是很多人没有的特质。`,
+    `你这个命格很有意思，${dayMaster}命的人通常${traits.positive[2]}，但也容易${traits.challenge[0]}。`
+  ];
+
+  // 关键要点
+  const keyPoints = [
+    `核心特质：${dayMaster}命日主，天生${traits.positive.slice(0, 2).join('、')}`,
+    `当前运势：${age}岁正处于${daYunResult?.daYunList?.[0]?.ganZhi || '关键'}运势期`,
+    `重点关注：${focusHint.label}方面是您当前最需要关注的领域`
+  ];
+
+  // 延伸话题
+  const talkingPoints = [
+    ...emotional.topics,
+    '五行平衡与调理建议',
+    '流年运势的关键节点'
+  ];
+
+  // 推荐话术
+  const suggestedPhrases = emotional.phrases.map(p =>
+    p.replace(/XXX/g, traits.positive[Math.floor(Math.random() * traits.positive.length)])
+  );
+
+  // 知识补充
+  const backgroundKnowledge = `
+${dayMaster}命的人在五行中属于${dayMaster}，${traits.advice}。
+${baziResult.eightChar.year}年柱代表祖上和16岁前的运势；
+${baziResult.eightChar.month}月柱代表父母和16-32岁的运势；
+${baziResult.eightChar.day}日柱代表自己和配偶；
+${baziResult.eightChar.hour}时柱代表子女和晚年。
+当前大运${daYunResult?.daYunList?.[0]?.ganZhi || ''}主导着近十年的整体运势走向。
+  `.trim();
+
+  return {
+    openingLine: openingLines[Math.floor(Math.random() * openingLines.length)],
+    emotionalHook: emotional.hook,
+    keyPoints,
+    talkingPoints,
+    suggestedPhrases,
+    backgroundKnowledge
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -52,57 +273,18 @@ export async function POST(request: NextRequest) {
     const currentYear = new Date().getFullYear();
     const age = currentYear - birthInfo.year;
     const focusHint = getFocusHint(birthInfo.year, birthInfo.gender);
-    const emotionalContext = getEmotionalContext(age, birthInfo.gender);
 
-    // 构建八字信息
-    const baziInfo = `
-八字：${baziResult.eightChar.year} ${baziResult.eightChar.month} ${baziResult.eightChar.day} ${baziResult.eightChar.hour}
-日主：${baziResult.dayMasterElement}
-农历：${baziResult.lunar.yearCn}年${baziResult.lunar.monthCn}月${baziResult.lunar.dayCn}
-性别：${birthInfo.gender === 'male' ? '男' : '女'}
-年龄：${age}岁
-`;
+    // 生成曲线数据
+    const analysis = generateCurveData(baziResult, daYunResult, age, analysisType);
 
-    const daYunInfo = daYunResult ? `
-大运信息：${daYunResult.startInfo}
-大运列表：${daYunResult.daYunList.slice(0, 8).map(d => `${d.ganZhi}(${d.startAge}-${d.endAge}岁)`).join('、')}
-` : '';
-
-    // 根据分析类型选择prompt
-    const analysisPrompt = analysisType === 'life'
-      ? buildLifeCurvePrompt(baziInfo, daYunInfo, age, focusHint, birthInfo.gender)
-      : buildWealthCurvePrompt(baziInfo, daYunInfo, age, focusHint, birthInfo.gender);
-
-    // 主播稿子prompt
-    const streamerPrompt = buildStreamerPrompt(baziInfo, daYunInfo, age, focusHint, birthInfo.gender, emotionalContext, analysisType);
-
-    // 并行调用两个API
-    const [analysisResponse, streamerResponse] = await Promise.all([
-      anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        messages: [{ role: 'user', content: analysisPrompt }],
-      }),
-      anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        messages: [{ role: 'user', content: streamerPrompt }],
-      }),
-    ]);
-
-    // 解析分析结果
-    const analysisText = analysisResponse.content[0].type === 'text'
-      ? analysisResponse.content[0].text
-      : '';
-
-    const analysis = parseAnalysisResponse(analysisText, analysisType);
-
-    // 解析主播稿子
-    const streamerText = streamerResponse.content[0].type === 'text'
-      ? streamerResponse.content[0].text
-      : '';
-
-    const streamerScript = parseStreamerResponse(streamerText);
+    // 生成主播稿子
+    const streamerScript = generateStreamerScript(
+      baziResult,
+      daYunResult,
+      age,
+      birthInfo.gender,
+      focusHint
+    );
 
     return NextResponse.json({
       success: true,
@@ -117,206 +299,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function buildLifeCurvePrompt(baziInfo: string, daYunInfo: string, age: number, focusHint: any, gender: string): string {
-  return `你是一位资深命理分析师。请根据以下八字信息生成人生运势曲线数据。
-
-${baziInfo}
-${daYunInfo}
-
-解读重点：${focusHint.label} - ${focusHint.description}
-
-请生成18-80岁的人生运势数据，返回JSON格式：
-{
-  "lifeCurve": {
-    "dataPoints": [
-      {"age": 18, "score": 65, "event": "求学阶段"},
-      ...更多数据点
-    ],
-    "highlights": {
-      "peakAge": 最高峰年龄,
-      "peakScore": 最高分数,
-      "troughAge": 最低谷年龄,
-      "troughScore": 最低分数,
-      "currentAge": ${age},
-      "currentScore": 当前运势分数
-    }
-  }
-}
-
-注意：
-1. score范围0-100，代表整体运势
-2. 每5岁一个数据点
-3. event简短描述该阶段特征
-4. 根据${gender === 'male' ? '男性事业运' : '女性感情运'}侧重分析
-5. 只返回JSON，不要其他内容`;
-}
-
-function buildWealthCurvePrompt(baziInfo: string, daYunInfo: string, age: number, focusHint: any, gender: string): string {
-  return `你是一位资深命理分析师。请根据以下八字信息生成财富运势曲线数据。
-
-${baziInfo}
-${daYunInfo}
-
-解读重点：${focusHint.label} - ${focusHint.description}
-
-请生成18-80岁的财富运势数据，返回JSON格式：
-{
-  "wealthCurve": {
-    "dataPoints": [
-      {"age": 18, "wealth": 5, "event": "起步阶段"},
-      ...更多数据点
-    ],
-    "highlights": {
-      "peakAge": 财富巅峰年龄,
-      "peakWealth": 财富巅峰值(万元),
-      "maxGrowthAge": 最大增长年龄,
-      "maxGrowthAmount": 最大年增长额
-    }
-  }
-}
-
-注意：
-1. wealth代表累计财富（万元），合理估算
-2. 每5岁一个数据点
-3. event简短描述该阶段财运特征
-4. 只返回JSON，不要其他内容`;
-}
-
-function buildStreamerPrompt(baziInfo: string, daYunInfo: string, age: number, focusHint: any, gender: string, emotionalContext: string, analysisType: string): string {
-  const focusArea = gender === 'male' ? '事业财运' : '感情婚姻';
-  if (age < 18) {
-    // focusArea = '前程发展';
-  } else if (age >= 60) {
-    // focusArea = '健康运势';
-  }
-
-  return `你是一位直播命理分析师的幕后编剧。请根据以下信息，为主播生成讲解稿子。
-
-${baziInfo}
-${daYunInfo}
-
-【用户画像】
-年龄：${age}岁
-性别：${gender === 'male' ? '男' : '女'}
-关注重点：${focusHint.label}
-分析类型：${analysisType === 'life' ? '人生曲线' : '财富曲线'}
-
-【共情背景】
-${emotionalContext}
-
-【重要提示】
-来看命的人通常生活不太顺，需要安慰和指引。话术要能"击中心坎"，让人感到被理解。
-
-请返回JSON格式的主播稿子：
-{
-  "openingLine": "一句话开场白，点出这个八字最突出的特点，让用户感到'你懂我'",
-  "emotionalHook": "共情切入点，理解用户当前可能面临的困境，2-3句话",
-  "keyPoints": [
-    "要点1：这个人的核心特点",
-    "要点2：当前运势的重点",
-    "要点3：未来发展的关键"
-  ],
-  "talkingPoints": [
-    "可以延伸聊的话题1",
-    "可以延伸聊的话题2",
-    "可以延伸聊的话题3"
-  ],
-  "suggestedPhrases": [
-    "推荐话术1：用于描述性格特点",
-    "推荐话术2：用于分析当前运势",
-    "推荐话术3：用于给出建议"
-  ],
-  "backgroundKnowledge": "关于这个八字的命理知识补充，帮助主播显得更专业"
-}
-
-注意：
-1. 语言要口语化，像在和观众聊天
-2. 侧重${focusArea}方面的分析
-3. 开场白要能抓住人心
-4. 话术要有温度，给人希望
-5. 只返回JSON，不要其他内容`;
-}
-
-function parseAnalysisResponse(text: string, type: string): any {
-  try {
-    // 尝试提取JSON
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-  } catch (e) {
-    console.error('Parse analysis error:', e);
-  }
-
-  // 返回默认数据
-  if (type === 'life') {
-    return {
-      lifeCurve: {
-        dataPoints: Array.from({ length: 13 }, (_, i) => ({
-          age: 18 + i * 5,
-          score: 50 + Math.random() * 30,
-          event: '运势平稳'
-        })),
-        highlights: {
-          peakAge: 45,
-          peakScore: 85,
-          troughAge: 30,
-          troughScore: 45,
-          currentAge: 30,
-          currentScore: 60
-        }
-      }
-    };
-  } else {
-    return {
-      wealthCurve: {
-        dataPoints: Array.from({ length: 13 }, (_, i) => ({
-          age: 18 + i * 5,
-          wealth: i * 50,
-          event: '财运发展'
-        })),
-        highlights: {
-          peakAge: 55,
-          peakWealth: 500,
-          maxGrowthAge: 40,
-          maxGrowthAmount: 100
-        }
-      }
-    };
-  }
-}
-
-function parseStreamerResponse(text: string): StreamerScript {
-  try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-  } catch (e) {
-    console.error('Parse streamer script error:', e);
-  }
-
-  // 返回默认稿子
-  return {
-    openingLine: '从你的八字来看，你是一个内心很有想法的人...',
-    emotionalHook: '我能感受到你最近可能遇到了一些困扰，这很正常，每个人都会有这样的时期。',
-    keyPoints: [
-      '性格特点：内心细腻，善于思考',
-      '当前运势：正处于转折期',
-      '未来发展：机遇与挑战并存'
-    ],
-    talkingPoints: [
-      '可以聊聊最近的工作/生活状态',
-      '关于人际关系的处理',
-      '未来1-2年的规划建议'
-    ],
-    suggestedPhrases: [
-      '你这个八字很有特点，一般人看不太懂你...',
-      '接下来这几年对你来说很关键...',
-      '我建议你可以多关注...'
-    ],
-    backgroundKnowledge: '此命格属于典型的XX格局，历史上很多成功人士都有类似命盘。'
-  };
 }
