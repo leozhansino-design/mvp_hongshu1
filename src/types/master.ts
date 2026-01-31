@@ -56,6 +56,50 @@ export function dbToMaster(db: MasterDB): Master {
 // 咨询订单状态
 export type ConsultationStatus = 'pending' | 'completed' | 'refunded';
 
+// 咨询关注重点类型
+export type FocusHint = 'career' | 'relationship' | 'future' | 'health';
+
+// 根据年龄和性别获取关注重点
+export function getFocusHint(birthYear: number, gender: 'male' | 'female'): { type: FocusHint; label: string; description: string } {
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - birthYear;
+
+  // 小孩（18岁以下）：看前程
+  if (age < 18) {
+    return {
+      type: 'future',
+      label: '前程发展',
+      description: '学业运势、未来发展方向、天赋潜能'
+    };
+  }
+
+  // 老人（60岁以上）：看健康
+  if (age >= 60) {
+    return {
+      type: 'health',
+      label: '健康运势',
+      description: '身体健康、养生调理、晚年福运'
+    };
+  }
+
+  // 成年人根据性别
+  if (gender === 'male') {
+    // 男人看事业
+    return {
+      type: 'career',
+      label: '事业财运',
+      description: '事业发展、财运走势、贵人运势'
+    };
+  } else {
+    // 女人看感情
+    return {
+      type: 'relationship',
+      label: '感情婚姻',
+      description: '感情运势、婚姻家庭、桃花运势'
+    };
+  }
+}
+
 // 咨询订单
 export interface Consultation {
   id: string;
@@ -72,7 +116,9 @@ export interface Consultation {
   birthTime?: string;
   gender?: string;
   name?: string;
+  wechatId?: string;  // 用户微信号（用于交付报告）
   question?: string;
+  focusHint?: string;  // 关注重点提示
   payMethod?: string;
   tradeNo?: string;
   status: ConsultationStatus;
@@ -107,7 +153,9 @@ export interface ConsultationDB {
   birth_time?: string;
   gender?: string;
   name?: string;
+  wechat_id?: string;  // 用户微信号（用于交付报告）
   question?: string;
+  focus_hint?: string;  // 关注重点提示
   pay_method?: string;
   trade_no?: string;
   status: ConsultationStatus;
@@ -136,7 +184,9 @@ export function dbToConsultation(db: ConsultationDB): Consultation {
     birthTime: db.birth_time,
     gender: db.gender,
     name: db.name,
+    wechatId: db.wechat_id,
     question: db.question,
+    focusHint: db.focus_hint,
     payMethod: db.pay_method,
     tradeNo: db.trade_no,
     status: db.status,

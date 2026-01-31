@@ -6,10 +6,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { generateOrderId, createNativePayOrder } from '@/lib/wechat-pay';
+import { createNativePayOrder } from '@/lib/wechat-pay';
 import { createAlipayOrder } from '@/lib/alipay';
 import { getMaster, createConsultation } from '@/lib/supabase';
-import { generateConsultationId } from '@/types/master';
+import { generateConsultationId, getFocusHint } from '@/types/master';
 import { getTokenFromHeader, getUserFromToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
       birthTime,
       gender,
       name,
+      wechatId,
       question,
       payMethod,
     } = body;
@@ -38,6 +39,10 @@ export async function POST(request: NextRequest) {
 
     if (!gender || !['male', 'female'].includes(gender)) {
       return NextResponse.json({ error: '请选择性别' }, { status: 400 });
+    }
+
+    if (!wechatId || !wechatId.trim()) {
+      return NextResponse.json({ error: '请填写微信号' }, { status: 400 });
     }
 
     if (!question || question.trim().length < 10) {
@@ -87,6 +92,10 @@ export async function POST(request: NextRequest) {
     // 商品描述
     const description = `大师测算 - ${master.name}`;
 
+    // 根据年龄性别计算关注重点
+    const focusHintData = getFocusHint(birthYear, gender as 'male' | 'female');
+    const focusHintText = `【${focusHintData.label}】${focusHintData.description}`;
+
     // 创建咨询订单记录
     await createConsultation({
       id: consultationId,
@@ -103,7 +112,9 @@ export async function POST(request: NextRequest) {
       birth_time: birthTime || undefined,
       gender,
       name: name || undefined,
+      wechat_id: wechatId.trim(),
       question: question.trim(),
+      focus_hint: focusHintText,
       pay_method: payMethod,
       trade_no: undefined,
       status: 'pending',
