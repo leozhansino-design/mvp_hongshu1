@@ -490,3 +490,28 @@ export interface UserAnalytics {
   hasUnlocked: boolean;          // 是否解锁成功
   unlockContext?: string;        // 解锁场景描述
 }
+
+// ========== 主播稿子类型 ==========
+
+// 详细分析板块
+export interface DetailedAnalysisSection {
+  title: string;
+  mainPoint: string;
+  baziReason: string;  // 八字依据
+  details: string[];
+  advice: string;
+}
+
+// 主播稿子结果（AI生成）
+export interface StreamerScriptResult {
+  openingLine: string;
+  emotionalHook: string;
+  keyPoints: string[];
+  healthAnalysis: DetailedAnalysisSection;
+  careerAnalysis: DetailedAnalysisSection;
+  relationshipAnalysis: DetailedAnalysisSection;
+  futureAnalysis: DetailedAnalysisSection;
+  talkingPoints: string[];
+  suggestedPhrases: string[];
+  backgroundKnowledge: string;
+}

@@ -1,5 +1,5 @@
-import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT, WEALTH_CURVE_PROMPT, BaziForPrompt, DaYunForPrompt } from '@/lib/constants';
-import { FreeVersionResult, PaidVersionResult, BirthInfo, WealthCurveData } from '@/types';
+import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT, WEALTH_CURVE_PROMPT, STREAMER_SCRIPT_PROMPT, BaziForPrompt, DaYunForPrompt } from '@/lib/constants';
+import { FreeVersionResult, PaidVersionResult, BirthInfo, WealthCurveData, StreamerScriptResult } from '@/types';
 import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
 
 // 将计算结果转换为prompt格式
@@ -465,4 +465,94 @@ export async function generateWealthCurve(
   }
 
   return aiResult as WealthCurveData;
+}
+
+// 生成主播稿子（调用AI）
+export async function generateStreamerScript(
+  birthInfo: BirthInfo,
+  focusType: 'career' | 'relationship' | 'future' | 'health',
+  config: APIConfig = API_CONFIG
+): Promise<StreamerScriptResult> {
+  // 预计算八字
+  const isLunar = birthInfo.calendarType === 'lunar';
+  const baziResult = calculateBazi(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, isLunar
+  );
+
+  if (!baziResult) {
+    throw new Error('八字计算失败，请检查出生信息');
+  }
+
+  // 预计算大运
+  const daYunResult = calculateDaYun(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+  );
+
+  if (!daYunResult) {
+    throw new Error('大运计算失败，请检查出生信息');
+  }
+
+  const baziForPrompt = toBaziForPrompt(baziResult);
+  const daYunForPrompt = toDaYunForPrompt(daYunResult.daYunList);
+
+  // 计算当前年龄
+  const currentYear = new Date().getFullYear();
+  const currentAge = currentYear - birthInfo.year + 1;
+
+  const userPrompt = STREAMER_SCRIPT_PROMPT(
+    birthInfo.gender,
+    birthInfo.year,
+    baziForPrompt,
+    daYunForPrompt,
+    currentAge,
+    focusType
+  );
+
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 8000,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`API错误: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+
+  // 检查是否因长度被截断
+  const finishReason = data.choices[0]?.finish_reason;
+  if (finishReason === 'length') {
+    console.error('响应被截断:', data);
+    throw new Error('AI响应被截断，请重试');
+  }
+
+  const content = data.choices[0]?.message?.content;
+
+  if (!content) {
+    throw new Error('AI未返回有效内容');
+  }
+
+  const aiResult = parseJSONWithRepair(content) as Partial<StreamerScriptResult>;
+
+  // 验证返回数据格式
+  if (!aiResult.openingLine || !aiResult.healthAnalysis || !aiResult.careerAnalysis) {
+    throw new Error('返回数据格式不正确');
+  }
+
+  return aiResult as StreamerScriptResult;
 }

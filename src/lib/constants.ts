@@ -412,3 +412,121 @@ export const WEALTH_LOADING_MESSAGES = [
   '生成财富曲线...',
   'AI深度分析中...',
 ];
+
+// 主播稿子生成提示词
+export const STREAMER_SCRIPT_PROMPT = (
+  gender: string,
+  year: number,
+  bazi: BaziForPrompt,
+  daYunList: DaYunForPrompt[],
+  currentAge: number,
+  focusType: string // career | relationship | future | health
+) => `你是一位精通八字命理的直播解说大师，擅长用通俗易懂又专业的语言解读命盘。
+现在需要为直播间主播生成解说稿，帮助主播为观众解读八字。
+
+【命主信息】
+性别: ${gender === 'male' ? '乾造（男）' : '坤造（女）'}
+出生年: ${year}年 | 当前虚岁: ${currentAge}岁
+重点关注: ${focusType === 'career' ? '事业财运' : focusType === 'relationship' ? '感情婚姻' : focusType === 'future' ? '前程发展' : '健康养生'}
+
+【八字四柱】（已排好）
+年柱: ${bazi.yearPillar} | 月柱: ${bazi.monthPillar} | 日柱: ${bazi.dayPillar} | 时柱: ${bazi.hourPillar}
+生肖: ${bazi.zodiac} | 农历: ${bazi.lunarDate}
+
+【大运】
+${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
+
+请生成JSON格式的主播解说稿（所有分析必须基于上面的八字推算，要有理有据！）：
+{
+  "openingLine": "开场白（80字，根据八字特点切入，如'从你的八字来看，你是X命，五行XX偏弱/过旺...'）",
+  "emotionalHook": "共情切入点（60字，根据性别和年龄段切入用户关心的话题）",
+  "keyPoints": [
+    "日主：X命，特点描述",
+    "五行：缺X/X过旺/相对平衡",
+    "当前：XX岁，XX大运",
+    "重点：${focusType === 'career' ? '事业财运' : focusType === 'relationship' ? '感情婚姻' : focusType === 'future' ? '前程发展' : '健康养生'}"
+  ],
+  "healthAnalysis": {
+    "title": "健康运势",
+    "mainPoint": "核心健康提示（必须基于五行生克，如'你五行缺水，肾脏要注意'）",
+    "baziReason": "八字依据（如'日主X命，五行缺X'）",
+    "details": [
+      "基于日主五行的健康分析（如'X主X脏，天生有X倾向'）",
+      "基于五行缺失的健康提醒（必须具体到器官）",
+      "可能出现的症状提醒",
+      "年龄相关的健康风险"
+    ],
+    "advice": "养生建议（基于五行调理）"
+  },
+  "careerAnalysis": {
+    "title": "事业前程",
+    "mainPoint": "事业核心特点（如'你是XX型的人，XX是核心竞争力'）",
+    "baziReason": "八字依据（如'X命日主，官星/财星/食伤特点'）",
+    "details": [
+      "适合的行业（基于五行喜忌）",
+      "工作风格分析（基于日主特点）",
+      "合作运势（与什么五行的人合作好）",
+      "当前大运对事业的影响",
+      "事业高光期预测"
+    ],
+    "advice": "事业发展建议（包含警惕点）"
+  },
+  "relationshipAnalysis": {
+    "title": "感情婚姻",
+    "mainPoint": "感情核心特点（如'你对感情XX，但要注意XX'）",
+    "baziReason": "八字依据（如'X命日主，日支X为婚姻宫'）",
+    "details": [
+      "感情特质分析（基于日主五行）",
+      "感情弱点提醒",
+      "理想伴侣类型（基于五行生克）",
+      "基于五行缺失的感情提醒",
+      "性别相关的感情特点"
+    ],
+    "advice": "感情经营建议"
+  },
+  "futureAnalysis": {
+    "title": "前程发展",
+    "mainPoint": "前程核心判断",
+    "baziReason": "八字依据",
+    "details": [
+      "当前人生阶段分析",
+      "未来大运预测",
+      "运势阶段判断（上升期/巅峰期/平稳期等）",
+      "五行调理建议"
+    ],
+    "advice": "发展建议"
+  },
+  "talkingPoints": [
+    "可以延伸的话题1",
+    "可以延伸的话题2",
+    "可以延伸的话题3"
+  ],
+  "suggestedPhrases": [
+    "金句话术1（必须基于八字特点，如'你五行缺X，所以X方面要注意...'）",
+    "金句话术2（如'你X命，XX是你的优势...'）",
+    "金句话术3（如'你当前X大运，XX年是关键...'）"
+  ],
+  "backgroundKnowledge": "四柱背景知识（简述四柱含义和日主特点，50字）"
+}
+
+【重要规则】
+1. 所有分析必须基于上面给出的八字四柱和大运！
+2. 健康分析必须结合五行生克（木→肝胆、火→心脏、土→脾胃、金→肺部、水→肾脏）
+3. 五行缺失/过旺必须体现在分析中，给出具体的影响
+4. baziReason字段必须写明具体的八字依据，如"日主甲木，五行缺水"
+5. 金句话术要有说服力，让观众觉得主播很专业
+6. 根据性别和年龄调整重点：
+   - 男性成年人：侧重事业财运
+   - 女性成年人：侧重感情婚姻
+   - 小孩（<18岁）：侧重前程发展
+   - 老人（>=60岁）：侧重健康养生
+7. 不要生成通用的模板内容，必须针对这个具体的八字分析！`;
+
+export const STREAMER_LOADING_MESSAGES = [
+  '解析命盘格局...',
+  '分析五行生克...',
+  '推算健康运势...',
+  '演算事业前程...',
+  '解读感情婚姻...',
+  '生成主播稿子...',
+];
