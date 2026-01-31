@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Master, formatPrice, formatFollowUps } from '@/types/master';
+import { Master, formatPrice, formatFollowUps, getFocusHint } from '@/types/master';
 import { getAuthToken } from '@/services/auth';
 import QRCode from 'qrcode';
 import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
@@ -73,6 +73,12 @@ export default function ConsultationModal({
     if (!birthYear || !birthMonth || !birthDay || shiChen === '') return null;
     return calculateDaYun(birthYear, birthMonth, birthDay, shiChen as number, 0, gender, false);
   }, [birthYear, birthMonth, birthDay, shiChen, gender]);
+
+  // Calculate focus hint based on age and gender
+  const focusHint = useMemo(() => {
+    if (!birthYear) return null;
+    return getFocusHint(birthYear, gender);
+  }, [birthYear, gender]);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -386,6 +392,17 @@ export default function ConsultationModal({
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Focus Hint Display */}
+            {focusHint && (
+              <div className="mb-4 p-3 bg-gold-400/10 rounded-lg border border-gold-400/30">
+                <div className="flex items-center gap-2">
+                  <span className="text-gold-400 text-sm font-medium">{focusHint.label}</span>
+                  <span className="text-xs text-gold-400/70">解读侧重</span>
+                </div>
+                <div className="text-xs text-gray-400 mt-1">{focusHint.description}</div>
               </div>
             )}
 

@@ -393,6 +393,16 @@ export default function ConsultationManagement() {
                 </div>
               </div>
 
+              {/* Focus Hint */}
+              {selectedConsultation.focusHint && (
+                <div className="border-t border-gray-700 pt-4">
+                  <h4 className="text-sm text-gray-400 mb-3">解读重点</h4>
+                  <div className="bg-gold-400/10 border border-gold-400/30 rounded-lg p-3 text-gold-400 text-sm">
+                    {selectedConsultation.focusHint}
+                  </div>
+                </div>
+              )}
+
               {/* Question */}
               <div className="border-t border-gray-700 pt-4">
                 <h4 className="text-sm text-gray-400 mb-3">用户问题</h4>
