@@ -81,6 +81,8 @@ export default function ConsultationModal({
       setError('');
       setQrCodeUrl('');
       setConsultationId('');
+      setPaymentError('');
+      setVerifying(false);
     }
   }, [isOpen]);
 
@@ -180,11 +182,42 @@ export default function ConsultationModal({
     }
   };
 
-  const handlePaymentComplete = () => {
-    if (consultationId) {
-      router.push(`/masters/success?id=${consultationId}`);
+  // Payment verification state
+  const [verifying, setVerifying] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+
+  const handlePaymentComplete = async () => {
+    if (!consultationId) return;
+
+    setVerifying(true);
+    setPaymentError('');
+
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`/api/consultations/${consultationId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || '查询订单失败');
+      }
+
+      // Check if payment is completed
+      if (data.consultation?.paymentStatus === 'paid') {
+        router.push(`/masters/success?id=${consultationId}`);
+        onClose();
+      } else {
+        setPaymentError('支付未完成，请完成支付后再试');
+      }
+    } catch (err) {
+      setPaymentError(err instanceof Error ? err.message : '查询订单失败，请稍后再试');
+    } finally {
+      setVerifying(false);
     }
-    onClose();
   };
 
   if (!isOpen) return null;
@@ -459,16 +492,35 @@ export default function ConsultationModal({
               请使用微信扫描二维码完成支付
             </p>
 
+            {/* Payment Error */}
+            {paymentError && (
+              <div className="mb-3 p-2 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-xs">
+                {paymentError}
+              </div>
+            )}
+
             <button
               onClick={handlePaymentComplete}
-              className="w-full py-2.5 bg-gradient-to-r from-gold-400 to-amber-500 text-black font-medium rounded-lg hover:from-gold-300 hover:to-amber-400 transition-all text-sm"
+              disabled={verifying}
+              className="w-full py-2.5 bg-gradient-to-r from-gold-400 to-amber-500 text-black font-medium rounded-lg hover:from-gold-300 hover:to-amber-400 transition-all text-sm disabled:opacity-50"
             >
-              我已完成支付
+              {verifying ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                  验证中...
+                </span>
+              ) : (
+                '我已完成支付'
+              )}
             </button>
 
             <button
-              onClick={() => setStep('form')}
-              className="w-full py-2 mt-2 text-text-secondary hover:text-white transition-colors text-sm"
+              onClick={() => {
+                setStep('form');
+                setPaymentError('');
+              }}
+              disabled={verifying}
+              className="w-full py-2 mt-2 text-text-secondary hover:text-white transition-colors text-sm disabled:opacity-50"
             >
               返回修改
             </button>
