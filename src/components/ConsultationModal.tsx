@@ -100,6 +100,41 @@ export default function ConsultationModal({
     }
   }, [qrCodeUrl]);
 
+  // Poll payment status when in payment step
+  useEffect(() => {
+    if (step !== 'payment' || !consultationId) return;
+
+    const checkPaymentStatus = async () => {
+      try {
+        const token = getAuthToken();
+        const response = await fetch(`/api/consultations/${consultationId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.consultation?.paymentStatus === 'paid') {
+          // Payment confirmed, redirect to success page
+          router.push(`/masters/success?id=${consultationId}`);
+          onClose();
+        }
+      } catch (err) {
+        // Silently ignore polling errors
+        console.error('Payment status check failed:', err);
+      }
+    };
+
+    // Check immediately once
+    checkPaymentStatus();
+
+    // Then poll every 3 seconds
+    const intervalId = setInterval(checkPaymentStatus, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [step, consultationId, router, onClose]);
+
   const handleSubmit = async () => {
     // Validation
     if (!name.trim()) {
@@ -488,8 +523,11 @@ export default function ConsultationModal({
               <canvas ref={qrCanvasRef} />
             </div>
 
-            <p className="text-text-secondary text-xs mb-4">
+            <p className="text-text-secondary text-xs mb-2">
               请使用微信扫描二维码完成支付
+            </p>
+            <p className="text-green-400/80 text-xs mb-4">
+              支付成功后将自动跳转
             </p>
 
             {/* Payment Error */}
