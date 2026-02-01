@@ -12,7 +12,7 @@ const LOADING_MESSAGES = [
   { id: 'init', name: 'AI 正在解析命盘信息', icon: '1' },
   { id: 'analyze', name: '大数据匹配相似命格', icon: '2' },
   { id: 'calculate', name: '神经网络计算运势趋势', icon: '3' },
-  { id: 'generate', name: 'GPT-4 生成专属分析', icon: '4' },
+  { id: 'generate', name: 'Gemini 3 Pro 生成专属分析', icon: '4' },
 ];
 
 // AI提示文字

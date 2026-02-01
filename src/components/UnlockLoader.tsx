@@ -10,7 +10,7 @@ const UNLOCK_MODULES = [
   { id: 'basic', name: 'AI深度分析八维运势', icon: '1' },
   { id: 'ten-gods', name: '神经网络解读十神', icon: '2' },
   { id: 'dayun', name: '大数据推演大运流年', icon: '3' },
-  { id: 'children', name: 'GPT生成子女运势', icon: '4' },
+  { id: 'children', name: 'Gemini生成子女运势', icon: '4' },
   { id: 'benefactor', name: '智能匹配贵人特征', icon: '5' },
   { id: 'education', name: 'AI评估学业潜力', icon: '6' },
   { id: 'shensha', name: '深度学习神煞解析', icon: '7' },
@@ -22,7 +22,7 @@ const UNLOCK_MODULES = [
 const AI_UNLOCK_HINTS = [
   '正在调用千万级命理数据库...',
   '深度学习模型匹配中...',
-  'GPT-4大模型分析进行中...',
+  'Gemini 3 Pro 大模型分析进行中...',
   '多维度交叉验证数据...',
 ];
 
