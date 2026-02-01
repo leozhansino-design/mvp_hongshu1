@@ -673,7 +673,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                   <span className="text-text-secondary text-sm">财富巅峰</span>
                   <span className="text-gold-400 text-xl font-bold">
                     {wealthResult.highlights.peakWealth >= 10000
-                      ? `${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿`
+                      ? '突破一亿'
                       : `${Math.round(wealthResult.highlights.peakWealth)}万`
                     }
                   </span>

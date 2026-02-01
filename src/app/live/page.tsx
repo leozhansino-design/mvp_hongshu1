@@ -359,9 +359,9 @@ function LivePageContent() {
                           <span className="text-text-secondary text-sm">· {wealthResult.wealthType}</span>
                         </div>
                         <p className="text-text-primary leading-relaxed text-sm">
-                          预计财富巅峰约{wealthResult.highlights.peakWealth >= 10000
-                            ? `${(wealthResult.highlights.peakWealth / 10000).toFixed(1)}亿`
-                            : `${Math.round(wealthResult.highlights.peakWealth)}万`
+                          {wealthResult.highlights.peakWealth >= 10000
+                            ? '预计财富巅峰 突破一亿·不可估量！'
+                            : `预计财富巅峰约 ${Math.round(wealthResult.highlights.peakWealth)}万`
                           }
                         </p>
                       </div>
