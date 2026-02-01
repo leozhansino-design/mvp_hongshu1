@@ -13,6 +13,51 @@ import { DaYunItem, calculateDaYun, calculateBazi, BaziResult } from '@/lib/bazi
 // 直播密码
 const LIVE_PASSWORD = 'lifecurve2024';
 
+// 评分圆环组件
+function ScoreRing({ score, label, size = 'md' }: { score?: number; label: string; size?: 'sm' | 'md' }) {
+  const validScore = score !== undefined && score !== null && !isNaN(score) ? score : 0;
+  const radius = size === 'sm' ? 28 : 36;
+  const strokeWidth = size === 'sm' ? 4 : 5;
+  const circumference = 2 * Math.PI * radius;
+  const progress = (validScore / 100) * circumference;
+  const color = validScore >= 75 ? '#22c55e' : validScore >= 50 ? '#D4AF37' : '#ef4444';
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className={`relative ${size === 'sm' ? 'w-16 h-16' : 'w-20 h-20'}`}>
+        <svg className="w-full h-full transform -rotate-90">
+          <circle cx="50%" cy="50%" r={radius} stroke="#1a1a1a" strokeWidth={strokeWidth} fill="none" />
+          <circle
+            cx="50%" cy="50%" r={radius} stroke={color} strokeWidth={strokeWidth} fill="none"
+            strokeDasharray={circumference} strokeDashoffset={circumference - progress}
+            strokeLinecap="round" className="transition-all duration-1000"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className={`font-mono font-bold ${size === 'sm' ? 'text-lg' : 'text-xl'}`} style={{ color }}>{validScore}</span>
+        </div>
+      </div>
+      {label && <span className="text-xs text-text-secondary mt-1">{label}</span>}
+    </div>
+  );
+}
+
+// 分析卡片组件
+function AnalysisCard({ title, content, score, icon }: { title: string; content: string; score?: number; icon: string }) {
+  return (
+    <div className="p-4 rounded-lg bg-black/30 border border-gray-700">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{icon}</span>
+          <h3 className="font-serif text-gold-400">{title}</h3>
+        </div>
+        <ScoreRing score={score} label="" size="sm" />
+      </div>
+      <p className="text-text-primary text-sm leading-relaxed">{content}</p>
+    </div>
+  );
+}
+
 // 直播页面内容组件
 function LivePageContent() {
   const searchParams = useSearchParams();
@@ -472,6 +517,29 @@ function LivePageContent() {
                       metal={freeResult.fiveElements.metal}
                       water={freeResult.fiveElements.water}
                     />
+                    {freeResult.elementAnalysis && (
+                      <div className="mt-6 p-4 rounded-lg bg-black/30 border border-gray-700">
+                        <h3 className="text-gold-400 text-sm mb-2 flex items-center gap-2">
+                          <span>⚖️</span>
+                          <span>五行相克分析</span>
+                        </h3>
+                        <p className="text-text-primary text-sm leading-relaxed">{freeResult.elementAnalysis}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 八维详批 */}
+                {freeResult && !isWealthMode && (
+                  <div className="mystic-card p-4">
+                    <h3 className="text-gold-400 font-serif text-lg mb-4">八维详批</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {freeResult.personality && <AnalysisCard title="性格命格" content={freeResult.personality} score={freeResult.personalityScore} icon="🎭" />}
+                      {freeResult.career && <AnalysisCard title="事业前程" content={freeResult.career} score={freeResult.careerScore} icon="💼" />}
+                      {freeResult.wealth && <AnalysisCard title="财帛运势" content={freeResult.wealth} score={freeResult.wealthScore} icon="💰" />}
+                      {freeResult.marriage && <AnalysisCard title="婚姻姻缘" content={freeResult.marriage} score={freeResult.marriageScore} icon="💕" />}
+                      {freeResult.health && <AnalysisCard title="健康体质" content={freeResult.health} score={freeResult.healthScore} icon="🏥" />}
+                    </div>
                   </div>
                 )}
 
