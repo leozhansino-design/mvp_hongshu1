@@ -8,7 +8,7 @@ import { generateFreeResult, generateWealthCurve, generateStreamerScript } from 
 import { BirthInfo, CurveMode, CURVE_MODE_LABELS, FreeVersionResult, WealthCurveData, PHASE_LABELS, PhaseType, StreamerScriptResult } from '@/types';
 import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
 import { getFocusHint, FocusHint } from '@/types/master';
-import { DaYunItem, calculateDaYun } from '@/lib/bazi';
+import { DaYunItem, calculateDaYun, calculateBazi, BaziResult } from '@/lib/bazi';
 
 // 直播密码
 const LIVE_PASSWORD = 'lifecurve2024';
@@ -32,6 +32,7 @@ function LivePageContent() {
   const [freeResult, setFreeResult] = useState<FreeVersionResult | null>(null);
   const [wealthResult, setWealthResult] = useState<WealthCurveData | null>(null);
   const [daYunResult, setDaYunResult] = useState<{ startInfo: string; daYunList: DaYunItem[] } | null>(null);
+  const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
 
   // 主播稿子
   const [streamerScript, setStreamerScript] = useState<StreamerScriptResult | null>(null);
@@ -106,9 +107,21 @@ function LivePageContent() {
     setFreeResult(null);
     setWealthResult(null);
     setStreamerScript(null);
+    setBaziResult(null);
 
     try {
-      // 计算大运
+      // 计算八字（包含详细的十神、藏干信息）
+      const bazi = calculateBazi(
+        info.year,
+        info.month,
+        info.day,
+        info.hour,
+        info.minute || 0,
+        info.calendarType === 'lunar'
+      );
+      setBaziResult(bazi);
+
+      // 计算大运（0-90岁）
       const daYun = calculateDaYun(
         info.year,
         info.month,
@@ -389,11 +402,15 @@ function LivePageContent() {
                   )}
                 </div>
 
-                {/* 八字排盘 */}
+                {/* 八字排盘 - 使用详细的pillarsDetail */}
                 {freeResult && birthInfo && !isWealthMode && (
                   <div className="mystic-card p-4">
                     <h3 className="text-gold-400 font-serif text-lg mb-4">四柱八字</h3>
-                    <BaziChartDisplay chart={freeResult.baziChart} showDetails={true} />
+                    <BaziChartDisplay
+                      chart={freeResult.baziChart}
+                      showDetails={true}
+                      pillarsDetail={baziResult?.pillarsDetail}
+                    />
                   </div>
                 )}
 
