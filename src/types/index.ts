@@ -514,4 +514,5 @@ export interface StreamerScriptResult {
   talkingPoints: string[];
   suggestedPhrases: string[];
   backgroundKnowledge: string;
+  goldenQuotes: string[];  // 命格金句（安慰、鼓励、点醒等）
 }

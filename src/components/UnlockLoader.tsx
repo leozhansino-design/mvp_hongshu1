@@ -7,21 +7,37 @@ interface UnlockLoaderProps {
 }
 
 const UNLOCK_MODULES = [
-  { id: 'basic', name: '八维详批', icon: '✦' },
-  { id: 'ten-gods', name: '十神详解', icon: '○' },
-  { id: 'dayun', name: '大运流年', icon: '◐' },
-  { id: 'children', name: '子女运势', icon: '○' },
-  { id: 'benefactor', name: '贵人运势', icon: '○' },
-  { id: 'education', name: '学业智慧', icon: '○' },
-  { id: 'shensha', name: '神煞解析', icon: '○' },
-  { id: 'improve', name: '改运建议', icon: '○' },
-  { id: 'future', name: '逐年运势', icon: '◐' },
-  { id: 'key-years', name: '关键年份', icon: '✦' },
+  { id: 'basic', name: 'AI深度分析八维运势', icon: '1' },
+  { id: 'ten-gods', name: '神经网络解读十神', icon: '2' },
+  { id: 'dayun', name: '大数据推演大运流年', icon: '3' },
+  { id: 'children', name: 'Gemini生成子女运势', icon: '4' },
+  { id: 'benefactor', name: '智能匹配贵人特征', icon: '5' },
+  { id: 'education', name: 'AI评估学业潜力', icon: '6' },
+  { id: 'shensha', name: '深度学习神煞解析', icon: '7' },
+  { id: 'improve', name: '个性化改运建议', icon: '8' },
+  { id: 'future', name: 'AI预测逐年运势', icon: '9' },
+  { id: 'key-years', name: '关键年份智能预警', icon: '10' },
+];
+
+const AI_UNLOCK_HINTS = [
+  '正在调用千万级命理数据库...',
+  '深度学习模型匹配中...',
+  'Gemini 3 Pro 大模型分析进行中...',
+  '多维度交叉验证数据...',
 ];
 
 export default function UnlockLoader({ onComplete }: UnlockLoaderProps) {
   const [progress, setProgress] = useState(0);
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
+  const [currentHintIndex, setCurrentHintIndex] = useState(0);
+
+  // 循环显示AI提示
+  useEffect(() => {
+    const hintTimer = setInterval(() => {
+      setCurrentHintIndex((prev) => (prev + 1) % AI_UNLOCK_HINTS.length);
+    }, 2500);
+    return () => clearInterval(hintTimer);
+  }, []);
 
   // 模拟解锁进度
   useEffect(() => {
@@ -54,31 +70,62 @@ export default function UnlockLoader({ onComplete }: UnlockLoaderProps) {
   }, [progress]);
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6 px-4 min-h-screen">
-      {/* 太极图 */}
-      <div className="relative w-56 h-56 flex items-center justify-center">
-        <div className="yinyang"></div>
+    <div className="flex flex-col items-center justify-center gap-6 px-4 min-h-screen bg-gradient-to-b from-white to-apple-gray-100">
+      {/* Apple-style Ring Loader */}
+      <div className="relative w-40 h-40">
+        <svg className="w-full h-full transform -rotate-90">
+          <circle
+            cx="80"
+            cy="80"
+            r="70"
+            stroke="#e8e8ed"
+            strokeWidth="10"
+            fill="none"
+          />
+          <circle
+            cx="80"
+            cy="80"
+            r="70"
+            stroke="#0066cc"
+            strokeWidth="10"
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={2 * Math.PI * 70}
+            strokeDashoffset={2 * Math.PI * 70 * (1 - progress / 100)}
+            className="transition-all duration-500 ease-out"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-4xl font-semibold text-apple-blue">
+            {Math.round(progress)}%
+          </span>
+        </div>
       </div>
 
       {/* 状态信息 */}
       <div className="text-center space-y-4 w-full max-w-md">
-        <h2 className="font-serif text-2xl text-white mb-2">
-          正在解锁完整命数...
+        <h2 className="font-medium text-2xl text-apple-gray-600 mb-2">
+          AI 正在解锁完整命数...
         </h2>
 
-        <p className="text-lg text-white/90 mb-6">
-          {UNLOCK_MODULES[currentModuleIndex]?.icon} {UNLOCK_MODULES[currentModuleIndex]?.name}
+        <p className="text-lg text-apple-blue mb-2">
+          {UNLOCK_MODULES[currentModuleIndex]?.name}
+        </p>
+
+        {/* AI提示 */}
+        <p className="text-sm text-apple-gray-400 transition-opacity duration-500">
+          {AI_UNLOCK_HINTS[currentHintIndex]}
         </p>
 
         {/* 进度条 */}
-        <div className="relative h-2 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
+        <div className="relative h-2 bg-apple-gray-200 rounded-full overflow-hidden">
           <div
-            className="absolute inset-y-0 left-0 bg-gradient-to-r from-white via-gray-200 to-white rounded-full transition-all duration-500 ease-out"
+            className="absolute inset-y-0 left-0 bg-apple-blue rounded-full transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
 
-        <div className="flex justify-between text-sm text-gray-400">
+        <div className="flex justify-between text-sm text-apple-gray-400">
           <span>{Math.round(progress)}%</span>
           <span>{estimatedTime}</span>
         </div>
@@ -92,81 +139,36 @@ export default function UnlockLoader({ onComplete }: UnlockLoaderProps) {
             return (
               <div
                 key={module.id}
-                className={`flex items-center gap-2 p-3 rounded text-sm transition-all border ${
+                className={`flex items-center gap-2 p-3 rounded-xl text-sm transition-all border ${
                   isCompleted
-                    ? 'bg-white/10 text-white border-white/30'
+                    ? 'bg-green-50 text-green-700 border-green-200'
                     : isCurrent
-                    ? 'bg-white/20 text-white border-white/50 animate-pulse'
-                    : 'bg-black/30 text-gray-500 border-gray-700'
+                    ? 'bg-apple-blue/10 text-apple-blue border-apple-blue/30'
+                    : 'bg-apple-gray-50 text-apple-gray-400 border-apple-gray-200'
                 }`}
               >
-                <span className="text-lg">{module.icon}</span>
-                <span className="flex-1">{module.name}</span>
-                {isCompleted && <span className="text-green-400">✓</span>}
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                  isCompleted
+                    ? 'bg-green-500 text-white'
+                    : isCurrent
+                    ? 'bg-apple-blue text-white'
+                    : 'bg-apple-gray-300 text-white'
+                }`}>
+                  {isCompleted ? '✓' : module.icon}
+                </div>
+                <span className="flex-1 text-left">{module.name}</span>
                 {isCurrent && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-apple-blue animate-ping" />
                 )}
               </div>
             );
           })}
         </div>
 
-        <p className="text-xs text-gray-500 mt-4">
-          正在为您解锁更详尽的命理分析...
+        <p className="text-xs text-apple-gray-400 mt-4">
+          基于千万级命理数据，AI正在生成专属分析报告
         </p>
       </div>
-
-      <style jsx>{`
-        .yinyang {
-          width: 224px;
-          height: 224px;
-          background: #fff;
-          box-sizing: border-box;
-          border-color: #000;
-          border-style: solid;
-          border-width: 3px 3px 112px 3px;
-          border-radius: 100%;
-          position: relative;
-          animation: yinyangRotate 3s infinite linear;
-        }
-
-        .yinyang::before {
-          content: "";
-          width: 108px;
-          height: 108px;
-          background: #fff;
-          box-sizing: border-box;
-          border-radius: 100%;
-          border: 41px solid #000;
-          position: absolute;
-          left: 0;
-          top: 100%;
-          transform: translate(0, -50%);
-        }
-
-        .yinyang::after {
-          content: "";
-          width: 108px;
-          height: 108px;
-          background: #000;
-          box-sizing: border-box;
-          border-radius: 100%;
-          border: 41px solid #fff;
-          position: absolute;
-          right: 0;
-          top: 100%;
-          transform: translate(0, -50%);
-        }
-
-        @keyframes yinyangRotate {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </div>
   );
 }

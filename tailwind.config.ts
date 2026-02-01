@@ -9,70 +9,93 @@ export default {
   theme: {
     extend: {
       colors: {
-        // 神秘深色背景
-        mystic: {
-          900: '#0D0221',
-          800: '#1A0A2E',
-          700: '#16213E',
-          600: '#2D1B4E',
+        // Apple-style light backgrounds
+        apple: {
+          white: '#ffffff',
+          gray: {
+            50: '#fafafa',
+            100: '#f5f5f7',
+            200: '#e8e8ed',
+            300: '#d2d2d7',
+            400: '#86868b',
+            500: '#6e6e73',
+            600: '#1d1d1f',
+          },
+          blue: {
+            light: '#0071e3',
+            DEFAULT: '#0066cc',
+            dark: '#004c99',
+          },
         },
-        // 金色光芒
-        gold: {
-          400: '#FFD700',
-          500: '#D4AF37',
-          600: '#B8860B',
+        // Primary accent
+        primary: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
         },
-        // 紫气
-        purple: {
-          400: '#9D4EDD',
-          500: '#7B2CBF',
-          600: '#5A189A',
-        },
-        // K线颜色
+        // Success/Error
+        success: '#34c759',
+        warning: '#ff9500',
+        error: '#ff3b30',
+        // K-Line colors
         kline: {
-          up: '#22D3EE',    // 青色涨
-          down: '#F43F5E',  // 玫红跌
-          current: '#FFD700', // 金色当前
+          up: '#34c759',
+          down: '#ff3b30',
+          current: '#007aff',
         },
-        // 神秘蓝
-        accent: {
-          blue: '#00D9FF',
-        },
-        // 文字色
+        // Text colors for light theme
         text: {
-          primary: '#E8E6E3',
-          secondary: '#9CA3AF',
-          gold: '#FFD700',
-        }
+          primary: '#1d1d1f',
+          secondary: '#86868b',
+          muted: '#6e6e73',
+          accent: '#0066cc',
+        },
       },
       fontFamily: {
-        serif: ['Noto Serif SC', 'serif'],
-        sans: ['Noto Sans SC', 'sans-serif'],
-        mono: ['Roboto Mono', 'monospace'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        mono: ['SF Mono', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       backgroundImage: {
-        'mystic-gradient': 'linear-gradient(180deg, #0D0221 0%, #1A0A2E 50%, #16213E 100%)',
-        'gold-gradient': 'linear-gradient(90deg, #D4AF37 0%, #FFD700 100%)',
-        'purple-gradient': 'linear-gradient(90deg, #9D4EDD 0%, #7B2CBF 100%)',
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'apple-gradient': 'linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%)',
+        'card-gradient': 'linear-gradient(180deg, #ffffff 0%, #fafafa 100%)',
       },
       boxShadow: {
-        'gold-glow': '0 0 20px rgba(212, 175, 55, 0.3)',
-        'purple-glow': '0 0 20px rgba(157, 78, 221, 0.3)',
+        'apple': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+        'apple-lg': '0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03)',
+        'apple-xl': '0 20px 40px -10px rgba(0, 0, 0, 0.1)',
+        'card': '0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 24px rgba(0, 0, 0, 0.06)',
+        'card-hover': '0 4px 12px rgba(0, 0, 0, 0.08), 0 8px 32px rgba(0, 0, 0, 0.1)',
       },
       animation: {
-        'spin-slow': 'spin 8s linear infinite',
-        'float': 'float 6s ease-in-out infinite',
-        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+        'spin-slow': 'spin 3s linear infinite',
+        'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
+        'fade-in': 'fade-in 0.5s ease-out',
+        'slide-up': 'slide-up 0.5s ease-out',
       },
       keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
+        'pulse-soft': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.6' },
         },
-        'pulse-glow': {
-          '0%, 100%': { opacity: '0.5' },
-          '50%': { opacity: '1' },
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
         },
+        'slide-up': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      borderRadius: {
+        '2xl': '1rem',
+        '3xl': '1.5rem',
+        '4xl': '2rem',
       },
     },
   },

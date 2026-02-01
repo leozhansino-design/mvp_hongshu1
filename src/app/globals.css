@@ -1,22 +1,30 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --mystic-900: #0D0221;
-  --mystic-800: #1A0A2E;
-  --mystic-700: #16213E;
-  --gold-400: #FFD700;
-  --gold-500: #D4AF37;
-  --purple-400: #9D4EDD;
-  --purple-500: #7B2CBF;
-  --kline-up: #22D3EE;
-  --kline-down: #F43F5E;
-  --accent-blue: #00D9FF;
-  --text-primary: #E8E6E3;
-  --text-secondary: #9CA3AF;
+  /* Apple-style colors */
+  --apple-white: #ffffff;
+  --apple-gray-50: #fafafa;
+  --apple-gray-100: #f5f5f7;
+  --apple-gray-200: #e8e8ed;
+  --apple-gray-300: #d2d2d7;
+  --apple-gray-400: #86868b;
+  --apple-gray-500: #6e6e73;
+  --apple-gray-600: #1d1d1f;
+
+  --apple-blue: #0066cc;
+  --apple-blue-light: #0071e3;
+
+  --text-primary: #1d1d1f;
+  --text-secondary: #86868b;
+  --text-muted: #6e6e73;
+
+  --success: #34c759;
+  --warning: #ff9500;
+  --error: #ff3b30;
 }
 
 html {
@@ -24,203 +32,347 @@ html {
 }
 
 body {
-  font-family: 'Noto Sans SC', sans-serif;
-  background: linear-gradient(180deg, #000000 0%, #1a1a1a 50%, #0a0a0a 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%);
   min-height: 100vh;
   color: var(--text-primary);
-}
-
-.font-serif {
-  font-family: 'Noto Serif SC', serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .font-mono {
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
 }
 
 @layer components {
-  .mystic-card {
-    @apply relative rounded-lg p-6;
-    background: rgba(10, 10, 10, 0.8);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    box-shadow: 0 0 40px rgba(50, 50, 50, 0.3);
+  /* Apple Card - 苹果风格卡片 */
+  .apple-card {
+    @apply relative rounded-2xl p-6 bg-white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 24px rgba(0, 0, 0, 0.06);
   }
 
-  .mystic-card-gold {
-    @apply mystic-card;
-    border-color: rgba(212, 175, 55, 0.4);
-    box-shadow: 0 0 40px rgba(212, 175, 55, 0.1);
+  .apple-card-hover {
+    @apply apple-card transition-all duration-300;
   }
 
-  .btn-gold {
-    @apply relative px-8 py-3 font-medium rounded-lg overflow-hidden transition-all duration-300;
-    background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);
-    color: var(--mystic-900);
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
-  }
-
-  .btn-gold:hover {
-    box-shadow: 0 0 50px rgba(212, 175, 55, 0.6);
+  .apple-card-hover:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 8px 32px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);
   }
 
-  .btn-gold:disabled {
+  /* Apple Button - Primary */
+  .btn-apple {
+    @apply relative px-6 py-3 font-medium rounded-xl overflow-hidden transition-all duration-200;
+    background: var(--apple-blue);
+    color: white;
+  }
+
+  .btn-apple:hover {
+    background: var(--apple-blue-light);
+  }
+
+  .btn-apple:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    transform: none;
   }
 
-  .btn-outline {
-    @apply px-6 py-2 rounded-lg border transition-all duration-300;
-    border-color: rgba(212, 175, 55, 0.4);
-    color: var(--gold-400);
-  }
-
-  .btn-outline:hover {
-    background: rgba(212, 175, 55, 0.1);
-    border-color: var(--gold-400);
-  }
-
-  .input-mystic {
-    @apply w-full px-4 py-3 rounded-lg transition-all duration-300 outline-none;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(100, 100, 100, 0.5);
+  /* Apple Button - Secondary */
+  .btn-apple-secondary {
+    @apply px-6 py-3 font-medium rounded-xl transition-all duration-200;
+    background: var(--apple-gray-100);
     color: var(--text-primary);
   }
 
-  .input-mystic:focus {
-    border-color: var(--gold-400);
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+  .btn-apple-secondary:hover {
+    background: var(--apple-gray-200);
   }
 
-  .select-mystic {
-    @apply w-full px-4 py-3 rounded-lg transition-all duration-300 outline-none appearance-none cursor-pointer;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(100, 100, 100, 0.5);
+  /* Apple Button - Outline */
+  .btn-apple-outline {
+    @apply px-6 py-3 font-medium rounded-xl border transition-all duration-200;
+    border-color: var(--apple-gray-300);
     color: var(--text-primary);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background: transparent;
+  }
+
+  .btn-apple-outline:hover {
+    background: var(--apple-gray-50);
+    border-color: var(--apple-gray-400);
+  }
+
+  /* Apple Input */
+  .input-apple {
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-200 outline-none;
+    background: var(--apple-gray-100);
+    border: 1px solid transparent;
+    color: var(--text-primary);
+  }
+
+  .input-apple:focus {
+    background: white;
+    border-color: var(--apple-blue);
+    box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
+  }
+
+  .input-apple::placeholder {
+    color: var(--text-muted);
+  }
+
+  /* Apple Select */
+  .select-apple {
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-200 outline-none appearance-none cursor-pointer;
+    background: var(--apple-gray-100);
+    border: 1px solid transparent;
+    color: var(--text-primary);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 20px;
     padding-right: 40px;
   }
 
-  .select-mystic:focus {
-    border-color: var(--gold-400);
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+  .select-apple:focus {
+    background-color: white;
+    border-color: var(--apple-blue);
+    box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
   }
 
-  .select-mystic option {
-    background: #1a1a1a;
+  .select-apple option {
+    background: white;
     color: var(--text-primary);
   }
 
+  /* Gender Button */
   .gender-btn {
-    @apply flex-1 py-4 rounded-lg font-serif text-lg transition-all duration-300 cursor-pointer;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(100, 100, 100, 0.5);
+    @apply flex-1 py-4 rounded-xl font-medium text-base transition-all duration-200 cursor-pointer;
+    background: var(--apple-gray-100);
+    border: 2px solid transparent;
     color: var(--text-secondary);
   }
 
   .gender-btn:hover {
-    border-color: rgba(255, 255, 255, 0.6);
+    background: var(--apple-gray-200);
   }
 
   .gender-btn.active {
-    border-color: var(--gold-400);
-    color: var(--gold-400);
-    background: rgba(212, 175, 55, 0.1);
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+    border-color: var(--apple-blue);
+    color: var(--apple-blue);
+    background: rgba(0, 102, 204, 0.05);
   }
 
-  .text-gold {
-    color: var(--gold-400);
+  /* Text Colors */
+  .text-apple-blue {
+    color: var(--apple-blue);
   }
 
-  .text-gold-gradient {
-    background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);
+  .text-apple-gradient {
+    background: linear-gradient(135deg, #0066cc 0%, #0071e3 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-}
 
-@keyframes bagua-spin {
-  from {
-    transform: rotate(0deg);
+  /* Pricing Card */
+  .pricing-card {
+    @apply relative rounded-2xl p-6 transition-all duration-300 bg-white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
-  to {
-    transform: rotate(360deg);
+
+  .pricing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .pricing-card.featured {
+    border: 2px solid var(--apple-blue);
+  }
+
+  .pricing-card.featured::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40%;
+    height: 3px;
+    background: var(--apple-blue);
+    border-radius: 0 0 4px 4px;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+    background: rgba(0, 102, 204, 0.1);
+    color: var(--apple-blue);
+  }
+
+  .badge-success {
+    background: rgba(52, 199, 89, 0.1);
+    color: var(--success);
+  }
+
+  /* Progress Bar */
+  .progress-bar {
+    @apply relative h-2 rounded-full overflow-hidden;
+    background: var(--apple-gray-200);
+  }
+
+  .progress-bar-fill {
+    @apply absolute left-0 top-0 h-full rounded-full transition-all duration-500;
+    background: var(--apple-blue);
+  }
+
+  /* Score Ring */
+  .score-ring {
+    @apply relative inline-flex items-center justify-center;
+  }
+
+  .score-ring-bg {
+    stroke: var(--apple-gray-200);
+  }
+
+  .score-ring-fill {
+    stroke: var(--apple-blue);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.5s ease-out;
+  }
+
+  /* Divider */
+  .divider {
+    @apply w-full h-px;
+    background: var(--apple-gray-200);
+  }
+
+  /* Section */
+  .section-title {
+    @apply text-2xl font-semibold text-apple-gray-600 mb-2;
+  }
+
+  .section-subtitle {
+    @apply text-base text-apple-gray-400;
+  }
+
+  /* Keep backward compatibility */
+  .glass-card {
+    @apply apple-card;
+  }
+
+  .tech-card {
+    @apply apple-card;
+  }
+
+  .btn-primary {
+    @apply btn-apple;
+  }
+
+  .btn-outline {
+    @apply btn-apple-outline;
+  }
+
+  .input-tech {
+    @apply input-apple;
+  }
+
+  .select-tech {
+    @apply select-apple;
+  }
+
+  .mystic-card {
+    @apply apple-card;
+  }
+
+  .mystic-card-gold {
+    @apply apple-card;
+  }
+
+  .btn-gold {
+    @apply btn-apple;
+  }
+
+  .input-mystic {
+    @apply input-apple;
+  }
+
+  .select-mystic {
+    @apply select-apple;
+  }
+
+  .text-gold {
+    color: var(--apple-blue);
+  }
+
+  .text-gold-gradient {
+    @apply text-apple-gradient;
+  }
+
+  .text-cyber-400 {
+    color: var(--apple-blue);
+  }
+
+  .text-cyber-gradient {
+    @apply text-apple-gradient;
   }
 }
 
-@keyframes star-float {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.6;
-  }
-  50% {
-    transform: translateY(-20px) scale(1.2);
-    opacity: 1;
-  }
+/* Animations */
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 0.5;
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-  }
-  50% {
-    opacity: 1;
-    box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
-  }
+@keyframes slide-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
-.animate-bagua-spin {
-  animation: bagua-spin 8s linear infinite;
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0.5; }
 }
 
-.animate-star-float {
-  animation: star-float 4s ease-in-out infinite;
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out;
 }
 
-.star-particle {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  background: var(--gold-400);
-  border-radius: 50%;
-  opacity: 0.5;
-  animation: star-float 6s ease-in-out infinite;
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-in-out infinite;
 }
 
+/* Recharts Styling for Light Theme */
 .recharts-cartesian-grid line {
-  stroke: rgba(100, 100, 100, 0.3) !important;
+  stroke: var(--apple-gray-200) !important;
 }
 
 .recharts-text {
   fill: var(--text-secondary) !important;
-  font-family: 'Roboto Mono', monospace !important;
+  font-family: 'SF Mono', Menlo, Monaco, monospace !important;
 }
 
+/* Scrollbar - Minimal */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #666666;
-  border-radius: 4px;
+  background: var(--apple-gray-300);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #999999;
+  background: var(--apple-gray-400);
+}
+
+/* Selection */
+::selection {
+  background: rgba(0, 102, 204, 0.2);
+  color: var(--text-primary);
 }

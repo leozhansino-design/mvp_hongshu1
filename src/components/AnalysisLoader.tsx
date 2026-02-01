@@ -1,21 +1,44 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { ANALYSIS_MODULES } from '@/types';
 
 interface AnalysisLoaderProps {
   onComplete?: () => void;
   messages?: string[];
 }
 
+// AI大数据相关的加载消息
+const LOADING_MESSAGES = [
+  { id: 'init', name: 'AI 正在解析命盘信息', icon: '1' },
+  { id: 'analyze', name: '大数据匹配相似命格', icon: '2' },
+  { id: 'calculate', name: '神经网络计算运势趋势', icon: '3' },
+  { id: 'generate', name: 'Gemini 3 Pro 生成专属分析', icon: '4' },
+];
+
+// AI提示文字
+const AI_HINTS = [
+  '基于千万级命理数据训练',
+  '融合传统命理与现代AI',
+  '深度学习模型精准分析',
+  '多维度交叉验证结果',
+];
+
 export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderProps) {
-  // 使用自定义消息或默认模块
   const displayModules = messages
-    ? messages.map((msg, i) => ({ id: `msg-${i}`, name: msg, icon: '○' }))
-    : ANALYSIS_MODULES;
+    ? messages.map((msg, i) => ({ id: `msg-${i}`, name: msg, icon: `${i + 1}` }))
+    : LOADING_MESSAGES;
   const [progress, setProgress] = useState(0);
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
-  const [queuePosition, setQueuePosition] = useState(() => Math.floor(Math.random() * 5) + 1);
+  const [queuePosition, setQueuePosition] = useState(() => Math.floor(Math.random() * 2) + 1);
+  const [currentHintIndex, setCurrentHintIndex] = useState(0);
+
+  // 循环显示AI提示
+  useEffect(() => {
+    const hintTimer = setInterval(() => {
+      setCurrentHintIndex((prev) => (prev + 1) % AI_HINTS.length);
+    }, 3000);
+    return () => clearInterval(hintTimer);
+  }, []);
 
   // 模拟排队进度
   useEffect(() => {
@@ -28,7 +51,7 @@ export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderP
           }
           return prev - 1;
         });
-      }, 1500);
+      }, 1000);
 
       return () => clearInterval(queueTimer);
     }
@@ -55,162 +78,117 @@ export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderP
 
         return newProgress;
       });
-    }, 800);
+    }, 600);
 
     return () => clearInterval(progressTimer);
   }, [queuePosition, onComplete, displayModules.length]);
 
-  // 估计剩余时间
   const estimatedTime = useMemo(() => {
     if (queuePosition > 0) {
-      return `排队中，约 ${queuePosition * 3} 秒`;
+      return `等待中...`;
     }
-    const remaining = Math.ceil((99 - progress) / 10);
-    return remaining > 0 ? `约 ${remaining} 秒` : '即将完成';
+    const remaining = Math.ceil((99 - progress) / 15);
+    return remaining > 0 ? `预计 ${remaining} 秒` : '即将完成';
   }, [queuePosition, progress]);
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6 px-4">
-      {/* 太极图 */}
-      <div className="relative w-48 h-48 md:w-56 md:h-56 flex items-center justify-center">
-        <div className="yinyang"></div>
-      </div>
-
-      {/* 状态信息 */}
-      <div className="text-center space-y-3 w-full max-w-sm">
-        {queuePosition > 0 ? (
-          <>
-            <p className="font-serif text-lg text-white">
-              天机排演中...
-            </p>
-            <div className="flex items-center justify-center gap-2 text-gray-400">
-              <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
-              <span>当前排位：第 <span className="text-white font-mono">{queuePosition}</span> 位</span>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="font-serif text-lg text-white">
-              {displayModules[currentModuleIndex]?.icon} {displayModules[currentModuleIndex]?.name}
-            </p>
-            <div className="text-gray-400 text-sm">
-              AI 深度解析中...
-            </div>
-          </>
-        )}
-
-        {/* 进度条 */}
-        <div className="relative h-2 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
-          <div
-            className="absolute inset-y-0 left-0 bg-white rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${queuePosition > 0 ? 0 : progress}%` }}
+    <div className="flex flex-col items-center justify-center gap-8 px-4 w-full max-w-sm">
+      {/* Apple-style Ring Loader */}
+      <div className="relative w-32 h-32">
+        {/* Background ring */}
+        <svg className="w-full h-full transform -rotate-90">
+          <circle
+            cx="64"
+            cy="64"
+            r="56"
+            stroke="#e8e8ed"
+            strokeWidth="8"
+            fill="none"
           />
+          {/* Progress ring */}
+          <circle
+            cx="64"
+            cy="64"
+            r="56"
+            stroke="#0066cc"
+            strokeWidth="8"
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={2 * Math.PI * 56}
+            strokeDashoffset={2 * Math.PI * 56 * (1 - (queuePosition > 0 ? 0 : progress / 100))}
+            className="transition-all duration-500 ease-out"
+          />
+        </svg>
+        {/* Center text */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-3xl font-semibold text-apple-gray-600">
+            {queuePosition > 0 ? '...' : `${Math.round(progress)}%`}
+          </span>
         </div>
-
-        <div className="flex justify-between text-xs text-gray-400">
-          <span>{queuePosition > 0 ? '等待中' : `${Math.round(progress)}%`}</span>
-          <span>{estimatedTime}</span>
-        </div>
-
-        {/* 模块进度列表 */}
-        {queuePosition === 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
-            {displayModules.map((module, index) => {
-              const isCompleted = index < currentModuleIndex;
-              const isCurrent = index === currentModuleIndex;
-
-              return (
-                <div
-                  key={module.id}
-                  className={`flex items-center justify-center gap-1 px-2 py-2 rounded text-xs transition-all border ${
-                    isCompleted
-                      ? 'bg-white/10 text-white border-white/30'
-                      : isCurrent
-                      ? 'bg-white/20 text-white border-white/50 animate-pulse'
-                      : 'bg-black/30 text-gray-500 border-gray-700'
-                  }`}
-                >
-                  <span>{module.icon}</span>
-                  <span className="whitespace-nowrap">{module.name}</span>
-                  {isCompleted && <span className="ml-1 flex-shrink-0">✓</span>}
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
 
-      <style jsx>{`
-        .yinyang {
-          width: 200px;
-          height: 200px;
-          background: #fff;
-          box-sizing: border-box;
-          border-color: #000;
-          border-style: solid;
-          border-width: 3px 3px 100px 3px;
-          border-radius: 100%;
-          position: relative;
-          animation: yinyangRotate 4s infinite linear;
-        }
-
-        @media (min-width: 768px) {
-          .yinyang {
-            width: 224px;
-            height: 224px;
-            border-width: 3px 3px 112px 3px;
+      {/* Status Info */}
+      <div className="text-center space-y-2 w-full">
+        <p className="text-lg font-medium text-apple-gray-600">
+          {queuePosition > 0
+            ? '准备中...'
+            : displayModules[currentModuleIndex]?.name
           }
+        </p>
+        <p className="text-sm text-apple-gray-400">
+          {estimatedTime}
+        </p>
+        {/* AI提示信息 */}
+        <p className="text-xs text-apple-blue/70 mt-2 transition-opacity duration-500">
+          {AI_HINTS[currentHintIndex]}
+        </p>
+      </div>
 
-          .yinyang::before {
-            width: 108px !important;
-            height: 108px !important;
-            border-width: 41px !important;
-          }
+      {/* Progress Steps */}
+      {queuePosition === 0 && (
+        <div className="w-full space-y-2">
+          {displayModules.map((module, index) => {
+            const isCompleted = index < currentModuleIndex;
+            const isCurrent = index === currentModuleIndex;
 
-          .yinyang::after {
-            width: 108px !important;
-            height: 108px !important;
-            border-width: 41px !important;
-          }
-        }
-
-        .yinyang::before {
-          content: "";
-          width: 97px;
-          height: 97px;
-          background: #fff;
-          box-sizing: border-box;
-          border-radius: 100%;
-          border: 37px solid #000;
-          position: absolute;
-          left: 0;
-          top: 100%;
-          transform: translate(0, -50%);
-        }
-
-        .yinyang::after {
-          content: "";
-          width: 97px;
-          height: 97px;
-          background: #000;
-          box-sizing: border-box;
-          border-radius: 100%;
-          border: 37px solid #fff;
-          position: absolute;
-          right: 0;
-          top: 100%;
-          transform: translate(0, -50%);
-        }
-
-        @keyframes yinyangRotate {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
+            return (
+              <div
+                key={module.id}
+                className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
+                  isCompleted
+                    ? 'bg-success/10'
+                    : isCurrent
+                    ? 'bg-apple-blue/10'
+                    : 'bg-apple-gray-100'
+                }`}
+              >
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                  isCompleted
+                    ? 'bg-success text-white'
+                    : isCurrent
+                    ? 'bg-apple-blue text-white'
+                    : 'bg-apple-gray-300 text-white'
+                }`}>
+                  {isCompleted ? (
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  ) : module.icon}
+                </div>
+                <span className={`text-sm ${
+                  isCompleted
+                    ? 'text-success'
+                    : isCurrent
+                    ? 'text-apple-blue font-medium'
+                    : 'text-apple-gray-400'
+                }`}>
+                  {module.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
