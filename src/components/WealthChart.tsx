@@ -30,10 +30,10 @@ export default function WealthChart({
   const chartHeight = height - padding.top - padding.bottom;
 
   // 计算坐标
-  const { path, areaPath, points, peakPoint, yTicks, xTicks } = useMemo(() => {
+  const { path, areaPath, points, peakPoint, yTicks, xTicks, showBillionPlus } = useMemo(() => {
     // 验证数据
     if (!dataPoints || dataPoints.length === 0) {
-      return { path: '', areaPath: '', points: [], peakPoint: null, yTicks: [], xTicks: [] };
+      return { path: '', areaPath: '', points: [], peakPoint: null, yTicks: [], xTicks: [], showBillionPlus: false };
     }
 
     // 过滤无效数据点
@@ -43,7 +43,7 @@ export default function WealthChart({
     );
 
     if (validDataPoints.length === 0) {
-      return { path: '', areaPath: '', points: [], peakPoint: null, yTicks: [], xTicks: [] };
+      return { path: '', areaPath: '', points: [], peakPoint: null, yTicks: [], xTicks: [], showBillionPlus: false };
     }
 
     const minAge = 18;
@@ -56,17 +56,22 @@ export default function WealthChart({
       maxWealth = Math.max(...validDataPoints.map(d => d.wealth), 1000);
     }
 
+    // 如果最大值超过1亿（10000万），Y轴最高显示1亿+
+    const displayMaxWealth = maxWealth > 10000 ? 12000 : maxWealth; // 留一点余量显示1亿+
+
     // X 坐标转换
     const xScale = (age: number) => {
       const val = padding.left + ((age - minAge) / (maxAge - minAge)) * chartWidth;
       return isNaN(val) ? padding.left : val;
     };
 
-    // Y 坐标转换
+    // Y 坐标转换 - 使用 displayMaxWealth 来限制Y轴
     const yScale = (wealth: number) => {
-      const range = maxWealth - minWealth;
+      // 超过1亿的部分压缩显示在顶部
+      const cappedWealth = Math.min(wealth, displayMaxWealth);
+      const range = displayMaxWealth - minWealth;
       if (range <= 0) return padding.top + chartHeight / 2;
-      const val = padding.top + chartHeight - ((wealth - minWealth) / range) * chartHeight;
+      const val = padding.top + chartHeight - ((cappedWealth - minWealth) / range) * chartHeight;
       return isNaN(val) ? padding.top + chartHeight : val;
     };
 
@@ -102,11 +107,14 @@ export default function WealthChart({
     // 找到巅峰点
     const peak = pts.find((p) => p.age === highlights.peakAge) || null;
 
-    // Y轴刻度
+    // Y轴刻度 - 超过1亿时，最高显示"1亿+"
     const yTickCount = 5;
     const yTickValues = Array.from({ length: yTickCount + 1 }, (_, i) => {
-      return minWealth + (maxWealth - minWealth) * (i / yTickCount);
+      const value = minWealth + (displayMaxWealth - minWealth) * (i / yTickCount);
+      return value;
     });
+    // 如果原始最大值超过1亿，标记需要显示"1亿+"
+    const showBillionPlus = maxWealth > 10000;
 
     // X轴刻度
     const xTickValues = [18, 30, 40, 50, 60, 70, 80];
@@ -118,11 +126,16 @@ export default function WealthChart({
       peakPoint: peak,
       yTicks: yTickValues.map((v) => ({ value: v, y: yScale(v) })),
       xTicks: xTickValues.map((v) => ({ value: v, x: xScale(v) })),
+      showBillionPlus,
     };
   }, [dataPoints, highlights, wealthRange, chartWidth, chartHeight]);
 
   // 格式化金额 - 用于坐标轴（简短）
-  const formatWealthAxis = (value: number) => {
+  const formatWealthAxis = (value: number, isTopTick: boolean = false) => {
+    // 如果是最高刻度且超过1亿，显示"1亿+"
+    if (isTopTick && showBillionPlus && value >= 10000) {
+      return '1亿+';
+    }
     if (value >= 10000) {
       return `${(value / 10000).toFixed(0)}亿`;
     }
@@ -132,9 +145,12 @@ export default function WealthChart({
     return `${value.toFixed(0)}万`;
   };
 
-  // 格式化金额 - 用于tooltip（精确）
+  // 格式化金额 - 用于tooltip和标注（戏剧性显示）
   const formatWealth = (value: number) => {
     if (value >= 10000) {
+      return '突破一亿·不可估量';
+    }
+    if (value >= 5000) {
       return `${(value / 10000).toFixed(1)}亿`;
     }
     return `${Math.round(value)}万`;
@@ -219,7 +235,7 @@ export default function WealthChart({
               dominantBaseline="middle"
               className="text-xs fill-gray-400"
             >
-              {formatWealthAxis(tick.value)}
+              {formatWealthAxis(tick.value, i === yTicks.length - 1)}
             </text>
           </g>
         ))}
