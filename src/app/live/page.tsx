@@ -539,6 +539,8 @@ function LivePageContent() {
                       {freeResult.wealth && <AnalysisCard title="财帛运势" content={freeResult.wealth} score={freeResult.wealthScore} icon="💰" />}
                       {freeResult.marriage && <AnalysisCard title="婚姻姻缘" content={freeResult.marriage} score={freeResult.marriageScore} icon="💕" />}
                       {freeResult.health && <AnalysisCard title="健康体质" content={freeResult.health} score={freeResult.healthScore} icon="🏥" />}
+                      {freeResult.fengShui && <AnalysisCard title="风水开运" content={freeResult.fengShui} score={freeResult.fengShuiScore} icon="🏠" />}
+                      {freeResult.family && <AnalysisCard title="六亲关系" content={freeResult.family} score={freeResult.familyScore} icon="👨‍👩‍👧" />}
                     </div>
                   </div>
                 )}
@@ -570,7 +572,7 @@ function LivePageContent() {
                   <div className="mystic-card p-4">
                     <h3 className="font-serif text-xl text-gold-400 mb-4">✦ 高光之年</h3>
                     <div className="space-y-4">
-                      {freeResult.highlights.slice(0, 3).map((h, i) => (
+                      {freeResult.highlights.map((h, i) => (
                         <div key={i} className="p-4 rounded-lg bg-gradient-to-r from-gold-400/10 to-transparent border-l-2 border-gold-400">
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-gold-400 font-mono text-lg">{h.age}岁</span>
@@ -596,7 +598,7 @@ function LivePageContent() {
                   <div className="mystic-card p-4">
                     <h3 className="font-serif text-xl text-kline-down mb-4">◆ 谨慎之年</h3>
                     <div className="space-y-4">
-                      {freeResult.warnings.slice(0, 2).map((w, i) => (
+                      {freeResult.warnings.map((w, i) => (
                         <div key={i} className="p-4 rounded-lg bg-kline-down/5 border-l-2 border-kline-down">
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-kline-down font-mono text-lg">{w.age}岁</span>
