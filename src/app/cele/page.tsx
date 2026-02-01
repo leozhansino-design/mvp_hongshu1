@@ -19,13 +19,13 @@ function ScoreRing({ score, label, size = 'md' }: { score?: number; label: strin
   const strokeWidth = size === 'sm' ? 4 : 5;
   const circumference = 2 * Math.PI * radius;
   const progress = (validScore / 100) * circumference;
-  const color = validScore >= 75 ? '#22c55e' : validScore >= 50 ? '#D4AF37' : '#ef4444';
+  const color = validScore >= 75 ? '#10b981' : validScore >= 50 ? '#22d3ee' : '#ef4444';
 
   return (
     <div className="flex flex-col items-center">
       <div className={`relative ${size === 'sm' ? 'w-16 h-16' : 'w-20 h-20'}`}>
         <svg className="w-full h-full transform -rotate-90">
-          <circle cx="50%" cy="50%" r={radius} stroke="#1a1a1a" strokeWidth={strokeWidth} fill="none" />
+          <circle cx="50%" cy="50%" r={radius} stroke="rgba(255,255,255,0.1)" strokeWidth={strokeWidth} fill="none" />
           <circle
             cx="50%" cy="50%" r={radius} stroke={color} strokeWidth={strokeWidth} fill="none"
             strokeDasharray={circumference} strokeDashoffset={circumference - progress}
@@ -44,11 +44,11 @@ function ScoreRing({ score, label, size = 'md' }: { score?: number; label: strin
 // 分析卡片组件
 function AnalysisCard({ title, content, score, icon }: { title: string; content: string; score?: number; icon: string }) {
   return (
-    <div className="p-4 rounded-lg bg-black/30 border border-gray-700">
+    <div className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-xl">{icon}</span>
-          <h3 className="font-serif text-gold-400">{title}</h3>
+          <h3 className="font-medium text-cyber-400">{title}</h3>
         </div>
         <ScoreRing score={score} label="" size="sm" />
       </div>
@@ -189,9 +189,9 @@ function CelePageContent() {
   // 密码页面
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
-        <div className="mystic-card-gold w-full max-w-sm p-6">
-          <h1 className="text-2xl font-serif text-gold-400 text-center mb-6">名人命盘解析</h1>
+      <div className="min-h-screen bg-tech-950 flex items-center justify-center p-4">
+        <div className="glass-card border-cyber-400/20 w-full max-w-sm p-6">
+          <h1 className="text-2xl font-serif text-cyber-400 text-center mb-6">名人命盘解析</h1>
           <p className="text-gray-400 text-sm text-center mb-4">专为名人/公众人物命盘分析优化</p>
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div>
@@ -200,7 +200,7 @@ function CelePageContent() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-gold-400"
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyber-400"
                 placeholder="输入密码"
                 autoFocus
               />
@@ -210,7 +210,7 @@ function CelePageContent() {
             </div>
             <button
               type="submit"
-              className="w-full py-3 bg-gold-400 text-black font-medium rounded-lg hover:bg-gold-300 transition-colors"
+              className="w-full py-3 bg-cyber-400 text-black font-medium rounded-lg hover:bg-gold-300 transition-colors"
             >
               进入名人模式
             </button>
@@ -223,7 +223,7 @@ function CelePageContent() {
   // 加载中页面
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+      <div className="min-h-screen bg-tech-950 flex items-center justify-center">
         <AnalysisLoader
           messages={curveMode === 'wealth' ? WEALTH_LOADING_MESSAGES : undefined}
         />
@@ -235,11 +235,11 @@ function CelePageContent() {
   const hasResult = (isWealthMode && wealthResult) || (!isWealthMode && freeResult);
 
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="min-h-screen bg-tech-950">
       <div className="max-w-4xl mx-auto p-6">
         {/* 标题和模式切换 */}
         <div className="text-center mb-8">
-          <h1 className="font-serif text-4xl text-gold-gradient mb-2">
+          <h1 className="font-serif text-4xl text-cyber-gradient mb-2">
             {CURVE_MODE_LABELS[curveMode]}
           </h1>
           <p className="text-text-secondary text-sm">
@@ -259,7 +259,7 @@ function CelePageContent() {
               }}
               className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
                 curveMode === 'life'
-                  ? 'bg-gold-400 text-black'
+                  ? 'bg-cyber-400 text-black'
                   : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
               }`}
             >
@@ -273,7 +273,7 @@ function CelePageContent() {
               }}
               className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
                 curveMode === 'wealth'
-                  ? 'bg-gold-400 text-black'
+                  ? 'bg-cyber-400 text-black'
                   : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
               }`}
             >
@@ -284,7 +284,7 @@ function CelePageContent() {
 
         {/* 输入表单 */}
         {!hasResult && (
-          <div className="mystic-card-gold max-w-md mx-auto">
+          <div className="glass-card border-cyber-400/20 max-w-md mx-auto">
             <BirthForm
               onSubmit={handleSubmit}
               disabled={isLoading}
@@ -319,7 +319,7 @@ function CelePageContent() {
               <button
                 onClick={handleShare}
                 disabled={shareLoading}
-                className="px-4 py-2 bg-gold-400/20 text-gold-400 border border-gold-400/50 rounded-lg hover:bg-gold-400/30 transition-colors text-sm"
+                className="px-4 py-2 bg-cyber-400/20 text-cyber-400 border border-cyber-400/50 rounded-lg hover:bg-cyber-400/30 transition-colors text-sm"
               >
                 {shareLoading ? '生成中...' : '📤 分享图片'}
               </button>
@@ -327,13 +327,13 @@ function CelePageContent() {
 
             {/* 人生高光时刻 */}
             {freeResult?.highlightMoment && !isWealthMode && (
-              <div className="mystic-card-gold p-4">
+              <div className="glass-card border-cyber-400/20 p-4">
                 <div className="flex items-start gap-3">
                   <div className="text-4xl">🌟</div>
                   <div className="flex-1">
-                    <h3 className="text-gold-400 font-serif text-lg mb-2">人生高光时刻</h3>
+                    <h3 className="text-cyber-400 font-serif text-lg mb-2">人生高光时刻</h3>
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="px-2 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
+                      <span className="px-2 py-1 rounded-full bg-cyber-400/20 text-cyber-400 text-sm font-mono">
                         {freeResult.highlightMoment.age}岁
                       </span>
                       <span className="text-text-secondary text-sm">· {freeResult.highlightMoment.title}</span>
@@ -346,13 +346,13 @@ function CelePageContent() {
 
             {/* 财富高光 */}
             {wealthResult && isWealthMode && (
-              <div className="mystic-card-gold p-4">
+              <div className="glass-card border-cyber-400/20 p-4">
                 <div className="flex items-start gap-3">
                   <div className="text-4xl">💰</div>
                   <div className="flex-1">
-                    <h3 className="text-gold-400 font-serif text-lg mb-2">财富巅峰</h3>
+                    <h3 className="text-cyber-400 font-serif text-lg mb-2">财富巅峰</h3>
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="px-2 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
+                      <span className="px-2 py-1 rounded-full bg-cyber-400/20 text-cyber-400 text-sm font-mono">
                         {wealthResult.highlights.peakAge}岁
                       </span>
                       <span className="text-text-secondary text-sm">· {wealthResult.wealthType}</span>
@@ -369,8 +369,8 @@ function CelePageContent() {
             )}
 
             {/* 图表展示 */}
-            <div className="mystic-card p-4">
-              <h3 className="text-gold-400 font-serif text-lg mb-4">
+            <div className="glass-card p-4">
+              <h3 className="text-cyber-400 font-serif text-lg mb-4">
                 {CURVE_MODE_LABELS[curveMode]}
               </h3>
               {!isWealthMode && freeResult && birthInfo && (
@@ -393,8 +393,8 @@ function CelePageContent() {
 
             {/* 八字排盘 */}
             {freeResult && birthInfo && !isWealthMode && (
-              <div className="mystic-card p-4">
-                <h3 className="text-gold-400 font-serif text-lg mb-4">四柱八字</h3>
+              <div className="glass-card p-4">
+                <h3 className="text-cyber-400 font-serif text-lg mb-4">四柱八字</h3>
                 <BaziChartDisplay
                   chart={freeResult.baziChart}
                   showDetails={true}
@@ -405,10 +405,10 @@ function CelePageContent() {
 
             {/* 命理总评 */}
             {freeResult && !isWealthMode && (
-              <div className="mystic-card p-4">
+              <div className="glass-card p-4">
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-gold-400 font-serif text-lg">命理总评</h3>
-                  <div className="text-2xl font-mono text-gold-400">{freeResult.summaryScore}分</div>
+                  <h3 className="text-cyber-400 font-serif text-lg">命理总评</h3>
+                  <div className="text-2xl font-mono text-cyber-400">{freeResult.summaryScore}分</div>
                 </div>
                 <p className="text-text-primary text-sm leading-relaxed mb-3">{freeResult.summary}</p>
                 {freeResult.currentPhase && (
@@ -421,7 +421,7 @@ function CelePageContent() {
                       {freeResult.currentPhase === 'valley' && '🌙'}
                     </span>
                     <span className="text-sm text-text-secondary">当前运势：</span>
-                    <span className="text-gold-400 text-sm">{PHASE_LABELS[freeResult.currentPhase as PhaseType]}</span>
+                    <span className="text-cyber-400 text-sm">{PHASE_LABELS[freeResult.currentPhase as PhaseType]}</span>
                   </div>
                 )}
               </div>
@@ -429,20 +429,20 @@ function CelePageContent() {
 
             {/* 财富分析 */}
             {wealthResult && isWealthMode && (
-              <div className="mystic-card p-4">
+              <div className="glass-card p-4">
                 <WealthAnalysis analysis={wealthResult.analysis} isPaid={false} />
               </div>
             )}
 
             {/* 大运流年 */}
             {daYunResult && (
-              <div className="mystic-card p-4">
-                <h3 className="text-gold-400 font-serif text-lg mb-3">大运流年</h3>
+              <div className="glass-card p-4">
+                <h3 className="text-cyber-400 font-serif text-lg mb-3">大运流年</h3>
                 <p className="text-xs text-gray-400 mb-3">{daYunResult.startInfo}</p>
                 <div className="flex flex-wrap gap-2">
                   {daYunResult.daYunList.slice(0, 8).map((dy, index) => (
                     <div key={index} className="px-3 py-2 bg-gray-800/50 rounded-lg text-center min-w-[60px]">
-                      <div className="text-gold-400 font-medium text-sm">{dy.ganZhi}</div>
+                      <div className="text-cyber-400 font-medium text-sm">{dy.ganZhi}</div>
                       <div className="text-xs text-gray-500">{dy.startAge}-{dy.endAge}岁</div>
                     </div>
                   ))}
@@ -452,8 +452,8 @@ function CelePageContent() {
 
             {/* 五行分析 */}
             {freeResult && !isWealthMode && (
-              <div className="mystic-card p-4">
-                <h3 className="text-gold-400 font-serif text-lg mb-4">五行生克</h3>
+              <div className="glass-card p-4">
+                <h3 className="text-cyber-400 font-serif text-lg mb-4">五行生克</h3>
                 <FiveElementsDiagram
                   wood={freeResult.fiveElements.wood}
                   fire={freeResult.fiveElements.fire}
@@ -463,7 +463,7 @@ function CelePageContent() {
                 />
                 {freeResult.elementAnalysis && (
                   <div className="mt-6 p-4 rounded-lg bg-black/30 border border-gray-700">
-                    <h3 className="text-gold-400 text-sm mb-2 flex items-center gap-2">
+                    <h3 className="text-cyber-400 text-sm mb-2 flex items-center gap-2">
                       <span>⚖️</span>
                       <span>五行相克分析</span>
                     </h3>
@@ -475,8 +475,8 @@ function CelePageContent() {
 
             {/* 八维详批 */}
             {freeResult && !isWealthMode && (
-              <div className="mystic-card p-4">
-                <h3 className="text-gold-400 font-serif text-lg mb-4">八维详批</h3>
+              <div className="glass-card p-4">
+                <h3 className="text-cyber-400 font-serif text-lg mb-4">八维详批</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {freeResult.personality && <AnalysisCard title="性格命格" content={freeResult.personality} score={freeResult.personalityScore} icon="🎭" />}
                   {freeResult.career && <AnalysisCard title="事业前程" content={freeResult.career} score={freeResult.careerScore} icon="💼" />}
@@ -491,20 +491,20 @@ function CelePageContent() {
 
             {/* 日主分析 */}
             {freeResult?.dayMaster && !isWealthMode && (
-              <div className="mystic-card p-4">
-                <h3 className="font-serif text-xl text-gold-400 mb-4">日主分析</h3>
+              <div className="glass-card p-4">
+                <h3 className="font-serif text-xl text-cyber-400 mb-4">日主分析</h3>
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500/30 to-gold-400/30 text-gold-400 font-serif text-xl">
+                  <span className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500/30 to-gold-400/30 text-cyber-400 font-serif text-xl">
                     {freeResult.dayMaster.stem}{freeResult.dayMaster.element}
                   </span>
-                  <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-sm">
+                  <span className="px-3 py-1 rounded-full bg-purple-500/20 text-cyber-300 text-sm">
                     {freeResult.dayMaster.strength}
                   </span>
                 </div>
                 <p className="text-text-primary leading-relaxed">{freeResult.dayMaster.description}</p>
                 {freeResult.usefulGod && (
                   <div className="mt-4 p-3 rounded-lg bg-mystic-800/50">
-                    <span className="text-gold-400 text-sm">用神喜忌：</span>
+                    <span className="text-cyber-400 text-sm">用神喜忌：</span>
                     <p className="text-text-secondary text-sm mt-1">{freeResult.usefulGod}</p>
                   </div>
                 )}
@@ -513,16 +513,16 @@ function CelePageContent() {
 
             {/* 高光年份 */}
             {freeResult?.highlights && freeResult.highlights.length > 0 && !isWealthMode && (
-              <div className="mystic-card p-4">
-                <h3 className="font-serif text-xl text-gold-400 mb-4">✦ 高光之年</h3>
+              <div className="glass-card p-4">
+                <h3 className="font-serif text-xl text-cyber-400 mb-4">✦ 高光之年</h3>
                 <div className="space-y-4">
                   {freeResult.highlights.map((h, i) => (
-                    <div key={i} className="p-4 rounded-lg bg-gradient-to-r from-gold-400/10 to-transparent border-l-2 border-gold-400">
+                    <div key={i} className="p-4 rounded-lg bg-gradient-to-r from-cyber-400/10 to-transparent border-l-2 border-cyber-400">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-gold-400 font-mono text-lg">{h.age}岁</span>
+                        <span className="text-cyber-400 font-mono text-lg">{h.age}岁</span>
                         <span className="text-text-secondary">({h.year}年)</span>
                         {h.type && (
-                          <span className="px-2 py-0.5 text-xs rounded-full bg-gold-400/20 text-gold-400">
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-cyber-400/20 text-cyber-400">
                             {TYPE_LABELS[h.type] || h.type}
                           </span>
                         )}
@@ -539,7 +539,7 @@ function CelePageContent() {
 
             {/* 警示年份 */}
             {freeResult?.warnings && freeResult.warnings.length > 0 && !isWealthMode && (
-              <div className="mystic-card p-4">
+              <div className="glass-card p-4">
                 <h3 className="font-serif text-xl text-kline-down mb-4">◆ 谨慎之年</h3>
                 <div className="space-y-4">
                   {freeResult.warnings.map((w, i) => (
@@ -559,7 +559,7 @@ function CelePageContent() {
                       )}
                       {w.advice && (
                         <p className="text-accent-blue text-sm">
-                          <span className="text-gold-400">化解之道：</span>{w.advice}
+                          <span className="text-cyber-400">化解之道：</span>{w.advice}
                         </p>
                       )}
                     </div>
@@ -570,33 +570,33 @@ function CelePageContent() {
 
             {/* 开运指南 */}
             {freeResult?.luckyInfo && !isWealthMode && (
-              <div className="mystic-card p-4">
-                <h3 className="font-serif text-xl text-gold-400 mb-4">开运指南</h3>
+              <div className="glass-card p-4">
+                <h3 className="font-serif text-xl text-cyber-400 mb-4">开运指南</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
                     <p className="text-2xl mb-2">🧭</p>
                     <p className="text-xs text-text-secondary mb-1">吉利方位</p>
-                    <p className="text-purple-300 text-sm">{freeResult.luckyInfo.direction}</p>
+                    <p className="text-cyber-300 text-sm">{freeResult.luckyInfo.direction}</p>
                   </div>
                   <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
                     <p className="text-2xl mb-2">🎨</p>
                     <p className="text-xs text-text-secondary mb-1">幸运颜色</p>
-                    <p className="text-purple-300 text-sm">{freeResult.luckyInfo.color}</p>
+                    <p className="text-cyber-300 text-sm">{freeResult.luckyInfo.color}</p>
                   </div>
                   <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
                     <p className="text-2xl mb-2">🔢</p>
                     <p className="text-xs text-text-secondary mb-1">幸运数字</p>
-                    <p className="text-purple-300 text-sm">{freeResult.luckyInfo.number}</p>
+                    <p className="text-cyber-300 text-sm">{freeResult.luckyInfo.number}</p>
                   </div>
                   <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
                     <p className="text-2xl mb-2">💼</p>
                     <p className="text-xs text-text-secondary mb-1">适合行业</p>
-                    <p className="text-purple-300 text-sm">{freeResult.luckyInfo.industry}</p>
+                    <p className="text-cyber-300 text-sm">{freeResult.luckyInfo.industry}</p>
                   </div>
                 </div>
                 {freeResult.luckyExplanation && (
                   <div className="mt-6 p-4 rounded-lg bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30">
-                    <h4 className="text-gold-400 text-sm mb-3 flex items-center gap-2">
+                    <h4 className="text-cyber-400 text-sm mb-3 flex items-center gap-2">
                       <span>✨</span>
                       <span>开运详解</span>
                     </h4>
@@ -616,8 +616,8 @@ function CelePageContent() {
 export default function CelePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-bg-primary">
-        <div className="text-gold-400 animate-pulse">加载中...</div>
+      <div className="min-h-screen flex items-center justify-center bg-tech-950">
+        <div className="text-cyber-400 animate-pulse">加载中...</div>
       </div>
     }>
       <CelePageContent />

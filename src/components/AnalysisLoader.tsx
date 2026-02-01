@@ -8,14 +8,37 @@ interface AnalysisLoaderProps {
   messages?: string[];
 }
 
+// Tech-style loading messages
+const TECH_LOADING_MESSAGES = [
+  { id: 'init', name: '初始化时空坐标系统', icon: '◎' },
+  { id: 'fetch', name: '调取历史气象数据', icon: '◉' },
+  { id: 'model', name: '加载时间维度模型', icon: '◈' },
+  { id: 'calc', name: '运行周期算法', icon: '◇' },
+  { id: 'analyze', name: '多维度交叉分析', icon: '◆' },
+  { id: 'predict', name: '生成趋势预测', icon: '●' },
+];
+
 export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderProps) {
   // 使用自定义消息或默认模块
   const displayModules = messages
-    ? messages.map((msg, i) => ({ id: `msg-${i}`, name: msg, icon: '○' }))
-    : ANALYSIS_MODULES;
+    ? messages.map((msg, i) => ({ id: `msg-${i}`, name: msg, icon: '◎' }))
+    : TECH_LOADING_MESSAGES;
   const [progress, setProgress] = useState(0);
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
-  const [queuePosition, setQueuePosition] = useState(() => Math.floor(Math.random() * 5) + 1);
+  const [queuePosition, setQueuePosition] = useState(() => Math.floor(Math.random() * 3) + 1);
+  const [dataPoints, setDataPoints] = useState<number[]>([]);
+
+  // Generate random data points for visualization
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDataPoints(prev => {
+        const newPoints = [...prev, Math.random() * 100];
+        if (newPoints.length > 20) newPoints.shift();
+        return newPoints;
+      });
+    }, 200);
+    return () => clearInterval(interval);
+  }, []);
 
   // 模拟排队进度
   useEffect(() => {
@@ -28,7 +51,7 @@ export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderP
           }
           return prev - 1;
         });
-      }, 1500);
+      }, 1200);
 
       return () => clearInterval(queueTimer);
     }
@@ -63,58 +86,115 @@ export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderP
   // 估计剩余时间
   const estimatedTime = useMemo(() => {
     if (queuePosition > 0) {
-      return `排队中，约 ${queuePosition * 3} 秒`;
+      return `Queue: ${queuePosition}`;
     }
     const remaining = Math.ceil((99 - progress) / 10);
-    return remaining > 0 ? `约 ${remaining} 秒` : '即将完成';
+    return remaining > 0 ? `ETA: ${remaining}s` : 'Completing...';
   }, [queuePosition, progress]);
 
   return (
     <div className="flex flex-col items-center justify-center gap-6 px-4">
-      {/* 太极图 */}
+      {/* Tech Scanner Animation */}
       <div className="relative w-48 h-48 md:w-56 md:h-56 flex items-center justify-center">
-        <div className="yinyang"></div>
+        {/* Outer ring */}
+        <div className="absolute inset-0 rounded-full border-2 border-cyber-400/30"></div>
+        <div className="absolute inset-2 rounded-full border border-cyber-400/20"></div>
+        <div className="absolute inset-4 rounded-full border border-white/10"></div>
+
+        {/* Scanning line */}
+        <div className="absolute inset-0 rounded-full overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-cyber-400/20 via-transparent to-transparent animate-scan"></div>
+        </div>
+
+        {/* Center hexagon */}
+        <div className="relative w-20 h-20 md:w-24 md:h-24">
+          <svg viewBox="0 0 100 100" className="w-full h-full animate-spin-slow">
+            <polygon
+              points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5"
+              fill="none"
+              stroke="rgba(34, 211, 238, 0.5)"
+              strokeWidth="2"
+            />
+            <polygon
+              points="50,15 85,32.5 85,67.5 50,85 15,67.5 15,32.5"
+              fill="rgba(34, 211, 238, 0.1)"
+              stroke="rgba(34, 211, 238, 0.3)"
+              strokeWidth="1"
+            />
+          </svg>
+          {/* Progress percentage */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-cyber-400 font-mono text-xl md:text-2xl font-bold">
+              {queuePosition > 0 ? '...' : `${Math.round(progress)}%`}
+            </span>
+          </div>
+        </div>
+
+        {/* Data visualization dots */}
+        <div className="absolute bottom-0 left-0 right-0 h-12 flex items-end justify-center gap-0.5 opacity-50">
+          {dataPoints.map((point, i) => (
+            <div
+              key={i}
+              className="w-1 bg-cyber-400 rounded-t transition-all duration-200"
+              style={{ height: `${point * 0.4}%` }}
+            />
+          ))}
+        </div>
+
+        {/* Orbiting dots */}
+        <div className="absolute inset-0 animate-spin-slow" style={{ animationDuration: '6s' }}>
+          <div className="absolute top-0 left-1/2 w-2 h-2 -ml-1 rounded-full bg-cyber-400 shadow-cyber-glow"></div>
+        </div>
+        <div className="absolute inset-0 animate-spin-slow" style={{ animationDuration: '8s', animationDirection: 'reverse' }}>
+          <div className="absolute bottom-0 left-1/2 w-1.5 h-1.5 -ml-0.75 rounded-full bg-neon-blue"></div>
+        </div>
       </div>
 
       {/* 状态信息 */}
       <div className="text-center space-y-3 w-full max-w-sm">
         {queuePosition > 0 ? (
           <>
-            <p className="font-serif text-lg text-white">
-              天机排演中...
+            <p className="text-lg text-white font-medium">
+              Initializing System...
             </p>
-            <div className="flex items-center justify-center gap-2 text-gray-400">
-              <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse" />
-              <span>当前排位：第 <span className="text-white font-mono">{queuePosition}</span> 位</span>
+            <div className="flex items-center justify-center gap-2 text-text-secondary">
+              <span className="inline-block w-2 h-2 bg-cyber-400 rounded-full animate-pulse" />
+              <span className="font-mono">Queue Position: <span className="text-cyber-400">{queuePosition}</span></span>
             </div>
           </>
         ) : (
           <>
-            <p className="font-serif text-lg text-white">
-              {displayModules[currentModuleIndex]?.icon} {displayModules[currentModuleIndex]?.name}
+            <p className="text-lg text-white font-medium flex items-center justify-center gap-2">
+              <span className="text-cyber-400">{displayModules[currentModuleIndex]?.icon}</span>
+              <span>{displayModules[currentModuleIndex]?.name}</span>
             </p>
-            <div className="text-gray-400 text-sm">
-              AI 深度解析中...
+            <div className="text-text-muted text-sm font-mono">
+              Processing temporal data matrix...
             </div>
           </>
         )}
 
         {/* 进度条 */}
-        <div className="relative h-2 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
+        <div className="relative h-1 bg-tech-800 rounded-full overflow-hidden">
           <div
-            className="absolute inset-y-0 left-0 bg-white rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${queuePosition > 0 ? 0 : progress}%` }}
+            className="absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out"
+            style={{
+              width: `${queuePosition > 0 ? 0 : progress}%`,
+              background: 'linear-gradient(90deg, #06b6d4, #3b82f6)'
+            }}
           />
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 shimmer"></div>
         </div>
 
-        <div className="flex justify-between text-xs text-gray-400">
-          <span>{queuePosition > 0 ? '等待中' : `${Math.round(progress)}%`}</span>
+        <div className="flex justify-between text-xs text-text-muted font-mono">
+          <span>{queuePosition > 0 ? 'Waiting...' : `${Math.round(progress)}% Complete`}</span>
           <span>{estimatedTime}</span>
         </div>
 
         {/* 模块进度列表 */}
         {queuePosition === 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4">
             {displayModules.map((module, index) => {
               const isCompleted = index < currentModuleIndex;
               const isCurrent = index === currentModuleIndex;
@@ -122,95 +202,35 @@ export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderP
               return (
                 <div
                   key={module.id}
-                  className={`flex items-center justify-center gap-1 px-2 py-2 rounded text-xs transition-all border ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all border ${
                     isCompleted
-                      ? 'bg-white/10 text-white border-white/30'
+                      ? 'bg-cyber-400/10 text-cyber-400 border-cyber-400/30'
                       : isCurrent
-                      ? 'bg-white/20 text-white border-white/50 animate-pulse'
-                      : 'bg-black/30 text-gray-500 border-gray-700'
+                      ? 'bg-cyber-400/20 text-white border-cyber-400/50 animate-pulse'
+                      : 'bg-tech-800/50 text-text-muted border-white/5'
                   }`}
                 >
-                  <span>{module.icon}</span>
-                  <span className="whitespace-nowrap">{module.name}</span>
-                  {isCompleted && <span className="ml-1 flex-shrink-0">✓</span>}
+                  <span className="text-sm">{isCompleted ? '✓' : module.icon}</span>
+                  <span className="whitespace-nowrap truncate">{module.name}</span>
                 </div>
               );
             })}
           </div>
         )}
+
+        {/* Terminal-style log */}
+        <div className="mt-4 p-3 rounded-lg bg-black/40 border border-white/5 text-left font-mono text-xs text-text-muted">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-2 h-2 rounded-full bg-neon-red"></span>
+            <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
+            <span className="w-2 h-2 rounded-full bg-neon-green"></span>
+          </div>
+          <div className="space-y-1 max-h-16 overflow-hidden">
+            <p className="text-cyber-400">$ analyzing temporal coordinates...</p>
+            <p className="animate-pulse">{'>'} {displayModules[currentModuleIndex]?.name || 'Loading...'}</p>
+          </div>
+        </div>
       </div>
-
-      <style jsx>{`
-        .yinyang {
-          width: 200px;
-          height: 200px;
-          background: #fff;
-          box-sizing: border-box;
-          border-color: #000;
-          border-style: solid;
-          border-width: 3px 3px 100px 3px;
-          border-radius: 100%;
-          position: relative;
-          animation: yinyangRotate 4s infinite linear;
-        }
-
-        @media (min-width: 768px) {
-          .yinyang {
-            width: 224px;
-            height: 224px;
-            border-width: 3px 3px 112px 3px;
-          }
-
-          .yinyang::before {
-            width: 108px !important;
-            height: 108px !important;
-            border-width: 41px !important;
-          }
-
-          .yinyang::after {
-            width: 108px !important;
-            height: 108px !important;
-            border-width: 41px !important;
-          }
-        }
-
-        .yinyang::before {
-          content: "";
-          width: 97px;
-          height: 97px;
-          background: #fff;
-          box-sizing: border-box;
-          border-radius: 100%;
-          border: 37px solid #000;
-          position: absolute;
-          left: 0;
-          top: 100%;
-          transform: translate(0, -50%);
-        }
-
-        .yinyang::after {
-          content: "";
-          width: 97px;
-          height: 97px;
-          background: #000;
-          box-sizing: border-box;
-          border-radius: 100%;
-          border: 37px solid #fff;
-          position: absolute;
-          right: 0;
-          top: 100%;
-          transform: translate(0, -50%);
-        }
-
-        @keyframes yinyangRotate {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </div>
   );
 }

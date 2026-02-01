@@ -143,7 +143,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
 
     // 性别验证
     if (!gender) {
-      errors.push('请选择性别');
+      errors.push('请选择性别参数');
     }
 
     // 年份验证
@@ -163,7 +163,7 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
 
     // 时辰验证
     if (shiChen === '') {
-      errors.push('请选择出生时辰');
+      errors.push('请选择出生时段');
     }
 
     return errors;
@@ -281,46 +281,46 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-text-secondary mb-2">
-            姓名 <span className="text-kline-down">*</span>
+            标识符 <span className="text-kline-down text-xs">(姓名)</span>
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => handleNameChange(e.target.value)}
             placeholder="请输入中文姓名"
-            className={`input-mystic ${nameError ? 'border-red-500' : ''}`}
+            className={`input-tech ${nameError ? 'border-neon-red' : ''}`}
             maxLength={4}
           />
           {nameError && (
-            <p className="text-xs text-red-400 mt-1">{nameError}</p>
+            <p className="text-xs text-neon-red mt-1">{nameError}</p>
           )}
         </div>
         <div>
           <label className="block text-sm text-text-secondary mb-2">
-            性别 <span className="text-kline-down">*</span>
+            性别参数 <span className="text-kline-down text-xs">(必选)</span>
           </label>
           <div className="flex gap-2">
             <button
               type="button"
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center border ${
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center border ${
                 gender === 'male'
-                  ? 'bg-white/10 border-white text-white'
-                  : 'bg-black/50 border-gray-700 text-text-secondary hover:border-gray-500'
+                  ? 'bg-cyber-400/10 border-cyber-400 text-cyber-400'
+                  : 'bg-black/40 border-white/10 text-text-secondary hover:border-white/20'
               }`}
               onClick={() => setGender('male')}
             >
-              乾造(男)
+              <span className="mr-1.5">♂</span> Male
             </button>
             <button
               type="button"
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center border ${
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center border ${
                 gender === 'female'
-                  ? 'bg-white/10 border-white text-white'
-                  : 'bg-black/50 border-gray-700 text-text-secondary hover:border-gray-500'
+                  ? 'bg-cyber-400/10 border-cyber-400 text-cyber-400'
+                  : 'bg-black/40 border-white/10 text-text-secondary hover:border-white/20'
               }`}
               onClick={() => setGender('female')}
             >
-              坤造(女)
+              <span className="mr-1.5">♀</span> Female
             </button>
           </div>
         </div>
@@ -329,58 +329,70 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
       {/* 历法选择 */}
       <div>
         <label className="block text-sm text-text-secondary mb-2">
-          历法 <span className="text-kline-down">*</span>
+          日历系统 <span className="text-text-muted text-xs">(Calendar System)</span>
         </label>
-        <div className="flex gap-3">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="calendar"
-              checked={calendarType === 'solar'}
-              onChange={() => setCalendarType('solar')}
-              className="w-4 h-4 accent-white bg-black border-gray-700"
-            />
-            <span className={calendarType === 'solar' ? 'text-white' : 'text-text-secondary'}>
-              公历
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+              calendarType === 'solar' ? 'border-cyber-400' : 'border-white/30 group-hover:border-white/50'
+            }`}>
+              {calendarType === 'solar' && <div className="w-2 h-2 rounded-full bg-cyber-400"></div>}
+            </div>
+            <span className={`text-sm ${calendarType === 'solar' ? 'text-cyber-400' : 'text-text-secondary'}`}>
+              公历 (Solar)
             </span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="calendar"
-              checked={calendarType === 'lunar'}
-              onChange={() => setCalendarType('lunar')}
-              className="w-4 h-4 accent-white bg-black border-gray-700"
-            />
-            <span className={calendarType === 'lunar' ? 'text-white' : 'text-text-secondary'}>
-              农历
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+              calendarType === 'lunar' ? 'border-cyber-400' : 'border-white/30 group-hover:border-white/50'
+            }`}>
+              {calendarType === 'lunar' && <div className="w-2 h-2 rounded-full bg-cyber-400"></div>}
+            </div>
+            <span className={`text-sm ${calendarType === 'lunar' ? 'text-cyber-400' : 'text-text-secondary'}`}>
+              农历 (Lunar)
             </span>
           </label>
         </div>
+        <input type="hidden" value={calendarType} onChange={() => {}} />
+        <div className="hidden">
+          <input
+            type="radio"
+            name="calendar"
+            checked={calendarType === 'solar'}
+            onChange={() => setCalendarType('solar')}
+          />
+          <input
+            type="radio"
+            name="calendar"
+            checked={calendarType === 'lunar'}
+            onChange={() => setCalendarType('lunar')}
+          />
+        </div>
+        <div onClick={() => setCalendarType(calendarType === 'solar' ? 'lunar' : 'solar')} className="hidden"></div>
       </div>
 
       {/* 出生日期 - 全部下拉选择 */}
       <div>
         <label className="block text-sm text-text-secondary mb-2">
-          出生日期 <span className="text-kline-down">*</span>
+          时间坐标 <span className="text-text-muted text-xs">(Birth Date)</span>
         </label>
         <div className="grid grid-cols-3 gap-2">
           <select
             value={year}
             onChange={(e) => setYear(e.target.value ? parseInt(e.target.value) : '')}
-            className="select-mystic w-full"
+            className="select-tech w-full"
           >
-            <option value="">选择年</option>
+            <option value="">Year</option>
             {years.map((y) => (
-              <option key={y} value={y}>{y}年</option>
+              <option key={y} value={y}>{y}</option>
             ))}
           </select>
           <select
             value={month}
             onChange={(e) => setMonth(e.target.value ? parseInt(e.target.value) : '')}
-            className="select-mystic w-full"
+            className="select-tech w-full"
           >
-            <option value="">选择月</option>
+            <option value="">Month</option>
             {months.map((m) => (
               <option key={m} value={m}>{m}月</option>
             ))}
@@ -388,9 +400,9 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
           <select
             value={day}
             onChange={(e) => setDay(e.target.value ? parseInt(e.target.value) : '')}
-            className="select-mystic w-full"
+            className="select-tech w-full"
           >
-            <option value="">选择日</option>
+            <option value="">Day</option>
             {days.map((d) => (
               <option key={d} value={d}>{d}日</option>
             ))}
@@ -402,22 +414,22 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm text-text-secondary">
-            出生时辰 <span className="text-kline-down">*</span>
+            时段参数 <span className="text-text-muted text-xs">(Time Period)</span>
           </label>
           <button
             type="button"
             onClick={setCurrentTime}
-            className="text-xs text-white hover:text-gray-300 px-2 py-1 rounded border border-gray-700 hover:border-gray-500 bg-black/50"
+            className="text-xs text-cyber-400 hover:text-cyber-300 px-2 py-1 rounded-lg border border-cyber-400/30 hover:border-cyber-400/50 bg-cyber-400/5 transition-all"
           >
-            当前时间
+            Now
           </button>
         </div>
         <select
           value={shiChen}
           onChange={(e) => setShiChen(e.target.value ? parseInt(e.target.value) : '')}
-          className="select-mystic w-full"
+          className="select-tech w-full"
         >
-          <option value="">请选择时辰</option>
+          <option value="">Select Time Period</option>
           {SHI_CHEN_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label} ({option.time})
@@ -429,15 +441,15 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
       {/* 出生地 - 省/市选择 */}
       <div>
         <label className="block text-sm text-text-secondary mb-2">
-          出生地 <span className="text-text-secondary/50">(选填，用于计算真太阳时)</span>
+          地理坐标 <span className="text-text-muted text-xs">(Location - Optional)</span>
         </label>
         <div className="grid grid-cols-2 gap-2">
           <select
             value={province}
             onChange={(e) => handleProvinceChange(e.target.value)}
-            className="select-mystic"
+            className="select-tech"
           >
-            <option value="">选择省份</option>
+            <option value="">Province</option>
             {CHINA_PROVINCES.map((p) => (
               <option key={p.name} value={p.name}>
                 {p.name}
@@ -447,10 +459,10 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
           <select
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="select-mystic"
+            className="select-tech"
             disabled={!province}
           >
-            <option value="">城市</option>
+            <option value="">City</option>
             {cities.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -460,12 +472,12 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
         </div>
       </div>
 
-      {/* 八字预览 */}
+      {/* 时空矩阵预览 */}
       {baziResult && (
-        <div className="p-4 rounded-xl bg-black/80 border border-gray-700">
+        <div className="p-4 rounded-xl bg-tech-800/50 border border-white/10">
           <div className="text-center mb-3">
-            <span className="text-xs text-white">命盘预览</span>
-            <p className="text-xs text-text-secondary mt-1">
+            <span className="text-xs text-cyber-400 font-mono uppercase tracking-wider">Temporal Matrix Preview</span>
+            <p className="text-xs text-text-muted mt-1">
               {baziResult.chart.lunarDate} · {baziResult.chart.zodiac}年
             </p>
           </div>
@@ -473,41 +485,41 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
           {/* 四柱八字 */}
           <div className="grid grid-cols-4 gap-2 mb-4">
             {[
-              { label: '年柱', pillar: baziResult.chart.yearPillar, naYin: baziResult.naYin.year },
-              { label: '月柱', pillar: baziResult.chart.monthPillar, naYin: baziResult.naYin.month },
-              { label: '日柱', pillar: baziResult.chart.dayPillar, naYin: baziResult.naYin.day },
-              { label: '时柱', pillar: baziResult.chart.hourPillar, naYin: baziResult.naYin.hour },
+              { label: 'Y', pillar: baziResult.chart.yearPillar, naYin: baziResult.naYin.year },
+              { label: 'M', pillar: baziResult.chart.monthPillar, naYin: baziResult.naYin.month },
+              { label: 'D', pillar: baziResult.chart.dayPillar, naYin: baziResult.naYin.day },
+              { label: 'H', pillar: baziResult.chart.hourPillar, naYin: baziResult.naYin.hour },
             ].map((item) => (
               <div key={item.label} className="text-center">
-                <div className="text-xs text-text-secondary mb-1">{item.label}</div>
-                <div className="bg-black/80 rounded-lg p-2 border border-gray-700">
-                  <div className="text-gold-400 font-bold text-lg">{item.pillar.heavenlyStem}</div>
+                <div className="text-xs text-text-muted mb-1 font-mono">{item.label}</div>
+                <div className="bg-black/40 rounded-lg p-2 border border-white/10">
+                  <div className="text-cyber-400 font-bold text-lg">{item.pillar.heavenlyStem}</div>
                   <div className="text-white font-bold text-lg">{item.pillar.earthlyBranch}</div>
                 </div>
-                <div className="text-xs text-text-secondary/70 mt-1">{item.naYin}</div>
+                <div className="text-xs text-text-muted/70 mt-1">{item.naYin}</div>
               </div>
             ))}
           </div>
 
           {/* 五行统计 */}
           <div className="flex justify-center gap-3 text-xs mb-3">
-            <span className="text-green-400">木{baziResult.wuXing.year.includes('木') ? 1 : 0}{baziResult.wuXing.month.includes('木') ? 1 : 0}{baziResult.wuXing.day.includes('木') ? 1 : 0}{baziResult.wuXing.hour.includes('木') ? 1 : 0}</span>
-            <span className="text-red-400">火{baziResult.wuXing.year.includes('火') ? 1 : 0}{baziResult.wuXing.month.includes('火') ? 1 : 0}{baziResult.wuXing.day.includes('火') ? 1 : 0}{baziResult.wuXing.hour.includes('火') ? 1 : 0}</span>
+            <span className="text-neon-green">木{baziResult.wuXing.year.includes('木') ? 1 : 0}{baziResult.wuXing.month.includes('木') ? 1 : 0}{baziResult.wuXing.day.includes('木') ? 1 : 0}{baziResult.wuXing.hour.includes('木') ? 1 : 0}</span>
+            <span className="text-neon-red">火{baziResult.wuXing.year.includes('火') ? 1 : 0}{baziResult.wuXing.month.includes('火') ? 1 : 0}{baziResult.wuXing.day.includes('火') ? 1 : 0}{baziResult.wuXing.hour.includes('火') ? 1 : 0}</span>
             <span className="text-yellow-400">土{baziResult.wuXing.year.includes('土') ? 1 : 0}{baziResult.wuXing.month.includes('土') ? 1 : 0}{baziResult.wuXing.day.includes('土') ? 1 : 0}{baziResult.wuXing.hour.includes('土') ? 1 : 0}</span>
             <span className="text-gray-300">金{baziResult.wuXing.year.includes('金') ? 1 : 0}{baziResult.wuXing.month.includes('金') ? 1 : 0}{baziResult.wuXing.day.includes('金') ? 1 : 0}{baziResult.wuXing.hour.includes('金') ? 1 : 0}</span>
-            <span className="text-blue-400">水{baziResult.wuXing.year.includes('水') ? 1 : 0}{baziResult.wuXing.month.includes('水') ? 1 : 0}{baziResult.wuXing.day.includes('水') ? 1 : 0}{baziResult.wuXing.hour.includes('水') ? 1 : 0}</span>
+            <span className="text-neon-blue">水{baziResult.wuXing.year.includes('水') ? 1 : 0}{baziResult.wuXing.month.includes('水') ? 1 : 0}{baziResult.wuXing.day.includes('水') ? 1 : 0}{baziResult.wuXing.hour.includes('水') ? 1 : 0}</span>
           </div>
 
           {/* 大运预览 */}
           {daYunResult && daYunResult.daYunList.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-700">
-              <div className="text-xs text-white text-center mb-2">大运排盘</div>
-              <div className="text-xs text-text-secondary/70 text-center mb-2">{daYunResult.startInfo}</div>
+            <div className="mt-3 pt-3 border-t border-white/10">
+              <div className="text-xs text-cyber-400 text-center mb-2 font-mono uppercase tracking-wider">Cycle Sequence</div>
+              <div className="text-xs text-text-muted/70 text-center mb-2">{daYunResult.startInfo}</div>
               <div className="flex gap-1 overflow-x-auto pb-1">
                 {daYunResult.daYunList.slice(0, 8).map((daYun, idx) => (
-                  <div key={idx} className="flex-shrink-0 text-center px-2 py-1 bg-black/50 rounded border border-gray-700">
-                    <div className="text-gold-400 text-sm font-medium">{daYun.ganZhi}</div>
-                    <div className="text-text-secondary/60 text-xs">{daYun.startAge}-{daYun.endAge}岁</div>
+                  <div key={idx} className="flex-shrink-0 text-center px-2 py-1 bg-black/40 rounded-lg border border-white/10">
+                    <div className="text-cyber-400 text-sm font-medium">{daYun.ganZhi}</div>
+                    <div className="text-text-muted/60 text-xs">{daYun.startAge}-{daYun.endAge}</div>
                   </div>
                 ))}
               </div>
@@ -518,18 +530,19 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
 
       {/* 表单错误提示 */}
       {showErrors && formErrors.length > 0 && (
-        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-          <p className="text-red-400 text-sm font-medium mb-1">请完善以下信息：</p>
+        <div className="p-3 rounded-xl bg-neon-red/10 border border-neon-red/30">
+          <p className="text-neon-red text-sm font-medium mb-1">请完善以下参数：</p>
           <ul className="list-disc list-inside space-y-0.5">
             {formErrors.map((error, idx) => (
-              <li key={idx} className="text-red-400/80 text-xs">{error}</li>
+              <li key={idx} className="text-neon-red/80 text-xs">{error}</li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* 两个按钮选项 */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* SaaS-style Pricing Buttons */}
+      <div className="space-y-3">
+        {/* Starter Plan */}
         <button
           type="button"
           disabled={disabled}
@@ -545,15 +558,32 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
             if (!trySubmit(false)) return;
             // 再检查积分
             if (remainingUsage <= 0 && points < 10) {
-              setFormErrors(['免费次数已用完，积分不足']);
+              setFormErrors(['免费额度已用完，积分不足']);
               setShowErrors(true);
               return;
             }
           }}
-          className="btn-outline py-3 text-base font-serif"
+          className="w-full p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all group"
         >
-          {remainingUsage > 0 ? '免费概览' : '10积分概览'}
+          <div className="flex items-center justify-between">
+            <div className="text-left">
+              <div className="flex items-center gap-2">
+                <span className="text-white font-medium">Starter</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-text-muted">基础版</span>
+              </div>
+              <p className="text-xs text-text-muted mt-0.5">快速概览 · 5维度分析</p>
+            </div>
+            <div className="text-right">
+              {remainingUsage > 0 ? (
+                <div className="text-neon-green font-mono text-lg">FREE</div>
+              ) : (
+                <div className="text-cyber-400 font-mono text-lg">10 pts</div>
+              )}
+            </div>
+          </div>
         </button>
+
+        {/* Pro Plan */}
         <button
           type="button"
           disabled={disabled}
@@ -578,22 +608,40 @@ export default function BirthForm({ onSubmit, disabled, remainingUsage, points =
             }
             // 再检查积分
             if (points < detailedPrice) {
-              setFormErrors([`积分不足，需要${detailedPrice}积分解锁精批详解`]);
+              setFormErrors([`积分不足，需要${detailedPrice}积分解锁专业版`]);
               setShowErrors(true);
               return;
             }
             trySubmit(true);
           }}
-          className={`py-3 text-base font-serif ${points >= detailedPrice ? 'btn-gold' : 'btn-gold opacity-50'}`}
+          className={`w-full p-4 rounded-xl border transition-all relative overflow-hidden group ${
+            points >= detailedPrice
+              ? 'border-cyber-400/50 bg-cyber-400/10 hover:bg-cyber-400/20 hover:border-cyber-400'
+              : 'border-white/10 bg-white/5 opacity-60'
+          }`}
         >
-          精批详解
+          {/* Glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-cyber-400/0 via-cyber-400/10 to-cyber-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+
+          <div className="flex items-center justify-between relative">
+            <div className="text-left">
+              <div className="flex items-center gap-2">
+                <span className="text-cyber-400 font-medium">Professional</span>
+                <span className="badge badge-pro text-xs">专业版</span>
+              </div>
+              <p className="text-xs text-text-muted mt-0.5">深度分析 · 8维度解析 · 周期预测</p>
+            </div>
+            <div className="text-right">
+              <div className="text-cyber-400 font-mono text-lg">{detailedPrice} pts</div>
+            </div>
+          </div>
         </button>
       </div>
 
-      {/* 积分不足提示 - 只在积分不够时显示 */}
+      {/* 积分不足提示 */}
       {points < detailedPrice && !showErrors && (
-        <p className="text-center text-xs text-text-secondary/70 mt-2">
-          需要{detailedPrice}积分解锁精批详解
+        <p className="text-center text-xs text-text-muted mt-2">
+          需要 <span className="text-cyber-400 font-mono">{detailedPrice}</span> 积分解锁专业版分析
         </p>
       )}
     </form>

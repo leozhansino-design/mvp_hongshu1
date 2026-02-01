@@ -77,7 +77,7 @@ export default function Header({
                       className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                         curveMode === mode
                           ? mode === 'wealth'
-                            ? 'bg-gradient-to-r from-gold-400/30 to-amber-500/30 text-gold-400 shadow-sm'
+                            ? 'bg-gradient-to-r from-cyber-400/30 to-amber-500/30 text-cyber-400 shadow-sm'
                             : 'bg-purple-500/20 text-purple-300 shadow-sm'
                           : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
                       }`}
@@ -97,8 +97,8 @@ export default function Header({
                 href="/masters"
                 className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all border flex-shrink-0 whitespace-nowrap ${
                   pathname === '/masters'
-                    ? 'bg-gold-400/20 text-gold-400 border-gold-400/50'
-                    : 'text-text-secondary hover:text-gold-400 border-gray-700 hover:border-gold-400/50'
+                    ? 'bg-cyber-400/20 text-cyber-400 border-cyber-400/50'
+                    : 'text-text-secondary hover:text-cyber-400 border-gray-700 hover:border-cyber-400/50'
                 }`}
               >
                 大师测算
@@ -114,7 +114,7 @@ export default function Header({
                     href={item.href}
                     className={`text-sm transition-colors ${
                       pathname === item.href
-                        ? 'text-gold-400'
+                        ? 'text-cyber-400'
                         : 'text-text-secondary hover:text-text-primary'
                     }`}
                   >
@@ -134,7 +134,7 @@ export default function Header({
                 ) : (
                   <button
                     onClick={() => setShowLoginModal(true)}
-                    className="px-4 py-2 text-sm text-gold-400 border border-gold-400/50 rounded-lg hover:bg-gold-400/10 transition-colors"
+                    className="px-4 py-2 text-sm text-cyber-400 border border-cyber-400/50 rounded-lg hover:bg-cyber-400/10 transition-colors"
                   >
                     登录
                   </button>
@@ -154,7 +154,7 @@ export default function Header({
                 ) : (
                   <button
                     onClick={() => setShowLoginModal(true)}
-                    className="px-3 py-1.5 text-sm text-gold-400 border border-gold-400/50 rounded-lg hover:bg-gold-400/10 transition-colors"
+                    className="px-3 py-1.5 text-sm text-cyber-400 border border-cyber-400/50 rounded-lg hover:bg-cyber-400/10 transition-colors"
                   >
                     登录
                   </button>
@@ -193,7 +193,7 @@ export default function Header({
                         }}
                         className={`flex-1 py-2 px-3 rounded-lg text-sm transition-colors ${
                           curveMode === mode
-                            ? 'bg-gold-400/20 text-gold-400 border border-gold-400/50'
+                            ? 'bg-cyber-400/20 text-cyber-400 border border-cyber-400/50'
                             : 'bg-white/5 text-text-secondary border border-gray-700'
                         }`}
                       >
@@ -210,7 +210,7 @@ export default function Header({
                   onClick={() => setMenuOpen(false)}
                   className={`block py-2 text-sm ${
                     pathname === item.href
-                      ? 'text-gold-400'
+                      ? 'text-cyber-400'
                       : 'text-text-secondary'
                   }`}
                 >

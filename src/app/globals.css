@@ -1,22 +1,42 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --mystic-900: #0D0221;
-  --mystic-800: #1A0A2E;
-  --mystic-700: #16213E;
-  --gold-400: #FFD700;
-  --gold-500: #D4AF37;
-  --purple-400: #9D4EDD;
-  --purple-500: #7B2CBF;
-  --kline-up: #22D3EE;
-  --kline-down: #F43F5E;
-  --accent-blue: #00D9FF;
-  --text-primary: #E8E6E3;
-  --text-secondary: #9CA3AF;
+  /* Tech Dark Colors */
+  --tech-950: #030712;
+  --tech-900: #0a0f1a;
+  --tech-800: #111827;
+  --tech-700: #1e293b;
+  --tech-600: #334155;
+
+  /* Cyber Colors */
+  --cyber-300: #67e8f9;
+  --cyber-400: #22d3ee;
+  --cyber-500: #06b6d4;
+  --cyber-600: #0891b2;
+
+  /* Neon Colors */
+  --neon-blue: #3b82f6;
+  --neon-green: #10b981;
+  --neon-red: #ef4444;
+
+  /* K-Line Colors */
+  --kline-up: #22d3ee;
+  --kline-down: #f43f5e;
+
+  /* Text Colors */
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-accent: #22d3ee;
+
+  /* Glass Colors */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-hover: rgba(255, 255, 255, 0.08);
 }
 
 html {
@@ -24,203 +44,396 @@ html {
 }
 
 body {
-  font-family: 'Noto Sans SC', sans-serif;
-  background: linear-gradient(180deg, #000000 0%, #1a1a1a 50%, #0a0a0a 100%);
+  font-family: 'Inter', system-ui, sans-serif;
+  background: linear-gradient(180deg, var(--tech-950) 0%, var(--tech-900) 50%, var(--tech-800) 100%);
   min-height: 100vh;
   color: var(--text-primary);
 }
 
-.font-serif {
-  font-family: 'Noto Serif SC', serif;
-}
-
 .font-mono {
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
 }
 
 @layer components {
-  .mystic-card {
-    @apply relative rounded-lg p-6;
-    background: rgba(10, 10, 10, 0.8);
+  /* Glass Card - 玻璃卡片 */
+  .glass-card {
+    @apply relative rounded-2xl p-6;
+    background: var(--glass-bg);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    box-shadow: 0 0 40px rgba(50, 50, 50, 0.3);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   }
 
-  .mystic-card-gold {
-    @apply mystic-card;
-    border-color: rgba(212, 175, 55, 0.4);
-    box-shadow: 0 0 40px rgba(212, 175, 55, 0.1);
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300;
   }
 
-  .btn-gold {
-    @apply relative px-8 py-3 font-medium rounded-lg overflow-hidden transition-all duration-300;
-    background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);
-    color: var(--mystic-900);
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
-  }
-
-  .btn-gold:hover {
-    box-shadow: 0 0 50px rgba(212, 175, 55, 0.6);
+  .glass-card-hover:hover {
+    background: var(--glass-hover);
+    border-color: var(--cyber-400);
+    box-shadow: 0 8px 32px rgba(34, 211, 238, 0.15);
     transform: translateY(-2px);
   }
 
-  .btn-gold:disabled {
+  /* Tech Card - 科技卡片 */
+  .tech-card {
+    @apply relative rounded-2xl p-6;
+    background: linear-gradient(180deg, rgba(17, 24, 39, 0.8) 0%, rgba(10, 15, 26, 0.9) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+
+  .tech-card-cyber {
+    @apply tech-card;
+    border-color: rgba(34, 211, 238, 0.3);
+    box-shadow: 0 0 40px rgba(34, 211, 238, 0.1);
+  }
+
+  /* Primary Button - 主按钮 */
+  .btn-primary {
+    @apply relative px-8 py-3 font-semibold rounded-xl overflow-hidden transition-all duration-300;
+    background: linear-gradient(135deg, var(--cyber-500) 0%, var(--neon-blue) 100%);
+    color: white;
+    box-shadow: 0 0 30px rgba(34, 211, 238, 0.4);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 0 50px rgba(34, 211, 238, 0.6);
+    transform: translateY(-2px);
+  }
+
+  .btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
   }
 
+  /* Outline Button - 边框按钮 */
   .btn-outline {
-    @apply px-6 py-2 rounded-lg border transition-all duration-300;
-    border-color: rgba(212, 175, 55, 0.4);
-    color: var(--gold-400);
+    @apply px-6 py-2 rounded-xl border transition-all duration-300;
+    border-color: var(--glass-border);
+    color: var(--text-secondary);
   }
 
   .btn-outline:hover {
-    background: rgba(212, 175, 55, 0.1);
-    border-color: var(--gold-400);
+    background: var(--glass-hover);
+    border-color: var(--cyber-400);
+    color: var(--cyber-400);
   }
 
-  .input-mystic {
-    @apply w-full px-4 py-3 rounded-lg transition-all duration-300 outline-none;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(100, 100, 100, 0.5);
+  /* Ghost Button - 幽灵按钮 */
+  .btn-ghost {
+    @apply px-6 py-2 rounded-xl transition-all duration-300;
+    color: var(--text-secondary);
+  }
+
+  .btn-ghost:hover {
+    background: var(--glass-hover);
+    color: var(--cyber-400);
+  }
+
+  /* Input - 输入框 */
+  .input-tech {
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-300 outline-none;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--glass-border);
     color: var(--text-primary);
   }
 
-  .input-mystic:focus {
-    border-color: var(--gold-400);
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+  .input-tech:focus {
+    border-color: var(--cyber-400);
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
   }
 
-  .select-mystic {
-    @apply w-full px-4 py-3 rounded-lg transition-all duration-300 outline-none appearance-none cursor-pointer;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(100, 100, 100, 0.5);
+  .input-tech::placeholder {
+    color: var(--text-muted);
+  }
+
+  /* Select - 选择框 */
+  .select-tech {
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-300 outline-none appearance-none cursor-pointer;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--glass-border);
     color: var(--text-primary);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 20px;
     padding-right: 40px;
   }
 
-  .select-mystic:focus {
-    border-color: var(--gold-400);
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+  .select-tech:focus {
+    border-color: var(--cyber-400);
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
   }
 
-  .select-mystic option {
-    background: #1a1a1a;
+  .select-tech option {
+    background: var(--tech-800);
     color: var(--text-primary);
   }
 
+  /* Gender Selection - 性别选择 */
   .gender-btn {
-    @apply flex-1 py-4 rounded-lg font-serif text-lg transition-all duration-300 cursor-pointer;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(100, 100, 100, 0.5);
+    @apply flex-1 py-4 rounded-xl font-medium text-lg transition-all duration-300 cursor-pointer;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--glass-border);
     color: var(--text-secondary);
   }
 
   .gender-btn:hover {
-    border-color: rgba(255, 255, 255, 0.6);
+    border-color: var(--text-muted);
   }
 
   .gender-btn.active {
-    border-color: var(--gold-400);
-    color: var(--gold-400);
-    background: rgba(212, 175, 55, 0.1);
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+    border-color: var(--cyber-400);
+    color: var(--cyber-400);
+    background: rgba(34, 211, 238, 0.1);
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
   }
 
-  .text-gold {
-    color: var(--gold-400);
+  /* Text Colors */
+  .text-cyber {
+    color: var(--cyber-400);
   }
 
-  .text-gold-gradient {
-    background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);
+  .text-cyber-gradient {
+    background: linear-gradient(135deg, var(--cyber-500) 0%, var(--neon-blue) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* Pricing Card - 定价卡片 */
+  .pricing-card {
+    @apply relative rounded-2xl p-6 transition-all duration-300;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+  }
+
+  .pricing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .pricing-card.featured {
+    border-color: var(--cyber-400);
+    box-shadow: 0 0 40px rgba(34, 211, 238, 0.2);
+  }
+
+  .pricing-card.featured::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--cyber-400), transparent);
+  }
+
+  /* Badge - 徽章 */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+    background: rgba(34, 211, 238, 0.1);
+    color: var(--cyber-400);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+  }
+
+  .badge-pro {
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+    border-color: var(--cyber-400);
+  }
+
+  /* Progress Bar - 进度条 */
+  .progress-bar {
+    @apply relative h-2 rounded-full overflow-hidden;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .progress-bar-fill {
+    @apply absolute left-0 top-0 h-full rounded-full transition-all duration-500;
+    background: linear-gradient(90deg, var(--cyber-500) 0%, var(--neon-blue) 100%);
+  }
+
+  /* Score Ring - 分数环 */
+  .score-ring {
+    @apply relative inline-flex items-center justify-center;
+  }
+
+  .score-ring-bg {
+    stroke: rgba(255, 255, 255, 0.1);
+  }
+
+  .score-ring-fill {
+    stroke: var(--cyber-400);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.5s ease-out;
+  }
+
+  /* Data Grid - 数据网格 */
+  .data-grid {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .data-item {
+    @apply glass-card p-4 text-center;
+  }
+
+  .data-item-label {
+    @apply text-xs uppercase tracking-wider mb-1;
+    color: var(--text-muted);
+  }
+
+  .data-item-value {
+    @apply text-2xl font-semibold;
+    color: var(--text-primary);
+  }
+
+  /* Loading Animation - 加载动画 */
+  .loading-scanner {
+    @apply relative overflow-hidden;
+  }
+
+  .loading-scanner::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyber-400), transparent);
+    animation: scan 2s linear infinite;
+  }
+
+  /* Shimmer Effect - 闪烁效果 */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Glow Text - 发光文字 */
+  .glow-text {
+    text-shadow: 0 0 20px rgba(34, 211, 238, 0.5);
+  }
+
+  /* Keep backward compatibility for old classes */
+  .mystic-card {
+    @apply glass-card;
+  }
+
+  .mystic-card-gold {
+    @apply tech-card-cyber;
+  }
+
+  .btn-gold {
+    @apply btn-primary;
+  }
+
+  .input-mystic {
+    @apply input-tech;
+  }
+
+  .select-mystic {
+    @apply select-tech;
+  }
+
+  .text-gold {
+    color: var(--cyber-400);
+  }
+
+  .text-gold-gradient {
+    @apply text-cyber-gradient;
+  }
 }
 
-@keyframes bagua-spin {
-  from {
-    transform: rotate(0deg);
+@keyframes scan {
+  0% {
+    transform: translateY(-100%);
   }
-  to {
-    transform: rotate(360deg);
+  100% {
+    transform: translateY(100vh);
   }
 }
 
-@keyframes star-float {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.6;
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
   }
-  50% {
-    transform: translateY(-20px) scale(1.2);
-    opacity: 1;
+  100% {
+    background-position: 200% 0;
   }
 }
 
 @keyframes pulse-glow {
   0%, 100% {
     opacity: 0.5;
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
   }
   50% {
     opacity: 1;
-    box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
+    box-shadow: 0 0 40px rgba(34, 211, 238, 0.6);
   }
 }
 
-.animate-bagua-spin {
-  animation: bagua-spin 8s linear infinite;
-}
-
-.animate-star-float {
-  animation: star-float 4s ease-in-out infinite;
+@keyframes data-flow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
-.star-particle {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  background: var(--gold-400);
-  border-radius: 50%;
-  opacity: 0.5;
-  animation: star-float 6s ease-in-out infinite;
+.animate-data-flow {
+  animation: data-flow 2s ease-in-out infinite;
 }
 
+/* Recharts Styling */
 .recharts-cartesian-grid line {
-  stroke: rgba(100, 100, 100, 0.3) !important;
+  stroke: rgba(100, 100, 100, 0.2) !important;
 }
 
 .recharts-text {
   fill: var(--text-secondary) !important;
-  font-family: 'Roboto Mono', monospace !important;
+  font-family: 'JetBrains Mono', monospace !important;
 }
 
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: var(--tech-950);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #666666;
-  border-radius: 4px;
+  background: var(--tech-600);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #999999;
+  background: var(--text-muted);
+}
+
+/* Selection */
+::selection {
+  background: rgba(34, 211, 238, 0.3);
+  color: var(--text-primary);
 }

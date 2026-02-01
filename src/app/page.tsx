@@ -19,6 +19,17 @@ import { useAuth } from '@/contexts/AuthContext';
 // 如果数据库不可用，使用此值作为后备
 const FALLBACK_GENERATED_COUNT = 41512;
 
+// 科技风格标题
+const TECH_TITLES: Record<CurveMode, string> = {
+  life: '生命周期模型',
+  wealth: '财富轨迹模型',
+};
+
+const TECH_SUBTITLES: Record<CurveMode, string> = {
+  life: '基于时空维度的个人发展趋势解析',
+  wealth: '多维度财富周期量化分析系统',
+};
+
 // 主页面内容组件
 function HomePageContent() {
   const router = useRouter();
@@ -280,7 +291,7 @@ function HomePageContent() {
       refreshUsageStatus(curveMode);
     } catch (err) {
       console.error('生成失败:', err);
-      setError(err instanceof Error ? err.message : '天机运算失败，请稍后再试');
+      setError(err instanceof Error ? err.message : '模型运算失败，请稍后再试');
       setIsLoading(false);
       // 生成失败时也刷新状态（扣费已成功但生成失败的情况）
       refreshUsageStatus(curveMode);
@@ -294,7 +305,7 @@ function HomePageContent() {
       // 保存待提交的数据
       setPendingSubmission({ birthInfo, isPaid });
       // 显示登录弹窗
-      setLoginRedirectMessage(isPaid ? '请先登录后再使用精批功能' : '请先登录后再使用免费概览');
+      setLoginRedirectMessage(isPaid ? '请先登录后再使用专业版' : '请先登录后再使用基础版');
       setShowLoginModal(true);
       return;
     }
@@ -324,28 +335,41 @@ function HomePageContent() {
         showModeSelector={true}
       />
       <div className="flex flex-col items-center justify-center px-4 py-8 md:py-12" style={{ minHeight: 'calc(100vh - 56px)' }}>
+        {/* Tech-style Header */}
         <div className="text-center mb-6 md:mb-8">
-          <h1 className={`font-serif text-3xl md:text-5xl mb-2 md:mb-3 ${
-            curveMode === 'wealth' ? 'text-gold-gradient' : 'text-gold-gradient'
-          }`}>
-            {CURVE_MODE_LABELS[curveMode]}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyber-400/10 border border-cyber-400/30 mb-4">
+            <span className="w-2 h-2 rounded-full bg-cyber-400 animate-pulse"></span>
+            <span className="text-cyber-400 text-xs font-mono uppercase tracking-wider">
+              {curveMode === 'life' ? 'Life Cycle Analysis' : 'Wealth Trajectory Analysis'}
+            </span>
+          </div>
+          <h1 className="text-3xl md:text-5xl font-semibold mb-3 text-cyber-gradient">
+            {TECH_TITLES[curveMode]}
           </h1>
-          <p className="text-text-secondary text-sm md:text-base">
-            {curveMode === 'life'
-              ? '探索命运轨迹 · 把握人生节奏'
-              : '解析财富密码 · 掌握财运周期'
-            }
+          <p className="text-text-secondary text-sm md:text-base max-w-md mx-auto">
+            {TECH_SUBTITLES[curveMode]}
           </p>
           {curveMode === 'wealth' && (
-            <p className="text-gold-400/60 text-xs mt-2">
-              已考虑年化2.5%通胀因素，显示未来名义财富值
+            <p className="text-cyber-400/60 text-xs mt-2 font-mono">
+              * 已计入年化2.5%通胀系数，显示未来名义财富值
             </p>
           )}
         </div>
 
-        <div className={`mystic-card-gold w-full max-w-md ${
-          curveMode === 'wealth' ? 'border-gold-400/30' : ''
-        }`}>
+        {/* Main Form Card */}
+        <div className="glass-card w-full max-w-md border-cyber-400/20">
+          <div className="flex items-center gap-2 mb-5 pb-4 border-b border-white/10">
+            <div className="w-8 h-8 rounded-lg bg-cyber-400/20 flex items-center justify-center">
+              <svg className="w-4 h-4 text-cyber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-white font-medium">初始时空坐标</h2>
+              <p className="text-text-muted text-xs">Initial Temporal Coordinates</p>
+            </div>
+          </div>
+
           <BirthForm
             onSubmit={handleSubmit}
             disabled={isLoading}
@@ -355,8 +379,8 @@ function HomePageContent() {
           />
 
           {error && (
-            <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-              <p className="text-red-400 text-sm text-center">{error}</p>
+            <div className="mt-4 p-3 rounded-xl bg-neon-red/10 border border-neon-red/30">
+              <p className="text-neon-red text-sm text-center">{error}</p>
             </div>
           )}
         </div>
@@ -378,9 +402,13 @@ function HomePageContent() {
           />
         </div>
 
-        <p className="mt-6 md:mt-8 text-xs md:text-sm text-text-secondary">
-          已有 <span className="text-gold-400 font-mono">{totalGenerated.toLocaleString()}</span> 人生成过命盘报告
-        </p>
+        {/* Stats Badge */}
+        <div className="mt-6 md:mt-8 flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+          <div className="w-2 h-2 rounded-full bg-neon-green animate-pulse"></div>
+          <span className="text-xs text-text-secondary">
+            已完成 <span className="text-cyber-400 font-mono">{totalGenerated.toLocaleString()}</span> 次分析
+          </span>
+        </div>
       </div>
       <Footer />
     </div>
@@ -392,7 +420,10 @@ export default function HomePage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gold-400 animate-pulse">加载中...</div>
+        <div className="flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-cyber-400 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-cyber-400 font-mono text-sm">Loading...</span>
+        </div>
       </div>
     }>
       <HomePageContent />

@@ -20,13 +20,13 @@ function ScoreRing({ score, label, size = 'md' }: { score?: number; label: strin
   const strokeWidth = size === 'sm' ? 4 : 5;
   const circumference = 2 * Math.PI * radius;
   const progress = (validScore / 100) * circumference;
-  const color = validScore >= 75 ? '#22c55e' : validScore >= 50 ? '#D4AF37' : '#ef4444';
+  const color = validScore >= 75 ? '#10b981' : validScore >= 50 ? '#22d3ee' : '#ef4444';
 
   return (
     <div className="flex flex-col items-center">
       <div className={`relative ${size === 'sm' ? 'w-16 h-16' : 'w-20 h-20'}`}>
         <svg className="w-full h-full transform -rotate-90">
-          <circle cx="50%" cy="50%" r={radius} stroke="#1a1a1a" strokeWidth={strokeWidth} fill="none" />
+          <circle cx="50%" cy="50%" r={radius} stroke="rgba(255,255,255,0.1)" strokeWidth={strokeWidth} fill="none" />
           <circle
             cx="50%" cy="50%" r={radius} stroke={color} strokeWidth={strokeWidth} fill="none"
             strokeDasharray={circumference} strokeDashoffset={circumference - progress}
@@ -45,11 +45,11 @@ function ScoreRing({ score, label, size = 'md' }: { score?: number; label: strin
 // 分析卡片组件
 function AnalysisCard({ title, content, score, icon }: { title: string; content: string; score?: number; icon: string }) {
   return (
-    <div className="p-4 rounded-lg bg-black/30 border border-gray-700">
+    <div className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-xl">{icon}</span>
-          <h3 className="font-serif text-gold-400">{title}</h3>
+          <h3 className="font-medium text-cyber-400">{title}</h3>
         </div>
         <ScoreRing score={score} label="" size="sm" />
       </div>
@@ -230,29 +230,37 @@ function LivePageContent() {
   // 密码页面
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
-        <div className="mystic-card-gold w-full max-w-sm p-6">
-          <h1 className="text-2xl font-serif text-gold-400 text-center mb-6">主播直播模式</h1>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="glass-card w-full max-w-sm p-6 border-cyber-400/30">
+          <div className="text-center mb-6">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-cyber-400/20 flex items-center justify-center">
+              <svg className="w-6 h-6 text-cyber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-semibold text-white mb-1">Live Streamer Mode</h1>
+            <p className="text-text-muted text-sm">主播直播专用入口</p>
+          </div>
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-2">请输入访问密码</label>
+              <label className="block text-sm text-text-secondary mb-2">Access Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-gold-400"
-                placeholder="输入密码"
+                className="input-tech"
+                placeholder="Enter password"
                 autoFocus
               />
               {passwordError && (
-                <p className="text-red-400 text-sm mt-2">{passwordError}</p>
+                <p className="text-neon-red text-sm mt-2">{passwordError}</p>
               )}
             </div>
             <button
               type="submit"
-              className="w-full py-3 bg-gold-400 text-black font-medium rounded-lg hover:bg-gold-300 transition-colors"
+              className="w-full py-3 btn-primary"
             >
-              进入直播模式
+              Enter Live Mode
             </button>
           </form>
         </div>
@@ -263,20 +271,22 @@ function LivePageContent() {
   // 加载中页面 - 使用和首页一样的加载动画
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bg-primary">
+      <div className="min-h-screen">
         <div className="flex h-screen">
           {/* 左侧加载动画 */}
-          <div className="w-1/2 flex items-center justify-center border-r border-gray-800">
+          <div className="w-1/2 flex items-center justify-center border-r border-white/10">
             <AnalysisLoader
               messages={curveMode === 'wealth' ? WEALTH_LOADING_MESSAGES : undefined}
             />
           </div>
           {/* 右侧等待提示 */}
-          <div className="w-1/2 flex items-center justify-center bg-gray-950">
+          <div className="w-1/2 flex items-center justify-center bg-tech-900">
             <div className="text-center">
-              <div className="text-6xl mb-4">🔮</div>
-              <p className="text-gold-400">正在推算命盘...</p>
-              <p className="text-gray-500 text-sm mt-2">主播稿子即将生成</p>
+              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-cyber-400/20 flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-cyber-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <p className="text-cyber-400 font-medium">Processing Model...</p>
+              <p className="text-text-muted text-sm mt-2 font-mono">Generating streamer script</p>
             </div>
           </div>
         </div>
@@ -288,25 +298,29 @@ function LivePageContent() {
   const hasResult = (isWealthMode && wealthResult) || (!isWealthMode && freeResult);
 
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="min-h-screen">
       <div className="flex h-screen">
         {/* 左侧 - 用户输入和结果展示区 */}
-        <div className="w-1/2 overflow-y-auto border-r border-gray-800">
+        <div className="w-1/2 overflow-y-auto border-r border-white/10">
           <div className="p-6">
             {/* 标题和模式切换 */}
             <div className="text-center mb-6">
-              <h1 className="font-serif text-3xl text-gold-gradient mb-2">
-                {CURVE_MODE_LABELS[curveMode]}
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyber-400/10 border border-cyber-400/30 mb-3">
+                <span className="w-2 h-2 rounded-full bg-cyber-400 animate-pulse"></span>
+                <span className="text-cyber-400 text-xs font-mono uppercase tracking-wider">Live Analysis</span>
+              </div>
+              <h1 className="text-3xl font-semibold text-cyber-gradient mb-2">
+                {curveMode === 'life' ? '生命周期模型' : '财富轨迹模型'}
               </h1>
               <p className="text-text-secondary text-sm">
                 {curveMode === 'life'
-                  ? '探索命运轨迹 · 把握人生节奏'
-                  : '解析财富密码 · 掌握财运周期'
+                  ? '基于时空维度的个人发展趋势解析'
+                  : '多维度财富周期量化分析系统'
                 }
               </p>
 
               {/* 模式切换按钮 */}
-              <div className="flex justify-center gap-4 mt-4">
+              <div className="flex justify-center gap-2 mt-4">
                 <button
                   onClick={() => {
                     setCurveMode('life');
@@ -314,13 +328,13 @@ function LivePageContent() {
                     setWealthResult(null);
                     setStreamerScript(null);
                   }}
-                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
                     curveMode === 'life'
-                      ? 'bg-gold-400 text-black'
-                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      ? 'bg-cyber-400/20 text-cyber-400 border border-cyber-400'
+                      : 'bg-white/5 text-text-secondary border border-white/10 hover:bg-white/10'
                   }`}
                 >
-                  人生曲线
+                  Life Cycle
                 </button>
                 <button
                   onClick={() => {
@@ -329,20 +343,20 @@ function LivePageContent() {
                     setWealthResult(null);
                     setStreamerScript(null);
                   }}
-                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
                     curveMode === 'wealth'
-                      ? 'bg-gold-400 text-black'
-                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                      ? 'bg-cyber-400/20 text-cyber-400 border border-cyber-400'
+                      : 'bg-white/5 text-text-secondary border border-white/10 hover:bg-white/10'
                   }`}
                 >
-                  财富曲线
+                  Wealth Track
                 </button>
               </div>
             </div>
 
             {/* 输入表单 - 使用和首页一样的BirthForm */}
             {!hasResult && (
-              <div className="mystic-card-gold max-w-md mx-auto">
+              <div className="glass-card max-w-md mx-auto border-cyber-400/20">
                 <BirthForm
                   onSubmit={handleSubmit}
                   disabled={isLoading}
@@ -352,8 +366,8 @@ function LivePageContent() {
                 />
 
                 {error && (
-                  <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                    <p className="text-red-400 text-sm text-center">{error}</p>
+                  <div className="mt-4 p-3 rounded-xl bg-neon-red/10 border border-neon-red/30">
+                    <p className="text-neon-red text-sm text-center">{error}</p>
                   </div>
                 )}
               </div>
@@ -371,28 +385,28 @@ function LivePageContent() {
                       setStreamerScript(null);
                       setBirthInfo(null);
                     }}
-                    className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                    className="px-4 py-2 bg-white/5 text-text-secondary rounded-xl hover:bg-white/10 border border-white/10 transition-colors text-sm"
                   >
-                    ← 重新分析
+                    ← New Analysis
                   </button>
                   <button
                     onClick={handleShare}
                     disabled={shareLoading}
-                    className="px-4 py-2 bg-gold-400/20 text-gold-400 border border-gold-400/50 rounded-lg hover:bg-gold-400/30 transition-colors text-sm"
+                    className="px-4 py-2 bg-cyber-400/20 text-cyber-400 border border-cyber-400/50 rounded-xl hover:bg-cyber-400/30 transition-colors text-sm"
                   >
-                    {shareLoading ? '生成中...' : '📤 分享图片'}
+                    {shareLoading ? 'Generating...' : '📤 Export Image'}
                   </button>
                 </div>
 
                 {/* 人生高光时刻 - 最优先显示 */}
                 {freeResult?.highlightMoment && !isWealthMode && (
-                  <div className="mystic-card-gold p-4">
+                  <div className="glass-card border-cyber-400/20 p-4">
                     <div className="flex items-start gap-3">
                       <div className="text-4xl">🌟</div>
                       <div className="flex-1">
-                        <h3 className="text-gold-400 font-serif text-lg mb-2">人生高光时刻</h3>
+                        <h3 className="text-cyber-400 font-serif text-lg mb-2">人生高光时刻</h3>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="px-2 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
+                          <span className="px-2 py-1 rounded-full bg-cyber-400/20 text-cyber-400 text-sm font-mono">
                             {freeResult.highlightMoment.age}岁
                           </span>
                           <span className="text-text-secondary text-sm">· {freeResult.highlightMoment.title}</span>
@@ -405,13 +419,13 @@ function LivePageContent() {
 
                 {/* 财富高光 */}
                 {wealthResult && isWealthMode && (
-                  <div className="mystic-card-gold p-4">
+                  <div className="glass-card border-cyber-400/20 p-4">
                     <div className="flex items-start gap-3">
                       <div className="text-4xl">💰</div>
                       <div className="flex-1">
-                        <h3 className="text-gold-400 font-serif text-lg mb-2">财富巅峰</h3>
+                        <h3 className="text-cyber-400 font-serif text-lg mb-2">财富巅峰</h3>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="px-2 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
+                          <span className="px-2 py-1 rounded-full bg-cyber-400/20 text-cyber-400 text-sm font-mono">
                             {wealthResult.highlights.peakAge}岁
                           </span>
                           <span className="text-text-secondary text-sm">· {wealthResult.wealthType}</span>
@@ -428,7 +442,7 @@ function LivePageContent() {
                 )}
 
                 {/* 图表展示 */}
-                <div className="mystic-card p-4">
+                <div className="glass-card p-4">
                   {!isWealthMode && freeResult && birthInfo && (
                     <LifeCurveChart
                       data={freeResult.chartPoints}
@@ -449,8 +463,8 @@ function LivePageContent() {
 
                 {/* 八字排盘 - 使用详细的pillarsDetail */}
                 {freeResult && birthInfo && !isWealthMode && (
-                  <div className="mystic-card p-4">
-                    <h3 className="text-gold-400 font-serif text-lg mb-4">四柱八字</h3>
+                  <div className="glass-card p-4">
+                    <h3 className="text-cyber-400 font-serif text-lg mb-4">四柱八字</h3>
                     <BaziChartDisplay
                       chart={freeResult.baziChart}
                       showDetails={true}
@@ -461,10 +475,10 @@ function LivePageContent() {
 
                 {/* 命理总评 */}
                 {freeResult && !isWealthMode && (
-                  <div className="mystic-card p-4">
+                  <div className="glass-card p-4">
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-gold-400 font-serif text-lg">命理总评</h3>
-                      <div className="text-2xl font-mono text-gold-400">{freeResult.summaryScore}分</div>
+                      <h3 className="text-cyber-400 font-serif text-lg">命理总评</h3>
+                      <div className="text-2xl font-mono text-cyber-400">{freeResult.summaryScore}分</div>
                     </div>
                     <p className="text-text-primary text-sm leading-relaxed mb-3">{freeResult.summary}</p>
                     {freeResult.currentPhase && (
@@ -477,7 +491,7 @@ function LivePageContent() {
                           {freeResult.currentPhase === 'valley' && '🌙'}
                         </span>
                         <span className="text-sm text-text-secondary">当前运势：</span>
-                        <span className="text-gold-400 text-sm">{PHASE_LABELS[freeResult.currentPhase as PhaseType]}</span>
+                        <span className="text-cyber-400 text-sm">{PHASE_LABELS[freeResult.currentPhase as PhaseType]}</span>
                       </div>
                     )}
                   </div>
@@ -485,20 +499,20 @@ function LivePageContent() {
 
                 {/* 财富分析 */}
                 {wealthResult && isWealthMode && (
-                  <div className="mystic-card p-4">
+                  <div className="glass-card p-4">
                     <WealthAnalysis analysis={wealthResult.analysis} isPaid={false} />
                   </div>
                 )}
 
                 {/* 大运流年 */}
                 {daYunResult && (
-                  <div className="mystic-card p-4">
-                    <h3 className="text-gold-400 font-serif text-lg mb-3">大运流年</h3>
+                  <div className="glass-card p-4">
+                    <h3 className="text-cyber-400 font-serif text-lg mb-3">大运流年</h3>
                     <p className="text-xs text-gray-400 mb-3">{daYunResult.startInfo}</p>
                     <div className="flex flex-wrap gap-2">
                       {daYunResult.daYunList.slice(0, 8).map((dy, index) => (
                         <div key={index} className="px-3 py-2 bg-gray-800/50 rounded-lg text-center min-w-[60px]">
-                          <div className="text-gold-400 font-medium text-sm">{dy.ganZhi}</div>
+                          <div className="text-cyber-400 font-medium text-sm">{dy.ganZhi}</div>
                           <div className="text-xs text-gray-500">{dy.startAge}-{dy.endAge}岁</div>
                         </div>
                       ))}
@@ -508,8 +522,8 @@ function LivePageContent() {
 
                 {/* 五行分析 */}
                 {freeResult && !isWealthMode && (
-                  <div className="mystic-card p-4">
-                    <h3 className="text-gold-400 font-serif text-lg mb-4">五行生克</h3>
+                  <div className="glass-card p-4">
+                    <h3 className="text-cyber-400 font-serif text-lg mb-4">五行生克</h3>
                     <FiveElementsDiagram
                       wood={freeResult.fiveElements.wood}
                       fire={freeResult.fiveElements.fire}
@@ -519,7 +533,7 @@ function LivePageContent() {
                     />
                     {freeResult.elementAnalysis && (
                       <div className="mt-6 p-4 rounded-lg bg-black/30 border border-gray-700">
-                        <h3 className="text-gold-400 text-sm mb-2 flex items-center gap-2">
+                        <h3 className="text-cyber-400 text-sm mb-2 flex items-center gap-2">
                           <span>⚖️</span>
                           <span>五行相克分析</span>
                         </h3>
@@ -531,8 +545,8 @@ function LivePageContent() {
 
                 {/* 八维详批 */}
                 {freeResult && !isWealthMode && (
-                  <div className="mystic-card p-4">
-                    <h3 className="text-gold-400 font-serif text-lg mb-4">八维详批</h3>
+                  <div className="glass-card p-4">
+                    <h3 className="text-cyber-400 font-serif text-lg mb-4">八维详批</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {freeResult.personality && <AnalysisCard title="性格命格" content={freeResult.personality} score={freeResult.personalityScore} icon="🎭" />}
                       {freeResult.career && <AnalysisCard title="事业前程" content={freeResult.career} score={freeResult.careerScore} icon="💼" />}
@@ -547,20 +561,20 @@ function LivePageContent() {
 
                 {/* 日主分析 */}
                 {freeResult?.dayMaster && !isWealthMode && (
-                  <div className="mystic-card p-4">
-                    <h3 className="font-serif text-xl text-gold-400 mb-4">日主分析</h3>
+                  <div className="glass-card p-4">
+                    <h3 className="font-serif text-xl text-cyber-400 mb-4">日主分析</h3>
                     <div className="flex items-center gap-3 mb-4">
-                      <span className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500/30 to-gold-400/30 text-gold-400 font-serif text-xl">
+                      <span className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500/30 to-gold-400/30 text-cyber-400 font-serif text-xl">
                         {freeResult.dayMaster.stem}{freeResult.dayMaster.element}
                       </span>
-                      <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-sm">
+                      <span className="px-3 py-1 rounded-full bg-neon-blue/20 text-cyber-300 text-sm">
                         {freeResult.dayMaster.strength}
                       </span>
                     </div>
                     <p className="text-text-primary leading-relaxed">{freeResult.dayMaster.description}</p>
                     {freeResult.usefulGod && (
                       <div className="mt-4 p-3 rounded-lg bg-mystic-800/50">
-                        <span className="text-gold-400 text-sm">用神喜忌：</span>
+                        <span className="text-cyber-400 text-sm">用神喜忌：</span>
                         <p className="text-text-secondary text-sm mt-1">{freeResult.usefulGod}</p>
                       </div>
                     )}
@@ -569,16 +583,16 @@ function LivePageContent() {
 
                 {/* 高光年份 */}
                 {freeResult?.highlights && freeResult.highlights.length > 0 && !isWealthMode && (
-                  <div className="mystic-card p-4">
-                    <h3 className="font-serif text-xl text-gold-400 mb-4">✦ 高光之年</h3>
+                  <div className="glass-card p-4">
+                    <h3 className="font-serif text-xl text-cyber-400 mb-4">✦ 高光之年</h3>
                     <div className="space-y-4">
                       {freeResult.highlights.map((h, i) => (
-                        <div key={i} className="p-4 rounded-lg bg-gradient-to-r from-gold-400/10 to-transparent border-l-2 border-gold-400">
+                        <div key={i} className="p-4 rounded-lg bg-gradient-to-r from-cyber-400/10 to-transparent border-l-2 border-cyber-400">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="text-gold-400 font-mono text-lg">{h.age}岁</span>
+                            <span className="text-cyber-400 font-mono text-lg">{h.age}岁</span>
                             <span className="text-text-secondary">({h.year}年)</span>
                             {h.type && (
-                              <span className="px-2 py-0.5 text-xs rounded-full bg-gold-400/20 text-gold-400">
+                              <span className="px-2 py-0.5 text-xs rounded-full bg-cyber-400/20 text-cyber-400">
                                 {TYPE_LABELS[h.type] || h.type}
                               </span>
                             )}
@@ -595,7 +609,7 @@ function LivePageContent() {
 
                 {/* 警示年份 */}
                 {freeResult?.warnings && freeResult.warnings.length > 0 && !isWealthMode && (
-                  <div className="mystic-card p-4">
+                  <div className="glass-card p-4">
                     <h3 className="font-serif text-xl text-kline-down mb-4">◆ 谨慎之年</h3>
                     <div className="space-y-4">
                       {freeResult.warnings.map((w, i) => (
@@ -615,7 +629,7 @@ function LivePageContent() {
                           )}
                           {w.advice && (
                             <p className="text-accent-blue text-sm">
-                              <span className="text-gold-400">化解之道：</span>{w.advice}
+                              <span className="text-cyber-400">化解之道：</span>{w.advice}
                             </p>
                           )}
                         </div>
@@ -626,33 +640,33 @@ function LivePageContent() {
 
                 {/* 开运指南 */}
                 {freeResult?.luckyInfo && !isWealthMode && (
-                  <div className="mystic-card p-4">
-                    <h3 className="font-serif text-xl text-gold-400 mb-4">开运指南</h3>
+                  <div className="glass-card p-4">
+                    <h3 className="font-serif text-xl text-cyber-400 mb-4">开运指南</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
                         <p className="text-2xl mb-2">🧭</p>
                         <p className="text-xs text-text-secondary mb-1">吉利方位</p>
-                        <p className="text-purple-300 text-sm">{freeResult.luckyInfo.direction}</p>
+                        <p className="text-cyber-300 text-sm">{freeResult.luckyInfo.direction}</p>
                       </div>
                       <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
                         <p className="text-2xl mb-2">🎨</p>
                         <p className="text-xs text-text-secondary mb-1">幸运颜色</p>
-                        <p className="text-purple-300 text-sm">{freeResult.luckyInfo.color}</p>
+                        <p className="text-cyber-300 text-sm">{freeResult.luckyInfo.color}</p>
                       </div>
                       <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
                         <p className="text-2xl mb-2">🔢</p>
                         <p className="text-xs text-text-secondary mb-1">幸运数字</p>
-                        <p className="text-purple-300 text-sm">{freeResult.luckyInfo.number}</p>
+                        <p className="text-cyber-300 text-sm">{freeResult.luckyInfo.number}</p>
                       </div>
                       <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
                         <p className="text-2xl mb-2">💼</p>
                         <p className="text-xs text-text-secondary mb-1">适合行业</p>
-                        <p className="text-purple-300 text-sm">{freeResult.luckyInfo.industry}</p>
+                        <p className="text-cyber-300 text-sm">{freeResult.luckyInfo.industry}</p>
                       </div>
                     </div>
                     {freeResult.luckyExplanation && (
-                      <div className="mt-6 p-4 rounded-lg bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30">
-                        <h4 className="text-gold-400 text-sm mb-3 flex items-center gap-2">
+                      <div className="mt-6 p-4 rounded-lg bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-neon-purple/30">
+                        <h4 className="text-cyber-400 text-sm mb-3 flex items-center gap-2">
                           <span>✨</span>
                           <span>开运详解</span>
                         </h4>
@@ -670,19 +684,19 @@ function LivePageContent() {
         <div className="w-1/2 bg-gray-950 overflow-y-auto">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-purple-400">主播专属区域</h2>
+              <h2 className="text-xl font-bold text-neon-blue">主播专属区域</h2>
               <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">用户不可见</span>
             </div>
 
             {scriptLoading ? (
               <div className="text-center py-20">
                 <div className="text-6xl mb-4 animate-pulse">🔮</div>
-                <p className="text-purple-400">AI正在生成主播稿子...</p>
+                <p className="text-neon-blue">AI正在生成主播稿子...</p>
                 <p className="text-gray-500 text-sm mt-2">根据八字命理深度分析中</p>
                 <div className="mt-4 flex justify-center gap-1">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  <div className="w-2 h-2 bg-neon-blue rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-neon-blue rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-neon-blue rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                 </div>
               </div>
             ) : !streamerScript ? (
@@ -695,18 +709,18 @@ function LivePageContent() {
               <div className="space-y-4">
                 {/* Focus Hint */}
                 {focusHint && (
-                  <div className="bg-gold-400/10 border border-gold-400/30 rounded-lg p-3">
+                  <div className="bg-cyber-400/10 border border-cyber-400/30 rounded-lg p-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-gold-400 font-medium">{focusHint.label}</span>
-                      <span className="text-xs text-gold-400/70 px-2 py-0.5 bg-gold-400/20 rounded">解读侧重</span>
+                      <span className="text-cyber-400 font-medium">{focusHint.label}</span>
+                      <span className="text-xs text-cyber-400/70 px-2 py-0.5 bg-cyber-400/20 rounded">解读侧重</span>
                     </div>
                     <p className="text-gray-400 text-sm mt-1">{focusHint.description}</p>
                   </div>
                 )}
 
                 {/* Opening Line */}
-                <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
-                  <h3 className="text-purple-400 font-medium mb-2 flex items-center gap-2">
+                <div className="bg-neon-purple/10 border border-neon-purple/30 rounded-lg p-3">
+                  <h3 className="text-neon-blue font-medium mb-2 flex items-center gap-2">
                     <span>🎯</span> 开场白
                   </h3>
                   <p className="text-white leading-relaxed">&quot;{streamerScript.openingLine}&quot;</p>
@@ -863,14 +877,14 @@ function LivePageContent() {
 
                 {/* Golden Quotes - 命格金句 */}
                 {streamerScript.goldenQuotes && streamerScript.goldenQuotes.length > 0 && (
-                  <div className="bg-gradient-to-r from-gold-400/10 to-purple-500/10 border border-gold-400/30 rounded-lg p-4">
-                    <h3 className="text-gold-400 font-medium mb-3 flex items-center gap-2">
+                  <div className="bg-gradient-to-r from-cyber-400/10 to-purple-500/10 border border-cyber-400/30 rounded-lg p-4">
+                    <h3 className="text-cyber-400 font-medium mb-3 flex items-center gap-2">
                       <span>✨</span> 命格金句
                       <span className="text-xs text-gray-500 font-normal">（可选择使用）</span>
                     </h3>
                     <div className="space-y-3">
                       {streamerScript.goldenQuotes.map((quote, index) => (
-                        <div key={index} className="bg-black/30 rounded-lg p-3 border-l-3 border-gold-400 hover:bg-black/40 transition-colors cursor-pointer">
+                        <div key={index} className="bg-black/30 rounded-lg p-3 border-l-3 border-cyber-400 hover:bg-black/40 transition-colors cursor-pointer">
                           <p className="text-white text-sm leading-relaxed">
                             &quot;{quote}&quot;
                           </p>
@@ -892,8 +906,8 @@ function LivePageContent() {
 export default function LivePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-bg-primary">
-        <div className="text-gold-400 animate-pulse">加载中...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-cyber-400 animate-pulse">加载中...</div>
       </div>
     }>
       <LivePageContent />
