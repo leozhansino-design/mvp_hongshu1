@@ -1,4 +1,4 @@
-import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT, WEALTH_CURVE_PROMPT, STREAMER_SCRIPT_PROMPT, BaziForPrompt, DaYunForPrompt } from '@/lib/constants';
+import { API_CONFIG, SYSTEM_PROMPT, FREE_VERSION_PROMPT, PAID_VERSION_PROMPT, WEALTH_CURVE_PROMPT, STREAMER_SCRIPT_PROMPT, CELEBRITY_SYSTEM_PROMPT, CELEBRITY_FREE_VERSION_PROMPT, CELEBRITY_WEALTH_CURVE_PROMPT, BaziForPrompt, DaYunForPrompt } from '@/lib/constants';
 import { FreeVersionResult, PaidVersionResult, BirthInfo, WealthCurveData, StreamerScriptResult } from '@/types';
 import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
 
@@ -555,4 +555,187 @@ export async function generateStreamerScript(
   }
 
   return aiResult as StreamerScriptResult;
+}
+
+// ============ 名人命盘分析 API ============
+
+// 生成名人版人生曲线
+export async function generateCelebrityFreeResult(
+  birthInfo: BirthInfo,
+  celebrityName?: string,
+  config: APIConfig = API_CONFIG
+): Promise<FreeVersionResult> {
+  // 预计算八字
+  const isLunar = birthInfo.calendarType === 'lunar';
+  const baziResult = calculateBazi(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, isLunar
+  );
+
+  if (!baziResult) {
+    throw new Error('八字计算失败，请检查出生信息');
+  }
+
+  // 预计算大运
+  const daYunResult = calculateDaYun(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+  );
+
+  if (!daYunResult) {
+    throw new Error('大运计算失败，请检查出生信息');
+  }
+
+  const baziForPrompt = toBaziForPrompt(baziResult);
+  const daYunForPrompt = toDaYunForPrompt(daYunResult.daYunList);
+
+  // Calculate current age
+  const currentYear = new Date().getFullYear();
+  const currentAge = currentYear - birthInfo.year + 1;
+
+  const userPrompt = CELEBRITY_FREE_VERSION_PROMPT(
+    birthInfo.gender,
+    birthInfo.year,
+    baziForPrompt,
+    daYunForPrompt,
+    currentAge,
+    celebrityName
+  );
+
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: 'system', content: CELEBRITY_SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 30000,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`API错误: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+
+  // 检查是否因长度被截断
+  const finishReason = data.choices[0]?.finish_reason;
+  if (finishReason === 'length') {
+    console.error('响应被截断:', data);
+    throw new Error('AI响应被截断，请重试');
+  }
+
+  const content = data.choices[0]?.message?.content;
+
+  if (!content) {
+    throw new Error('AI未返回有效内容');
+  }
+
+  const aiResult = parseJSONWithRepair(content) as Partial<FreeVersionResult>;
+
+  if (!aiResult.chartPoints || !Array.isArray(aiResult.chartPoints)) {
+    throw new Error('返回数据格式不正确');
+  }
+
+  // 使用预计算的八字，不依赖AI返回
+  const result: FreeVersionResult = {
+    ...aiResult as FreeVersionResult,
+    baziChart: baziResult.chart,
+  };
+
+  return result;
+}
+
+// 生成名人版财富曲线
+export async function generateCelebrityWealthCurve(
+  birthInfo: BirthInfo,
+  isPaid: boolean = false,
+  celebrityName?: string,
+  config: APIConfig = API_CONFIG
+): Promise<WealthCurveData> {
+  // 预计算八字
+  const isLunar = birthInfo.calendarType === 'lunar';
+  const baziResult = calculateBazi(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, isLunar
+  );
+
+  if (!baziResult) {
+    throw new Error('八字计算失败，请检查出生信息');
+  }
+
+  // 预计算大运
+  const daYunResult = calculateDaYun(
+    birthInfo.year, birthInfo.month, birthInfo.day,
+    birthInfo.hour, birthInfo.minute, birthInfo.gender, isLunar
+  );
+
+  if (!daYunResult) {
+    throw new Error('大运计算失败，请检查出生信息');
+  }
+
+  const baziForPrompt = toBaziForPrompt(baziResult);
+  const daYunForPrompt = toDaYunForPrompt(daYunResult.daYunList);
+
+  const userPrompt = CELEBRITY_WEALTH_CURVE_PROMPT(
+    birthInfo.gender,
+    birthInfo.year,
+    baziForPrompt,
+    daYunForPrompt,
+    isPaid,
+    celebrityName
+  );
+
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: 'system', content: CELEBRITY_SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 20000,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`API错误: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+
+  // 检查是否因长度被截断
+  const finishReason = data.choices[0]?.finish_reason;
+  if (finishReason === 'length') {
+    console.error('响应被截断:', data);
+    throw new Error('AI响应被截断，请重试');
+  }
+
+  const content = data.choices[0]?.message?.content;
+
+  if (!content) {
+    throw new Error('AI未返回有效内容');
+  }
+
+  const aiResult = parseJSONWithRepair(content) as Partial<WealthCurveData>;
+
+  if (!aiResult.dataPoints || !Array.isArray(aiResult.dataPoints)) {
+    throw new Error('返回数据格式不正确');
+  }
+
+  return aiResult as WealthCurveData;
 }
