@@ -545,3 +545,176 @@ export const STREAMER_LOADING_MESSAGES = [
   '解读感情婚姻...',
   '生成主播稿子...',
 ];
+
+// 名人命盘分析系统提示词
+export const CELEBRITY_SYSTEM_PROMPT = `你是一位精通八字命理的AI大师，融合传统命理学与现代数据可视化技术。
+你对《三命通会》《滴天髓》《穷通宝鉴》《子平真诠》等典籍了然于胸。
+
+**【特殊模式：名人命盘分析】**
+这是名人/公众人物的命盘分析，你需要：
+1. 根据八字命理推演出的运势，尽量与该人的真实人生轨迹相契合
+2. 高光年份应该对应他们人生中的重大成就时刻（如创业成功、上市、获奖等）
+3. 谨慎年份应该对应他们人生中的困难时期（如创业失败、官司、健康问题等）
+4. 分析要体现出"命理预测与现实验证"的效果，让人觉得八字命理是准确的
+5. 财富曲线要符合名人的实际财富积累轨迹
+
+**核心规则:**
+1. **年龄计算**: 采用虚岁，从1岁开始
+2. **评分机制**: 所有维度评分0-100分，**必须实事求是**
+3. **数据起伏**: 分数必须呈现明显波动，体现人生高峰与低谷
+4. **大运规则**: 大运十年一换，顺行为甲子→乙丑→丙寅，逆行为甲子→癸亥→壬戌
+
+**分析原则:**
+1. 严格基于传统八字命理学推演
+2. 大运、流年、命局三者结合判断吉凶
+3. 名人的高光时刻要用他们的真实成就来描述
+4. 警示之言要参考他们真实经历的困难
+5. 体现"命中注定"的感觉，让分析更有说服力
+
+**输出规则（极其重要）:**
+- 直接输出纯JSON，第一个字符必须是{
+- 禁止使用\`\`\`json或\`\`\`等markdown代码块
+- 禁止在JSON前后添加任何解释性文字
+- 确保JSON完整闭合，所有括号配对正确`;
+
+// 名人版人生曲线提示词
+export const CELEBRITY_FREE_VERSION_PROMPT = (
+  gender: string,
+  year: number,
+  bazi: BaziForPrompt,
+  daYunList: DaYunForPrompt[],
+  currentAge: number,
+  celebrityName?: string
+) => `请基于以下已排好的八字和大运，进行**名人命盘**命理分析。
+
+【特殊说明】
+这是一位名人/公众人物的命盘${celebrityName ? `（${celebrityName}）` : ''}。请根据八字推演运势时：
+- 高光年份的描述要体现成功人士的特质（如创业成功、事业巅峰、财富突破等）
+- 谨慎年份要体现名人可能遇到的挑战（如舆论危机、商业困境、健康问题等）
+- 分析要体现出这是一个有大格局、大成就的命格
+- highlightMoment要描述得像真正的人生巅峰时刻
+
+【命主信息】
+性别: ${gender === 'male' ? '乾造' : '坤造'}
+出生年: ${year}年 | 当前虚岁: ${currentAge}岁
+
+【八字四柱】（已排好，请直接使用）
+年柱: ${bazi.yearPillar} | 月柱: ${bazi.monthPillar} | 日柱: ${bazi.dayPillar} | 时柱: ${bazi.hourPillar}
+生肖: ${bazi.zodiac} | 农历: ${bazi.lunarDate}
+
+【大运】（已排好，请直接使用）
+${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
+
+请输出JSON格式：
+{
+  "summary": "命理概述（80-100字，要体现大格局大成就的命格特点）",
+  "summaryScore": 85,
+  "personality": "性格简析（60字，体现领袖/企业家特质）",
+  "personalityScore": 85,
+  "career": "事业简析（60字，体现事业有成的命格）",
+  "careerScore": 88,
+  "wealth": "财运简析（60字，体现财富格局）",
+  "wealthScore": 85,
+  "marriage": "婚姻简析（60字）",
+  "marriageScore": 72,
+  "health": "健康简析（40字）",
+  "healthScore": 70,
+  "fengShui": "风水开运（60字）",
+  "fengShuiScore": 75,
+  "family": "六亲关系（60字）",
+  "familyScore": 72,
+  "dayMaster": {"stem": "${bazi.dayPillar[0]}", "element": "X", "strength": "身旺/身弱/中和", "description": "日主（30字，体现成功者特质）"},
+  "usefulGod": "用神喜忌（30字）",
+  "fiveElements": {"wood": 2, "fire": 1, "earth": 2, "metal": 1, "water": 2},
+  "elementAnalysis": "五行相克分析（50字，分析五行特点对成就的影响）",
+  "luckyInfo": {"direction": "方位", "color": "颜色", "number": "数字", "industry": "行业"},
+  "luckyExplanation": "开运指南详解（80字）",
+  "highlightMoment": {"age": ${currentAge > 30 ? Math.min(currentAge - 5, 45) : 35}, "title": "人生巅峰时刻", "description": "结合网络用语（80字，描述事业巅峰/财富突破/行业领袖等成就，如'这一年堪称人生开挂，从此走上人生巅峰'、'命中注定的高光时刻'），要有画面感"},
+  "chartPoints": [
+    {"age": 1, "score": 55, "daYun": "${daYunList[0]?.ganZhi || '童限'}", "ganZhi": "XX", "reason": "简述（10字）"}
+  ],
+  "highlights": [{"age": 28, "year": ${year + 27}, "type": "career", "title": "标题", "description": "描述（30字，体现重大成就）"}],
+  "warnings": [{"age": 35, "year": ${year + 34}, "type": "career", "title": "标题", "description": "描述（30字）", "advice": "建议（20字）"}],
+  "currentPhase": "rising"
+}
+
+规则：
+1. 八字四柱直接使用上面给出的，不要自己推算
+2. **chartPoints只需5个关键点**（1,20,40,60,80岁），daYun使用上面大运
+3. **曲线趋势要求**：体现名人的成功轨迹，一般应该是上升趋势或先抑后扬
+4. reason限10字内
+5. **highlights要体现重大成就**，如创业成功、上市、获奖、行业突破等
+6. **warnings要体现名人可能遇到的挑战**
+7. 整体分析要体现这是一个有大格局的成功者命格`;
+
+// 名人版财富曲线提示词
+export const CELEBRITY_WEALTH_CURVE_PROMPT = (
+  gender: string,
+  year: number,
+  bazi: BaziForPrompt,
+  daYunList: DaYunForPrompt[],
+  isPaid: boolean,
+  celebrityName?: string
+) => {
+  const currentYear = new Date().getFullYear();
+  const currentAge = currentYear - year;
+
+  return `你是一位精通八字命理的财运分析师。请根据以下八字信息，生成此名人18-80岁的累计财富曲线数据。
+
+【特殊说明】
+这是一位名人/公众人物的命盘${celebrityName ? `（${celebrityName}）` : ''}。
+- 财富曲线要体现名人级别的财富积累
+- 要有戏剧性的财富增长故事
+- 分析要体现"命中注定的财富格局"
+
+【命主信息】
+性别: ${gender === 'male' ? '乾造' : '坤造'}
+出生年: ${year}年
+当前年龄: 约${currentAge}岁
+
+【八字四柱】（已排好，请直接使用）
+年柱: ${bazi.yearPillar} | 月柱: ${bazi.monthPillar} | 日柱: ${bazi.dayPillar} | 时柱: ${bazi.hourPillar}
+生肖: ${bazi.zodiac} | 农历: ${bazi.lunarDate}
+
+【大运】（已排好，请直接使用）
+${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
+
+【名人财富曲线要求】
+作为名人/成功人士，财富曲线应该体现：
+1. 峰值应该达到千万级别甚至亿级别（如企业家、明星等）
+2. 要有明显的财富爆发点（对应创业成功、上市、爆红等）
+3. 可能有回撤（对应商业困难、投资失败等），但最终恢复或更高
+4. 整体呈现成功者的财富积累轨迹
+
+【输出格式】
+请返回以下JSON格式：
+{
+  "wealthRange": {
+    "min": 0,
+    "max": 数字（Y轴最大值，名人级别建议10000-100000，即1亿-10亿）,
+    "unit": "万"
+  },
+  "wealthType": "白手起家型/一夜暴富型/东山再起型/稳中有升型",
+  "highlights": {
+    "peakAge": 数字（巅峰年龄）,
+    "peakWealth": 数字（巅峰财富，单位万，名人级别建议5000-50000）,
+    "maxGrowthAge": 数字（最大增长年龄）,
+    "maxGrowthAmount": 数字（最大年增长金额，单位万）,
+    "maxLossAge": 数字（最大回撤年龄，如有的话）,
+    "maxLossAmount": 数字（最大年回撤金额）
+  },
+  "dataPoints": [
+    ${isPaid
+      ? '生成63个完整的数据点（18-80岁）'
+      : '生成11个数据点：18,24,30,36,42,48,54,60,66,72,78岁'
+    }
+  ],
+  "analysis": {
+    "summary": "财星分析总结（150字以上，体现名人级别的财富格局）",
+    "earlyYears": "18-30岁财运分析（100字以上，早期奋斗或起步）",
+    "middleYears": "30-50岁财运分析（100字以上，事业腾飞期）",
+    "lateYears": "50岁后财运分析（100字以上，守业或继续发展）",
+    "advice": "理财建议（120字以上）"
+  }
+}`;
+};

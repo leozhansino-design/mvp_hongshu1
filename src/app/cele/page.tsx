@@ -3,246 +3,14 @@
 import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import html2canvas from 'html2canvas';
-import { AnalysisLoader, BaziChartDisplay, LifeCurveChart, WealthChart, WealthAnalysis, FiveElementsDiagram } from '@/components';
-import { generateFreeResult, generateWealthCurve } from '@/services/api';
+import { BirthForm, AnalysisLoader, BaziChartDisplay, LifeCurveChart, WealthChart, WealthAnalysis, FiveElementsDiagram } from '@/components';
+import { generateCelebrityFreeResult, generateCelebrityWealthCurve } from '@/services/api';
 import { BirthInfo, CurveMode, CURVE_MODE_LABELS, FreeVersionResult, WealthCurveData, PHASE_LABELS, PhaseType, TYPE_LABELS } from '@/types';
 import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
 import { DaYunItem, calculateDaYun, calculateBazi, BaziResult } from '@/lib/bazi';
 
 // 名人密码
 const CELE_PASSWORD = 'celebrity2024';
-
-// 名人数据类型
-interface Celebrity {
-  id: string;
-  name: string;
-  nameEn?: string;
-  avatar: string;
-  birthInfo: BirthInfo;
-  description: string;
-  achievements: string[];
-  category: 'tech' | 'business' | 'entertainment' | 'sports';
-}
-
-// 名人列表
-const CELEBRITIES: Celebrity[] = [
-  {
-    id: 'elon-musk',
-    name: '埃隆·马斯克',
-    nameEn: 'Elon Musk',
-    avatar: '🚀',
-    birthInfo: {
-      year: 1971,
-      month: 6,
-      day: 28,
-      hour: 7,
-      minute: 0,
-      gender: 'male',
-      calendarType: 'solar',
-    },
-    description: 'Tesla、SpaceX创始人，世界首富',
-    achievements: ['创立PayPal', '特斯拉电动车革命', 'SpaceX火箭回收', '收购Twitter'],
-    category: 'tech',
-  },
-  {
-    id: 'jack-ma',
-    name: '马云',
-    nameEn: 'Jack Ma',
-    avatar: '🛒',
-    birthInfo: {
-      year: 1964,
-      month: 9,
-      day: 10,
-      hour: 8,
-      minute: 0,
-      gender: 'male',
-      calendarType: 'solar',
-    },
-    description: '阿里巴巴创始人，中国电商之父',
-    achievements: ['创立阿里巴巴', '淘宝改变购物方式', '支付宝金融革命', '蚂蚁集团'],
-    category: 'tech',
-  },
-  {
-    id: 'pony-ma',
-    name: '马化腾',
-    nameEn: 'Pony Ma',
-    avatar: '💬',
-    birthInfo: {
-      year: 1971,
-      month: 10,
-      day: 29,
-      hour: 10,
-      minute: 0,
-      gender: 'male',
-      calendarType: 'solar',
-    },
-    description: '腾讯创始人，社交帝国缔造者',
-    achievements: ['QQ改变中国社交', '微信连接世界', '游戏帝国', '投资版图'],
-    category: 'tech',
-  },
-  {
-    id: 'lei-jun',
-    name: '雷军',
-    nameEn: 'Lei Jun',
-    avatar: '📱',
-    birthInfo: {
-      year: 1969,
-      month: 12,
-      day: 16,
-      hour: 12,
-      minute: 0,
-      gender: 'male',
-      calendarType: 'solar',
-    },
-    description: '小米创始人，性价比之王',
-    achievements: ['金山软件CEO', '小米手机', '智能家居生态', '造车新势力'],
-    category: 'tech',
-  },
-  {
-    id: 'richard-liu',
-    name: '刘强东',
-    nameEn: 'Richard Liu',
-    avatar: '📦',
-    birthInfo: {
-      year: 1974,
-      month: 3,
-      day: 10,
-      hour: 6,
-      minute: 0,
-      gender: 'male',
-      calendarType: 'solar',
-    },
-    description: '京东创始人，自建物流先驱',
-    achievements: ['中关村起家', '京东商城', '自建物流体系', '京东数科'],
-    category: 'tech',
-  },
-  {
-    id: 'wang-jianlin',
-    name: '王健林',
-    nameEn: 'Wang Jianlin',
-    avatar: '🏢',
-    birthInfo: {
-      year: 1954,
-      month: 10,
-      day: 24,
-      hour: 8,
-      minute: 0,
-      gender: 'male',
-      calendarType: 'solar',
-    },
-    description: '万达集团创始人，曾经的中国首富',
-    achievements: ['万达广场帝国', '文旅产业', '影视投资', '一个亿小目标'],
-    category: 'business',
-  },
-  {
-    id: 'dong-mingzhu',
-    name: '董明珠',
-    nameEn: 'Dong Mingzhu',
-    avatar: '❄️',
-    birthInfo: {
-      year: 1954,
-      month: 8,
-      day: 12,
-      hour: 14,
-      minute: 0,
-      gender: 'female',
-      calendarType: 'solar',
-    },
-    description: '格力电器董事长，铁娘子',
-    achievements: ['销售女王', '格力掌门人', '自主研发', '网红企业家'],
-    category: 'business',
-  },
-  {
-    id: 'ren-zhengfei',
-    name: '任正非',
-    nameEn: 'Ren Zhengfei',
-    avatar: '📡',
-    birthInfo: {
-      year: 1944,
-      month: 10,
-      day: 25,
-      hour: 6,
-      minute: 0,
-      gender: 'male',
-      calendarType: 'solar',
-    },
-    description: '华为创始人，科技自主先驱',
-    achievements: ['通信设备起家', '5G技术领先', '芯片突围', '鸿蒙系统'],
-    category: 'tech',
-  },
-  {
-    id: 'zhang-yiming',
-    name: '张一鸣',
-    nameEn: 'Zhang Yiming',
-    avatar: '🎵',
-    birthInfo: {
-      year: 1983,
-      month: 4,
-      day: 1,
-      hour: 10,
-      minute: 0,
-      gender: 'male',
-      calendarType: 'solar',
-    },
-    description: '字节跳动创始人，算法帝国缔造者',
-    achievements: ['今日头条', 'TikTok全球爆发', '抖音', '最年轻的互联网大佬'],
-    category: 'tech',
-  },
-  {
-    id: 'bill-gates',
-    name: '比尔·盖茨',
-    nameEn: 'Bill Gates',
-    avatar: '💻',
-    birthInfo: {
-      year: 1955,
-      month: 10,
-      day: 28,
-      hour: 22,
-      minute: 0,
-      gender: 'male',
-      calendarType: 'solar',
-    },
-    description: '微软创始人，曾经的世界首富',
-    achievements: ['微软帝国', 'Windows操作系统', '慈善事业', '盖茨基金会'],
-    category: 'tech',
-  },
-  {
-    id: 'steve-jobs',
-    name: '史蒂夫·乔布斯',
-    nameEn: 'Steve Jobs',
-    avatar: '🍎',
-    birthInfo: {
-      year: 1955,
-      month: 2,
-      day: 24,
-      hour: 19,
-      minute: 15,
-      gender: 'male',
-      calendarType: 'solar',
-    },
-    description: '苹果创始人，改变世界的人',
-    achievements: ['苹果电脑', 'iPod', 'iPhone改变世界', 'iPad'],
-    category: 'tech',
-  },
-  {
-    id: 'warren-buffett',
-    name: '沃伦·巴菲特',
-    nameEn: 'Warren Buffett',
-    avatar: '📈',
-    birthInfo: {
-      year: 1930,
-      month: 8,
-      day: 30,
-      hour: 15,
-      minute: 0,
-      gender: 'male',
-      calendarType: 'solar',
-    },
-    description: '股神，价值投资大师',
-    achievements: ['伯克希尔·哈撒韦', '价值投资传奇', '慈善承诺', '投资智慧'],
-    category: 'business',
-  },
-];
 
 // 评分圆环组件
 function ScoreRing({ score, label, size = 'md' }: { score?: number; label: string; size?: 'sm' | 'md' }) {
@@ -289,38 +57,6 @@ function AnalysisCard({ title, content, score, icon }: { title: string; content:
   );
 }
 
-// 名人卡片组件
-function CelebrityCard({ celebrity, isSelected, onClick }: { celebrity: Celebrity; isSelected: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`p-4 rounded-lg border transition-all text-left w-full ${
-        isSelected
-          ? 'border-gold-400 bg-gold-400/10'
-          : 'border-gray-700 bg-gray-900/50 hover:border-gray-500'
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        <span className="text-3xl">{celebrity.avatar}</span>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-white font-medium">{celebrity.name}</span>
-            {celebrity.nameEn && <span className="text-gray-500 text-sm">{celebrity.nameEn}</span>}
-          </div>
-          <p className="text-gray-400 text-xs mt-1">{celebrity.description}</p>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-1 mt-2">
-        {celebrity.achievements.slice(0, 2).map((achievement, i) => (
-          <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">
-            {achievement}
-          </span>
-        ))}
-      </div>
-    </button>
-  );
-}
-
 // 名人页面内容组件
 function CelePageContent() {
   const searchParams = useSearchParams();
@@ -329,10 +65,6 @@ function CelePageContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
-
-  // 名人选择
-  const [selectedCelebrity, setSelectedCelebrity] = useState<Celebrity | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   // 表单和结果状态
   const [curveMode, setCurveMode] = useState<CurveMode>('life');
@@ -349,7 +81,6 @@ function CelePageContent() {
   // 分享相关
   const [shareLoading, setShareLoading] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
-  const wealthShareRef = useRef<HTMLDivElement>(null);
 
   // 从 URL 读取模式参数
   useEffect(() => {
@@ -382,17 +113,16 @@ function CelePageContent() {
 
   // 分享功能
   const handleShare = async () => {
-    const ref = curveMode === 'wealth' ? wealthShareRef.current : shareRef.current;
-    if (!ref) return;
+    if (!shareRef.current) return;
     setShareLoading(true);
     try {
-      const canvas = await html2canvas(ref, {
-        backgroundColor: curveMode === 'wealth' ? '#0a0a0a' : '#0D0221',
+      const canvas = await html2canvas(shareRef.current, {
+        backgroundColor: '#0D0221',
         scale: 2,
         useCORS: true,
       });
       const link = document.createElement('a');
-      link.download = `cele-${selectedCelebrity?.id || 'unknown'}-${curveMode}-${Date.now()}.png`;
+      link.download = `celebrity-${curveMode}-curve-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (error) {
@@ -403,11 +133,8 @@ function CelePageContent() {
     }
   };
 
-  // 分析名人
-  const handleAnalyze = useCallback(async () => {
-    if (!selectedCelebrity) return;
-
-    const info = selectedCelebrity.birthInfo;
+  // 提交处理 - 使用名人版API
+  const handleSubmit = useCallback(async (info: BirthInfo, _isPaid: boolean = false) => {
     setIsLoading(true);
     setError(null);
     setBirthInfo(info);
@@ -441,12 +168,12 @@ function CelePageContent() {
       );
       setDaYunResult(daYun);
 
-      // 根据模式调用API
+      // 根据模式调用名人版API
       if (curveMode === 'wealth') {
-        const resultWealth = await generateWealthCurve(info, false);
+        const resultWealth = await generateCelebrityWealthCurve(info, false);
         setWealthResult(resultWealth);
       } else {
-        const resultFree = await generateFreeResult(info);
+        const resultFree = await generateCelebrityFreeResult(info);
         setFreeResult(resultFree);
       }
 
@@ -457,12 +184,7 @@ function CelePageContent() {
       setError(err instanceof Error ? err.message : '天机运算失败，请稍后再试');
       setIsLoading(false);
     }
-  }, [selectedCelebrity, curveMode]);
-
-  // 过滤名人列表
-  const filteredCelebrities = categoryFilter === 'all'
-    ? CELEBRITIES
-    : CELEBRITIES.filter(c => c.category === categoryFilter);
+  }, [curveMode]);
 
   // 密码页面
   if (!isAuthenticated) {
@@ -470,6 +192,7 @@ function CelePageContent() {
       <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
         <div className="mystic-card-gold w-full max-w-sm p-6">
           <h1 className="text-2xl font-serif text-gold-400 text-center mb-6">名人命盘解析</h1>
+          <p className="text-gray-400 text-sm text-center mb-4">专为名人/公众人物命盘分析优化</p>
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div>
               <label className="block text-sm text-gray-400 mb-2">请输入访问密码</label>
@@ -501,17 +224,9 @@ function CelePageContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
-        <div className="text-center">
-          <AnalysisLoader
-            messages={curveMode === 'wealth' ? WEALTH_LOADING_MESSAGES : undefined}
-          />
-          {selectedCelebrity && (
-            <div className="mt-6">
-              <span className="text-6xl">{selectedCelebrity.avatar}</span>
-              <p className="text-gold-400 mt-2">正在解析 {selectedCelebrity.name} 的命盘...</p>
-            </div>
-          )}
-        </div>
+        <AnalysisLoader
+          messages={curveMode === 'wealth' ? WEALTH_LOADING_MESSAGES : undefined}
+        />
       </div>
     );
   }
@@ -521,102 +236,75 @@ function CelePageContent() {
 
   return (
     <div className="min-h-screen bg-bg-primary">
-      <div className="max-w-7xl mx-auto p-6">
-        {/* 标题 */}
+      <div className="max-w-4xl mx-auto p-6">
+        {/* 标题和模式切换 */}
         <div className="text-center mb-8">
-          <h1 className="font-serif text-4xl text-gold-gradient mb-2">名人命盘解析</h1>
-          <p className="text-text-secondary">探索商业传奇的命运密码</p>
+          <h1 className="font-serif text-4xl text-gold-gradient mb-2">
+            {CURVE_MODE_LABELS[curveMode]}
+          </h1>
+          <p className="text-text-secondary text-sm mb-1">
+            {curveMode === 'life'
+              ? '探索命运轨迹 · 把握人生节奏'
+              : '解析财富密码 · 掌握财运周期'
+            }
+          </p>
+          <p className="text-purple-400 text-xs">名人命盘专属分析模式</p>
+
+          {/* 模式切换按钮 */}
+          <div className="flex justify-center gap-4 mt-4">
+            <button
+              onClick={() => {
+                setCurveMode('life');
+                setFreeResult(null);
+                setWealthResult(null);
+              }}
+              className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
+                curveMode === 'life'
+                  ? 'bg-gold-400 text-black'
+                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              人生曲线
+            </button>
+            <button
+              onClick={() => {
+                setCurveMode('wealth');
+                setFreeResult(null);
+                setWealthResult(null);
+              }}
+              className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
+                curveMode === 'wealth'
+                  ? 'bg-gold-400 text-black'
+                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              财富曲线
+            </button>
+          </div>
         </div>
 
-        {/* 模式切换 */}
-        <div className="flex justify-center gap-4 mb-8">
-          <button
-            onClick={() => {
-              setCurveMode('life');
-              setFreeResult(null);
-              setWealthResult(null);
-            }}
-            className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
-              curveMode === 'life'
-                ? 'bg-gold-400 text-black'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
-            人生曲线
-          </button>
-          <button
-            onClick={() => {
-              setCurveMode('wealth');
-              setFreeResult(null);
-              setWealthResult(null);
-            }}
-            className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
-              curveMode === 'wealth'
-                ? 'bg-gold-400 text-black'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
-            财富曲线
-          </button>
-        </div>
-
-        {!hasResult ? (
-          <>
-            {/* 分类筛选 */}
-            <div className="flex justify-center gap-2 mb-6">
-              {[
-                { key: 'all', label: '全部' },
-                { key: 'tech', label: '科技' },
-                { key: 'business', label: '商业' },
-              ].map(cat => (
-                <button
-                  key={cat.key}
-                  onClick={() => setCategoryFilter(cat.key)}
-                  className={`px-4 py-1.5 rounded-full text-sm transition-colors ${
-                    categoryFilter === cat.key
-                      ? 'bg-purple-500 text-white'
-                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-
-            {/* 名人选择网格 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              {filteredCelebrities.map(celebrity => (
-                <CelebrityCard
-                  key={celebrity.id}
-                  celebrity={celebrity}
-                  isSelected={selectedCelebrity?.id === celebrity.id}
-                  onClick={() => setSelectedCelebrity(celebrity)}
-                />
-              ))}
-            </div>
-
-            {/* 分析按钮 */}
-            {selectedCelebrity && (
-              <div className="text-center">
-                <button
-                  onClick={handleAnalyze}
-                  disabled={isLoading}
-                  className="px-8 py-3 bg-gold-400 text-black font-medium rounded-lg hover:bg-gold-300 transition-colors disabled:opacity-50"
-                >
-                  解析 {selectedCelebrity.name} 的{CURVE_MODE_LABELS[curveMode]}
-                </button>
-              </div>
-            )}
+        {/* 输入表单 */}
+        {!hasResult && (
+          <div className="mystic-card-gold max-w-md mx-auto">
+            <BirthForm
+              onSubmit={handleSubmit}
+              disabled={isLoading}
+              remainingUsage={999}
+              points={99999}
+              detailedPrice={200}
+            />
 
             {error && (
-              <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 max-w-md mx-auto">
+              <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
                 <p className="text-red-400 text-sm text-center">{error}</p>
               </div>
             )}
-          </>
-        ) : (
-          /* 结果展示 */
-          <div className="space-y-6">
+          </div>
+        )}
+
+        {/* 结果展示 */}
+        {hasResult && (
+          <div ref={shareRef} className="space-y-6">
             {/* 顶部操作栏 */}
             <div className="flex justify-between items-center">
               <button
@@ -627,49 +315,16 @@ function CelePageContent() {
                 }}
                 className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors text-sm"
               >
-                ← 返回选择
+                ← 重新分析
               </button>
-              <div className="flex items-center gap-3">
-                {selectedCelebrity && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{selectedCelebrity.avatar}</span>
-                    <span className="text-gold-400 font-medium">{selectedCelebrity.name}</span>
-                  </div>
-                )}
-                <button
-                  onClick={handleShare}
-                  disabled={shareLoading}
-                  className="px-4 py-2 bg-gold-400/20 text-gold-400 border border-gold-400/50 rounded-lg hover:bg-gold-400/30 transition-colors text-sm"
-                >
-                  {shareLoading ? '生成中...' : '📤 分享图片'}
-                </button>
-              </div>
+              <button
+                onClick={handleShare}
+                disabled={shareLoading}
+                className="px-4 py-2 bg-gold-400/20 text-gold-400 border border-gold-400/50 rounded-lg hover:bg-gold-400/30 transition-colors text-sm"
+              >
+                {shareLoading ? '生成中...' : '📤 分享图片'}
+              </button>
             </div>
-
-            {/* 名人信息卡片 */}
-            {selectedCelebrity && (
-              <div className="mystic-card-gold p-4">
-                <div className="flex items-start gap-4">
-                  <span className="text-5xl">{selectedCelebrity.avatar}</span>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h2 className="text-2xl font-serif text-gold-400">{selectedCelebrity.name}</h2>
-                      {selectedCelebrity.nameEn && (
-                        <span className="text-gray-400">{selectedCelebrity.nameEn}</span>
-                      )}
-                    </div>
-                    <p className="text-text-primary mb-3">{selectedCelebrity.description}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedCelebrity.achievements.map((achievement, i) => (
-                        <span key={i} className="text-xs px-3 py-1 rounded-full bg-gold-400/20 text-gold-400">
-                          {achievement}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* 人生高光时刻 */}
             {freeResult?.highlightMoment && !isWealthMode && (
@@ -717,7 +372,7 @@ function CelePageContent() {
             {/* 图表展示 */}
             <div className="mystic-card p-4">
               <h3 className="text-gold-400 font-serif text-lg mb-4">
-                {selectedCelebrity?.name} 的{CURVE_MODE_LABELS[curveMode]}
+                {CURVE_MODE_LABELS[curveMode]}
               </h3>
               {!isWealthMode && freeResult && birthInfo && (
                 <LifeCurveChart
