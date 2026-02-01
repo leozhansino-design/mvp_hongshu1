@@ -95,9 +95,10 @@ function LivePageContent() {
     }
   };
 
-  // 提交处理 - 使用和首页一样的API
+  // 提交处理 - 使用和首页一样的API，并行调用
   const handleSubmit = useCallback(async (info: BirthInfo, _isPaid: boolean = false) => {
     setIsLoading(true);
+    setScriptLoading(true);
     setError(null);
     setBirthInfo(info);
 
@@ -123,43 +124,48 @@ function LivePageContent() {
       const hint = getFocusHint(info.year, info.gender);
       setFocusHint(hint);
 
+      // 根据关注重点确定focusType
+      const focusTypeMap: Record<string, 'career' | 'relationship' | 'future' | 'health'> = {
+        'career': 'career',
+        'relationship': 'relationship',
+        'future': 'future',
+        'health': 'health'
+      };
+      const focusType = focusTypeMap[hint.type] || 'career';
+
+      // 并行调用所有API
       if (curveMode === 'wealth') {
-        // 财富曲线模式 - 调用和首页一样的API
-        const resultWealth = await generateWealthCurve(info, false);
+        // 财富曲线模式 - 并行调用财富曲线和主播稿子API
+        const [resultWealth, script] = await Promise.all([
+          generateWealthCurve(info, false),
+          generateStreamerScript(info, focusType).catch(err => {
+            console.error('生成主播稿子失败:', err);
+            return null;
+          })
+        ]);
         setWealthResult(resultWealth);
+        if (script) setStreamerScript(script);
       } else {
-        // 人生曲线模式 - 调用和首页一样的API
-        const resultFree = await generateFreeResult(info);
+        // 人生曲线模式 - 并行调用人生曲线和主播稿子API
+        const [resultFree, script] = await Promise.all([
+          generateFreeResult(info),
+          generateStreamerScript(info, focusType).catch(err => {
+            console.error('生成主播稿子失败:', err);
+            return null;
+          })
+        ]);
         setFreeResult(resultFree);
+        if (script) setStreamerScript(script);
       }
 
       setIsLoading(false);
-
-      // 异步生成主播稿子 - 使用AI API
-      setScriptLoading(true);
-      try {
-        // 根据关注重点确定focusType
-        const focusTypeMap: Record<string, 'career' | 'relationship' | 'future' | 'health'> = {
-          'career': 'career',
-          'relationship': 'relationship',
-          'future': 'future',
-          'health': 'health'
-        };
-        const focusType = focusTypeMap[hint.type] || 'career';
-
-        const script = await generateStreamerScript(info, focusType);
-        setStreamerScript(script);
-      } catch (scriptErr) {
-        console.error('生成主播稿子失败:', scriptErr);
-        // 主播稿子失败不阻塞主流程
-      } finally {
-        setScriptLoading(false);
-      }
+      setScriptLoading(false);
 
     } catch (err) {
       console.error('生成失败:', err);
       setError(err instanceof Error ? err.message : '天机运算失败，请稍后再试');
       setIsLoading(false);
+      setScriptLoading(false);
     }
   }, [curveMode]);
 
@@ -370,6 +376,7 @@ function LivePageContent() {
                       data={freeResult.chartPoints}
                       currentAge={new Date().getFullYear() - birthInfo.year}
                       birthYear={birthInfo.year}
+                      daYunList={daYunResult?.daYunList}
                     />
                   )}
                   {isWealthMode && wealthResult && birthInfo && (

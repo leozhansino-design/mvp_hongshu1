@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, use } from 'react';
+import { useState, useEffect, useRef, use, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import html2canvas from 'html2canvas';
 import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagram, DetailedDaYunTable, WealthChart, WealthAnalysis, RechargeModal, Footer } from '@/components';
@@ -300,6 +300,23 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   // 从URL检测初始模式
   const urlMode = searchParams.get('mode') as CurveMode | null;
   const isWealthMode = curveMode === 'wealth';
+
+  // 计算大运列表用于图表显示 - 需要在所有早期返回之前调用
+  const daYunList = useMemo(() => {
+    if (!result?.birthInfo) return [];
+    const bi = result.birthInfo;
+    const isLunar = bi.calendarType === 'lunar';
+    const daYunResult = calculateDaYun(
+      bi.year,
+      bi.month,
+      bi.day,
+      bi.hour || 0,
+      bi.minute || 0,
+      bi.gender,
+      isLunar
+    );
+    return daYunResult?.daYunList || [];
+  }, [result?.birthInfo]);
 
   useEffect(() => {
     const storedResult = getResult(resolvedParams.id);
@@ -786,6 +803,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
               data={data.chartPoints}
               currentAge={currentAge}
               birthYear={birthInfo.year}
+              daYunList={daYunList}
             />
           </div>
         )}
@@ -1073,6 +1091,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                 data={data?.chartPoints || []}
                 currentAge={currentAge}
                 birthYear={birthInfo.year}
+                daYunList={daYunList}
               />
             </div>
 
