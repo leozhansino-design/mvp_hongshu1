@@ -339,109 +339,117 @@ function LivePageContent() {
                   </button>
                 </div>
 
-                {/* 人生高光时刻 - 最优先显示 */}
-                {freeResult?.highlightMoment && !isWealthMode && (
-                  <div className="mystic-card-gold p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="text-4xl">🌟</div>
-                      <div className="flex-1">
-                        <h3 className="text-gold-400 font-serif text-lg mb-2">人生高光时刻</h3>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="px-2 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
-                            {freeResult.highlightMoment.age}岁
-                          </span>
-                          <span className="text-text-secondary text-sm">· {freeResult.highlightMoment.title}</span>
+                {/* 可分享内容区域 - 人生曲线 */}
+                {!isWealthMode && freeResult && (
+                  <div ref={shareRef} className="space-y-6 bg-bg-primary p-4 rounded-lg">
+                    {/* 人生高光时刻 */}
+                    {freeResult.highlightMoment && (
+                      <div className="mystic-card-gold p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="text-4xl">🌟</div>
+                          <div className="flex-1">
+                            <h3 className="text-gold-400 font-serif text-lg mb-2">人生高光时刻</h3>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="px-2 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
+                                {freeResult.highlightMoment.age}岁
+                              </span>
+                              <span className="text-text-secondary text-sm">· {freeResult.highlightMoment.title}</span>
+                            </div>
+                            <p className="text-text-primary leading-relaxed text-sm">{freeResult.highlightMoment.description}</p>
+                          </div>
                         </div>
-                        <p className="text-text-primary leading-relaxed text-sm">{freeResult.highlightMoment.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 财富高光 */}
-                {wealthResult && isWealthMode && (
-                  <div className="mystic-card-gold p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="text-4xl">💰</div>
-                      <div className="flex-1">
-                        <h3 className="text-gold-400 font-serif text-lg mb-2">财富巅峰</h3>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="px-2 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
-                            {wealthResult.highlights.peakAge}岁
-                          </span>
-                          <span className="text-text-secondary text-sm">· {wealthResult.wealthType}</span>
-                        </div>
-                        <p className="text-text-primary leading-relaxed text-sm">
-                          {wealthResult.highlights.peakWealth >= 10000
-                            ? '预计财富巅峰 突破一亿·不可估量！'
-                            : `预计财富巅峰约 ${Math.round(wealthResult.highlights.peakWealth)}万`
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 图表展示 */}
-                <div className="mystic-card p-4">
-                  {!isWealthMode && freeResult && birthInfo && (
-                    <LifeCurveChart
-                      data={freeResult.chartPoints}
-                      currentAge={new Date().getFullYear() - birthInfo.year}
-                      birthYear={birthInfo.year}
-                      daYunList={daYunResult?.daYunList}
-                    />
-                  )}
-                  {isWealthMode && wealthResult && birthInfo && (
-                    <WealthChart
-                      dataPoints={wealthResult.dataPoints}
-                      highlights={wealthResult.highlights}
-                      wealthRange={wealthResult.wealthRange}
-                      isPaid={false}
-                    />
-                  )}
-                </div>
-
-                {/* 八字排盘 - 使用详细的pillarsDetail */}
-                {freeResult && birthInfo && !isWealthMode && (
-                  <div className="mystic-card p-4">
-                    <h3 className="text-gold-400 font-serif text-lg mb-4">四柱八字</h3>
-                    <BaziChartDisplay
-                      chart={freeResult.baziChart}
-                      showDetails={true}
-                      pillarsDetail={baziResult?.pillarsDetail}
-                    />
-                  </div>
-                )}
-
-                {/* 命理总评 */}
-                {freeResult && !isWealthMode && (
-                  <div className="mystic-card p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-gold-400 font-serif text-lg">命理总评</h3>
-                      <div className="text-2xl font-mono text-gold-400">{freeResult.summaryScore}分</div>
-                    </div>
-                    <p className="text-text-primary text-sm leading-relaxed mb-3">{freeResult.summary}</p>
-                    {freeResult.currentPhase && (
-                      <div className="p-2 rounded-lg bg-gray-800/50 flex items-center gap-2">
-                        <span className="text-lg">
-                          {freeResult.currentPhase === 'rising' && '📈'}
-                          {freeResult.currentPhase === 'peak' && '⭐'}
-                          {freeResult.currentPhase === 'stable' && '➡️'}
-                          {freeResult.currentPhase === 'declining' && '📉'}
-                          {freeResult.currentPhase === 'valley' && '🌙'}
-                        </span>
-                        <span className="text-sm text-text-secondary">当前运势：</span>
-                        <span className="text-gold-400 text-sm">{PHASE_LABELS[freeResult.currentPhase as PhaseType]}</span>
                       </div>
                     )}
+
+                    {/* 图表 */}
+                    {birthInfo && (
+                      <div className="mystic-card p-4">
+                        <LifeCurveChart
+                          data={freeResult.chartPoints}
+                          currentAge={new Date().getFullYear() - birthInfo.year}
+                          birthYear={birthInfo.year}
+                          daYunList={daYunResult?.daYunList}
+                        />
+                      </div>
+                    )}
+
+                    {/* 八字排盘 */}
+                    {birthInfo && (
+                      <div className="mystic-card p-4">
+                        <h3 className="text-gold-400 font-serif text-lg mb-4">四柱八字</h3>
+                        <BaziChartDisplay
+                          chart={freeResult.baziChart}
+                          showDetails={true}
+                          pillarsDetail={baziResult?.pillarsDetail}
+                        />
+                      </div>
+                    )}
+
+                    {/* 命理总评 */}
+                    <div className="mystic-card p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <h3 className="text-gold-400 font-serif text-lg">命理总评</h3>
+                        <div className="text-2xl font-mono text-gold-400">{freeResult.summaryScore}分</div>
+                      </div>
+                      <p className="text-text-primary text-sm leading-relaxed mb-3">{freeResult.summary}</p>
+                      {freeResult.currentPhase && (
+                        <div className="p-2 rounded-lg bg-gray-800/50 flex items-center gap-2">
+                          <span className="text-lg">
+                            {freeResult.currentPhase === 'rising' && '📈'}
+                            {freeResult.currentPhase === 'peak' && '⭐'}
+                            {freeResult.currentPhase === 'stable' && '➡️'}
+                            {freeResult.currentPhase === 'declining' && '📉'}
+                            {freeResult.currentPhase === 'valley' && '🌙'}
+                          </span>
+                          <span className="text-sm text-text-secondary">当前运势：</span>
+                          <span className="text-gold-400 text-sm">{PHASE_LABELS[freeResult.currentPhase as PhaseType]}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
-                {/* 财富分析 */}
-                {wealthResult && isWealthMode && (
-                  <div className="mystic-card p-4">
-                    <WealthAnalysis analysis={wealthResult.analysis} isPaid={false} />
+                {/* 可分享内容区域 - 财富曲线 */}
+                {isWealthMode && wealthResult && (
+                  <div ref={wealthShareRef} className="space-y-6 bg-gray-950 p-4 rounded-lg">
+                    {/* 财富高光 */}
+                    <div className="mystic-card-gold p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="text-4xl">💰</div>
+                        <div className="flex-1">
+                          <h3 className="text-gold-400 font-serif text-lg mb-2">财富巅峰</h3>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="px-2 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
+                              {wealthResult.highlights.peakAge}岁
+                            </span>
+                            <span className="text-text-secondary text-sm">· {wealthResult.wealthType}</span>
+                          </div>
+                          <p className="text-text-primary leading-relaxed text-sm">
+                            {wealthResult.highlights.peakWealth >= 10000
+                              ? '预计财富巅峰 突破一亿·不可估量！'
+                              : `预计财富巅峰约 ${Math.round(wealthResult.highlights.peakWealth)}万`
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 财富图表 */}
+                    {birthInfo && (
+                      <div className="mystic-card p-4">
+                        <WealthChart
+                          dataPoints={wealthResult.dataPoints}
+                          highlights={wealthResult.highlights}
+                          wealthRange={wealthResult.wealthRange}
+                          isPaid={false}
+                        />
+                      </div>
+                    )}
+
+                    {/* 财富分析 */}
+                    <div className="mystic-card p-4">
+                      <WealthAnalysis analysis={wealthResult.analysis} isPaid={false} />
+                    </div>
                   </div>
                 )}
 
