@@ -242,13 +242,12 @@ function CelePageContent() {
           <h1 className="font-serif text-4xl text-gold-gradient mb-2">
             {CURVE_MODE_LABELS[curveMode]}
           </h1>
-          <p className="text-text-secondary text-sm mb-1">
+          <p className="text-text-secondary text-sm">
             {curveMode === 'life'
               ? '探索命运轨迹 · 把握人生节奏'
               : '解析财富密码 · 掌握财运周期'
             }
           </p>
-          <p className="text-purple-400 text-xs">名人命盘专属分析模式</p>
 
           {/* 模式切换按钮 */}
           <div className="flex justify-center gap-4 mt-4">
