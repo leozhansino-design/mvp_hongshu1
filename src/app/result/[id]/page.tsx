@@ -7,7 +7,7 @@ import { Header, BaziChartDisplay, LifeCurveChart, DaYunTable, FiveElementsDiagr
 import UnlockLoader from '@/components/UnlockLoader';
 import { getResult, saveResult } from '@/services/storage';
 import { generatePaidResult, generateWealthCurve } from '@/services/api';
-import { calculateDaYun } from '@/lib/bazi';
+import { calculateDaYun, calculateBazi, BaziResult } from '@/lib/bazi';
 import { getOrCreateAnalytics, trackEvent, trackPageView, trackButtonClick } from '@/services/analytics';
 import { checkUsageStatus, consumeUsage } from '@/lib/device';
 import { useAuth } from '@/contexts/AuthContext';
@@ -316,6 +316,21 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
       isLunar
     );
     return daYunResult?.daYunList || [];
+  }, [result?.birthInfo]);
+
+  // 计算八字详细信息（包含十神、藏干等）用于显示详细的四柱八字
+  const baziResult = useMemo<BaziResult | null>(() => {
+    if (!result?.birthInfo) return null;
+    const bi = result.birthInfo;
+    const isLunar = bi.calendarType === 'lunar';
+    return calculateBazi(
+      bi.year,
+      bi.month,
+      bi.day,
+      bi.hour || 0,
+      bi.minute || 0,
+      isLunar
+    );
   }, [result?.birthInfo]);
 
   useEffect(() => {
@@ -824,7 +839,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
         {data?.baziChart && (
           <div className="mystic-card mb-6">
             <h2 className="font-serif text-xl text-gold-400 mb-4">四柱八字</h2>
-            <BaziChartDisplay chart={data.baziChart} showDetails={true} />
+            <BaziChartDisplay chart={data.baziChart} showDetails={true} pillarsDetail={baziResult?.pillarsDetail} />
 
             {/* 大运流年折叠按钮 */}
             <button
