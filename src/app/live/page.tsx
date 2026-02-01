@@ -413,9 +413,7 @@ function LivePageContent() {
                         </div>
                         <p className="text-apple-gray-600 leading-relaxed text-sm">{freeResult.highlightMoment.description}</p>
                       </div>
-                    </div>
-                  </div>
-                )}
+                    )}
 
                 {/* 财富高光 */}
                 {wealthResult && isWealthMode && (
@@ -437,9 +435,7 @@ function LivePageContent() {
                           }
                         </p>
                       </div>
-                    </div>
-                  </div>
-                )}
+                    )}
 
                 {/* 图表展示 */}
                 <div className="apple-card p-4">
@@ -494,8 +490,6 @@ function LivePageContent() {
                         <span className="text-apple-blue text-sm">{PHASE_LABELS[freeResult.currentPhase as PhaseType]}</span>
                       </div>
                     )}
-                  </div>
-                )}
 
                 {/* 财富分析 */}
                 {wealthResult && isWealthMode && (
