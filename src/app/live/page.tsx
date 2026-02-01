@@ -860,6 +860,25 @@ function LivePageContent() {
                   </h3>
                   <p className="text-gray-400 text-xs leading-relaxed">{streamerScript.backgroundKnowledge}</p>
                 </div>
+
+                {/* Golden Quotes - 命格金句 */}
+                {streamerScript.goldenQuotes && streamerScript.goldenQuotes.length > 0 && (
+                  <div className="bg-gradient-to-r from-gold-400/10 to-purple-500/10 border border-gold-400/30 rounded-lg p-4">
+                    <h3 className="text-gold-400 font-medium mb-3 flex items-center gap-2">
+                      <span>✨</span> 命格金句
+                      <span className="text-xs text-gray-500 font-normal">（可选择使用）</span>
+                    </h3>
+                    <div className="space-y-3">
+                      {streamerScript.goldenQuotes.map((quote, index) => (
+                        <div key={index} className="bg-black/30 rounded-lg p-3 border-l-3 border-gold-400 hover:bg-black/40 transition-colors cursor-pointer">
+                          <p className="text-white text-sm leading-relaxed">
+                            &quot;{quote}&quot;
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
