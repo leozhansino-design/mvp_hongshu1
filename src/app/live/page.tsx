@@ -246,8 +246,8 @@ function LivePageContent() {
     <div className="min-h-screen bg-bg-primary">
       <div className="flex h-screen">
         {/* 左侧 - 用户输入和结果展示区 */}
-        <div className="w-1/2 overflow-y-auto border-r border-gray-800">
-          <div className="p-6">
+        <div className={`w-1/2 border-r border-gray-800 ${hasResult ? 'overflow-y-auto' : 'flex items-center justify-center'}`}>
+          <div className={`p-6 ${hasResult ? '' : 'w-full max-w-lg'}`}>
             {/* 标题和模式切换 */}
             <div className="text-center mb-6">
               <h1 className="font-serif text-3xl text-gold-gradient mb-2">
