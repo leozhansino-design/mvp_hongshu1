@@ -10,31 +10,28 @@ import {
   saveResult,
 } from '@/services/storage';
 import { trackPageView, trackButtonClick } from '@/services/analytics';
-import { checkUsageStatus, consumeUsage, UsageStatus, checkResultCache, saveResultCache } from '@/lib/device';
-import { BirthInfo, StoredResult, CurveMode, CURVE_MODE_LABELS, FreeVersionResult, PaidVersionResult, WealthCurveData } from '@/types';
+import { consumeUsage, UsageStatus, checkResultCache, saveResultCache } from '@/lib/device';
+import { BirthInfo, StoredResult, CurveMode, FreeVersionResult, PaidVersionResult, WealthCurveData } from '@/types';
 import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
 import { useAuth } from '@/contexts/AuthContext';
 
-// 基础统计数（运营初始值，数据库中已初始化为 41512）
-// 如果数据库不可用，使用此值作为后备
 const FALLBACK_GENERATED_COUNT = 41512;
 
-// 科技风格标题
-const TECH_TITLES: Record<CurveMode, string> = {
-  life: '生命周期模型',
-  wealth: '财富轨迹模型',
+// 简洁标题
+const PAGE_TITLES: Record<CurveMode, string> = {
+  life: '人生曲线',
+  wealth: '财富曲线',
 };
 
-const TECH_SUBTITLES: Record<CurveMode, string> = {
-  life: '基于时空维度的个人发展趋势解析',
-  wealth: '多维度财富周期量化分析系统',
+const PAGE_SUBTITLES: Record<CurveMode, string> = {
+  life: '探索您的人生发展趋势',
+  wealth: '了解您的财富增长轨迹',
 };
 
-// 主页面内容组件
 function HomePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, isLoggedIn, setShowLoginModal, setLoginRedirectMessage, updateFreeUsed, updatePoints } = useAuth();
+  const { user, isLoggedIn, setShowLoginModal, setLoginRedirectMessage } = useAuth();
   const [remainingUsage, setRemainingUsage] = useState(3);
   const [points, setPoints] = useState(0);
   const [detailedPrice, setDetailedPrice] = useState(200);
@@ -43,10 +40,8 @@ function HomePageContent() {
   const [error, setError] = useState<string | null>(null);
   const [curveMode, setCurveMode] = useState<CurveMode>('life');
   const [usageRefreshKey, setUsageRefreshKey] = useState(0);
-  // 存储待提交的表单数据（用于登录后继续）
   const [pendingSubmission, setPendingSubmission] = useState<{ birthInfo: BirthInfo; isPaid: boolean } | null>(null);
 
-  // 从 URL 读取模式参数
   useEffect(() => {
     const modeParam = searchParams.get('mode');
     if (modeParam === 'wealth') {
@@ -56,12 +51,10 @@ function HomePageContent() {
     }
   }, [searchParams]);
 
-  // 刷新使用状态（从服务器/用户状态加载）
   const refreshUsageStatus = useCallback(async (mode: CurveMode) => {
     try {
-      // 如果已登录，使用用户的数据
       if (isLoggedIn && user) {
-        const freeLimit = 1; // 每种模式免费1次
+        const freeLimit = 1;
         if (mode === 'wealth') {
           setRemainingUsage(Math.max(0, freeLimit - user.freeUsedWealth));
         } else {
@@ -69,20 +62,16 @@ function HomePageContent() {
         }
         setPoints(user.points);
       } else {
-        // 未登录时显示默认值（需要登录才能使用）
-        setRemainingUsage(1); // 显示有1次免费机会，但点击时会要求登录
+        setRemainingUsage(1);
         setPoints(0);
       }
-      // 通知 UsageStatusBar 也刷新
       setUsageRefreshKey(prev => prev + 1);
     } catch (err) {
       console.error('Failed to refresh usage status:', err);
     }
   }, [isLoggedIn, user]);
 
-  // 初始加载 + 曲线模式变化时刷新
   useEffect(() => {
-    // 从数据库获取总生成次数
     const fetchTotalGenerated = async () => {
       try {
         const response = await fetch('/api/stats');
@@ -92,14 +81,12 @@ function HomePageContent() {
         }
       } catch (error) {
         console.error('获取总生成次数失败:', error);
-        // 保持默认值
       }
     };
     fetchTotalGenerated();
     refreshUsageStatus(curveMode);
   }, [curveMode, refreshUsageStatus]);
 
-  // 页面可见性变化时刷新（从结果页返回时触发）
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -109,9 +96,7 @@ function HomePageContent() {
     const handleFocus = () => {
       refreshUsageStatus(curveMode);
     };
-    // pageshow 事件在浏览器后退时也会触发（包括从 bfcache 恢复时）
     const handlePageShow = (event: PageTransitionEvent) => {
-      // persisted 为 true 表示页面从 bfcache 恢复
       if (event.persisted) {
         refreshUsageStatus(curveMode);
       }
@@ -126,36 +111,27 @@ function HomePageContent() {
     };
   }, [curveMode, refreshUsageStatus]);
 
-  // 追踪页面访问
   useEffect(() => {
     trackPageView('home', curveMode);
   }, [curveMode]);
 
-  // 登录成功后处理待提交的表单
   useEffect(() => {
     if (isLoggedIn && pendingSubmission) {
-      // 清空待提交数据，然后提交
       const { birthInfo, isPaid } = pendingSubmission;
       setPendingSubmission(null);
-      // 延迟一下以确保状态更新
       setTimeout(() => {
         handleSubmitInternal(birthInfo, isPaid);
       }, 100);
     }
   }, [isLoggedIn, pendingSubmission]);
 
-  // 内部提交函数（需要已登录）
   const handleSubmitInternal = useCallback(async (birthInfo: BirthInfo, isPaid: boolean = false) => {
     setIsLoading(true);
     setError(null);
-
-    // 追踪表单提交点击
     trackButtonClick('form_submit', 'home', { curveMode, isPaid });
 
     try {
       const resultId = uuidv4();
-
-      // 先消耗使用次数/积分（服务端扣费）
       const action = isPaid ? 'detailed' : 'free_overview';
       const consumeResult = await consumeUsage(
         action,
@@ -170,7 +146,6 @@ function HomePageContent() {
         return;
       }
 
-      // 检查缓存（确保同一用户同样信息返回一致结果）
       const cacheParams = {
         name: birthInfo.name,
         year: birthInfo.year,
@@ -185,16 +160,11 @@ function HomePageContent() {
       const cacheResult = await checkResultCache(cacheParams);
 
       if (curveMode === 'wealth') {
-        // 财富曲线模式
         let wealthResult: WealthCurveData;
-
         if (cacheResult.found && cacheResult.resultData) {
-          // 使用缓存结果
           wealthResult = cacheResult.resultData as WealthCurveData;
         } else {
-          // 生成新结果
           wealthResult = await generateWealthCurve(birthInfo, isPaid);
-          // 保存到缓存（等待完成确保一致性）
           await saveResultCache({
             cacheKey: cacheResult.cacheKey,
             curveMode,
@@ -204,7 +174,6 @@ function HomePageContent() {
           });
         }
 
-        // 存储财富曲线结果
         const storedResult: StoredResult = {
           id: resultId,
           birthInfo,
@@ -215,25 +184,17 @@ function HomePageContent() {
         };
 
         saveResult(storedResult);
-
-        // 增加数据库中的总生成次数（异步，不阻塞跳转）
         fetch('/api/stats', { method: 'POST' }).catch(console.error);
-
         router.push(`/result/${resultId}?mode=wealth`);
       } else {
-        // 人生曲线模式
         let storedResult: StoredResult;
 
         if (isPaid) {
           let paidResult: PaidVersionResult;
-
           if (cacheResult.found && cacheResult.resultData) {
-            // 使用缓存结果
             paidResult = cacheResult.resultData as PaidVersionResult;
           } else {
-            // 生成新结果
             paidResult = await generatePaidResult(birthInfo);
-            // 保存到缓存（等待完成确保一致性）
             await saveResultCache({
               cacheKey: cacheResult.cacheKey,
               curveMode,
@@ -242,7 +203,6 @@ function HomePageContent() {
               birthInfo,
             });
           }
-
           storedResult = {
             id: resultId,
             birthInfo,
@@ -253,14 +213,10 @@ function HomePageContent() {
           };
         } else {
           let freeResult: FreeVersionResult;
-
           if (cacheResult.found && cacheResult.resultData) {
-            // 使用缓存结果
             freeResult = cacheResult.resultData as FreeVersionResult;
           } else {
-            // 生成新结果
             freeResult = await generateFreeResult(birthInfo);
-            // 保存到缓存（等待完成确保一致性）
             await saveResultCache({
               cacheKey: cacheResult.cacheKey,
               curveMode,
@@ -269,7 +225,6 @@ function HomePageContent() {
               birthInfo,
             });
           }
-
           storedResult = {
             id: resultId,
             birthInfo,
@@ -280,43 +235,32 @@ function HomePageContent() {
         }
 
         saveResult(storedResult);
-
-        // 增加数据库中的总生成次数（异步，不阻塞跳转）
         fetch('/api/stats', { method: 'POST' }).catch(console.error);
-
         router.push(`/result/${resultId}`);
       }
 
-      // 刷新使用状态（在后台刷新，不阻塞跳转）
       refreshUsageStatus(curveMode);
     } catch (err) {
       console.error('生成失败:', err);
-      setError(err instanceof Error ? err.message : '模型运算失败，请稍后再试');
+      setError(err instanceof Error ? err.message : '分析失败，请稍后再试');
       setIsLoading(false);
-      // 生成失败时也刷新状态（扣费已成功但生成失败的情况）
       refreshUsageStatus(curveMode);
     }
   }, [router, curveMode, refreshUsageStatus]);
 
-  // 外部提交函数（检查登录状态）
   const handleSubmit = useCallback((birthInfo: BirthInfo, isPaid: boolean = false) => {
-    // 必须登录才能使用
     if (!isLoggedIn) {
-      // 保存待提交的数据
       setPendingSubmission({ birthInfo, isPaid });
-      // 显示登录弹窗
-      setLoginRedirectMessage(isPaid ? '请先登录后再使用专业版' : '请先登录后再使用基础版');
+      setLoginRedirectMessage(isPaid ? '请先登录后使用完整版' : '请先登录后使用');
       setShowLoginModal(true);
       return;
     }
-
-    // 已登录，直接提交
     handleSubmitInternal(birthInfo, isPaid);
   }, [isLoggedIn, handleSubmitInternal, setLoginRedirectMessage, setShowLoginModal]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-white">
         <Header curveMode={curveMode} showModeSelector={false} />
         <div className="flex flex-col items-center justify-center px-4 py-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
           <AnalysisLoader
@@ -328,45 +272,34 @@ function HomePageContent() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-white to-apple-gray-100">
       <Header
         curveMode={curveMode}
         onModeChange={setCurveMode}
         showModeSelector={true}
       />
-      <div className="flex flex-col items-center justify-center px-4 py-8 md:py-12" style={{ minHeight: 'calc(100vh - 56px)' }}>
-        {/* Tech-style Header */}
-        <div className="text-center mb-6 md:mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyber-400/10 border border-cyber-400/30 mb-4">
-            <span className="w-2 h-2 rounded-full bg-cyber-400 animate-pulse"></span>
-            <span className="text-cyber-400 text-xs font-mono uppercase tracking-wider">
-              {curveMode === 'life' ? 'Life Cycle Analysis' : 'Wealth Trajectory Analysis'}
-            </span>
-          </div>
-          <h1 className="text-3xl md:text-5xl font-semibold mb-3 text-cyber-gradient">
-            {TECH_TITLES[curveMode]}
+      <div className="flex flex-col items-center justify-center px-4 py-12 md:py-16" style={{ minHeight: 'calc(100vh - 56px)' }}>
+        {/* Header Section */}
+        <div className="text-center mb-8 md:mb-10">
+          <h1 className="text-4xl md:text-5xl font-semibold text-apple-gray-600 mb-3">
+            {PAGE_TITLES[curveMode]}
           </h1>
-          <p className="text-text-secondary text-sm md:text-base max-w-md mx-auto">
-            {TECH_SUBTITLES[curveMode]}
+          <p className="text-apple-gray-400 text-lg">
+            {PAGE_SUBTITLES[curveMode]}
           </p>
-          {curveMode === 'wealth' && (
-            <p className="text-cyber-400/60 text-xs mt-2 font-mono">
-              * 已计入年化2.5%通胀系数，显示未来名义财富值
-            </p>
-          )}
         </div>
 
         {/* Main Form Card */}
-        <div className="glass-card w-full max-w-md border-cyber-400/20">
-          <div className="flex items-center gap-2 mb-5 pb-4 border-b border-white/10">
-            <div className="w-8 h-8 rounded-lg bg-cyber-400/20 flex items-center justify-center">
-              <svg className="w-4 h-4 text-cyber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        <div className="apple-card w-full max-w-md">
+          <div className="flex items-center gap-3 mb-6 pb-5 border-b border-apple-gray-200">
+            <div className="w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center">
+              <svg className="w-5 h-5 text-apple-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
             <div>
-              <h2 className="text-white font-medium">初始时空坐标</h2>
-              <p className="text-text-muted text-xs">Initial Temporal Coordinates</p>
+              <h2 className="text-apple-gray-600 font-medium text-lg">个人信息</h2>
+              <p className="text-apple-gray-400 text-sm">请填写您的基本信息</p>
             </div>
           </div>
 
@@ -379,13 +312,13 @@ function HomePageContent() {
           />
 
           {error && (
-            <div className="mt-4 p-3 rounded-xl bg-neon-red/10 border border-neon-red/30">
-              <p className="text-neon-red text-sm text-center">{error}</p>
+            <div className="mt-4 p-4 rounded-xl bg-error/5 border border-error/20">
+              <p className="text-error text-sm text-center">{error}</p>
             </div>
           )}
         </div>
 
-        {/* 使用状态栏 - 显示免费次数和积分 */}
+        {/* Usage Status */}
         <div className="w-full max-w-md">
           <UsageStatusBar
             curveMode={curveMode}
@@ -403,10 +336,10 @@ function HomePageContent() {
         </div>
 
         {/* Stats Badge */}
-        <div className="mt-6 md:mt-8 flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
-          <div className="w-2 h-2 rounded-full bg-neon-green animate-pulse"></div>
-          <span className="text-xs text-text-secondary">
-            已完成 <span className="text-cyber-400 font-mono">{totalGenerated.toLocaleString()}</span> 次分析
+        <div className="mt-8 flex items-center gap-2 px-4 py-2 rounded-full bg-apple-gray-100">
+          <div className="w-2 h-2 rounded-full bg-success"></div>
+          <span className="text-sm text-apple-gray-500">
+            已为 <span className="text-apple-blue font-medium">{totalGenerated.toLocaleString()}</span> 人生成分析报告
           </span>
         </div>
       </div>
@@ -415,14 +348,13 @@ function HomePageContent() {
   );
 }
 
-// 导出包装组件，使用 Suspense 包裹
 export default function HomePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-cyber-400 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-cyber-400 font-mono text-sm">Loading...</span>
+          <div className="w-5 h-5 border-2 border-apple-blue border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-apple-gray-500">加载中...</span>
         </div>
       </div>
     }>

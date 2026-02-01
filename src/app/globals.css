@@ -1,42 +1,30 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Tech Dark Colors */
-  --tech-950: #030712;
-  --tech-900: #0a0f1a;
-  --tech-800: #111827;
-  --tech-700: #1e293b;
-  --tech-600: #334155;
+  /* Apple-style colors */
+  --apple-white: #ffffff;
+  --apple-gray-50: #fafafa;
+  --apple-gray-100: #f5f5f7;
+  --apple-gray-200: #e8e8ed;
+  --apple-gray-300: #d2d2d7;
+  --apple-gray-400: #86868b;
+  --apple-gray-500: #6e6e73;
+  --apple-gray-600: #1d1d1f;
 
-  /* Cyber Colors */
-  --cyber-300: #67e8f9;
-  --cyber-400: #22d3ee;
-  --cyber-500: #06b6d4;
-  --cyber-600: #0891b2;
+  --apple-blue: #0066cc;
+  --apple-blue-light: #0071e3;
 
-  /* Neon Colors */
-  --neon-blue: #3b82f6;
-  --neon-green: #10b981;
-  --neon-red: #ef4444;
+  --text-primary: #1d1d1f;
+  --text-secondary: #86868b;
+  --text-muted: #6e6e73;
 
-  /* K-Line Colors */
-  --kline-up: #22d3ee;
-  --kline-down: #f43f5e;
-
-  /* Text Colors */
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-accent: #22d3ee;
-
-  /* Glass Colors */
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-hover: rgba(255, 255, 255, 0.08);
+  --success: #34c759;
+  --warning: #ff9500;
+  --error: #ff3b30;
 }
 
 html {
@@ -44,185 +32,159 @@ html {
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background: linear-gradient(180deg, var(--tech-950) 0%, var(--tech-900) 50%, var(--tech-800) 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%);
   min-height: 100vh;
   color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .font-mono {
-  font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
 }
 
 @layer components {
-  /* Glass Card - 玻璃卡片 */
-  .glass-card {
-    @apply relative rounded-2xl p-6;
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  /* Apple Card - 苹果风格卡片 */
+  .apple-card {
+    @apply relative rounded-2xl p-6 bg-white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 24px rgba(0, 0, 0, 0.06);
   }
 
-  .glass-card-hover {
-    @apply glass-card transition-all duration-300;
+  .apple-card-hover {
+    @apply apple-card transition-all duration-300;
   }
 
-  .glass-card-hover:hover {
-    background: var(--glass-hover);
-    border-color: var(--cyber-400);
-    box-shadow: 0 8px 32px rgba(34, 211, 238, 0.15);
+  .apple-card-hover:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 8px 32px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);
   }
 
-  /* Tech Card - 科技卡片 */
-  .tech-card {
-    @apply relative rounded-2xl p-6;
-    background: linear-gradient(180deg, rgba(17, 24, 39, 0.8) 0%, rgba(10, 15, 26, 0.9) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  }
-
-  .tech-card-cyber {
-    @apply tech-card;
-    border-color: rgba(34, 211, 238, 0.3);
-    box-shadow: 0 0 40px rgba(34, 211, 238, 0.1);
-  }
-
-  /* Primary Button - 主按钮 */
-  .btn-primary {
-    @apply relative px-8 py-3 font-semibold rounded-xl overflow-hidden transition-all duration-300;
-    background: linear-gradient(135deg, var(--cyber-500) 0%, var(--neon-blue) 100%);
+  /* Apple Button - Primary */
+  .btn-apple {
+    @apply relative px-6 py-3 font-medium rounded-xl overflow-hidden transition-all duration-200;
+    background: var(--apple-blue);
     color: white;
-    box-shadow: 0 0 30px rgba(34, 211, 238, 0.4);
   }
 
-  .btn-primary:hover {
-    box-shadow: 0 0 50px rgba(34, 211, 238, 0.6);
-    transform: translateY(-2px);
+  .btn-apple:hover {
+    background: var(--apple-blue-light);
   }
 
-  .btn-primary:disabled {
+  .btn-apple:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    transform: none;
   }
 
-  /* Outline Button - 边框按钮 */
-  .btn-outline {
-    @apply px-6 py-2 rounded-xl border transition-all duration-300;
-    border-color: var(--glass-border);
-    color: var(--text-secondary);
-  }
-
-  .btn-outline:hover {
-    background: var(--glass-hover);
-    border-color: var(--cyber-400);
-    color: var(--cyber-400);
-  }
-
-  /* Ghost Button - 幽灵按钮 */
-  .btn-ghost {
-    @apply px-6 py-2 rounded-xl transition-all duration-300;
-    color: var(--text-secondary);
-  }
-
-  .btn-ghost:hover {
-    background: var(--glass-hover);
-    color: var(--cyber-400);
-  }
-
-  /* Input - 输入框 */
-  .input-tech {
-    @apply w-full px-4 py-3 rounded-xl transition-all duration-300 outline-none;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--glass-border);
+  /* Apple Button - Secondary */
+  .btn-apple-secondary {
+    @apply px-6 py-3 font-medium rounded-xl transition-all duration-200;
+    background: var(--apple-gray-100);
     color: var(--text-primary);
   }
 
-  .input-tech:focus {
-    border-color: var(--cyber-400);
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
+  .btn-apple-secondary:hover {
+    background: var(--apple-gray-200);
   }
 
-  .input-tech::placeholder {
+  /* Apple Button - Outline */
+  .btn-apple-outline {
+    @apply px-6 py-3 font-medium rounded-xl border transition-all duration-200;
+    border-color: var(--apple-gray-300);
+    color: var(--text-primary);
+    background: transparent;
+  }
+
+  .btn-apple-outline:hover {
+    background: var(--apple-gray-50);
+    border-color: var(--apple-gray-400);
+  }
+
+  /* Apple Input */
+  .input-apple {
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-200 outline-none;
+    background: var(--apple-gray-100);
+    border: 1px solid transparent;
+    color: var(--text-primary);
+  }
+
+  .input-apple:focus {
+    background: white;
+    border-color: var(--apple-blue);
+    box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
+  }
+
+  .input-apple::placeholder {
     color: var(--text-muted);
   }
 
-  /* Select - 选择框 */
-  .select-tech {
-    @apply w-full px-4 py-3 rounded-xl transition-all duration-300 outline-none appearance-none cursor-pointer;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--glass-border);
+  /* Apple Select */
+  .select-apple {
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-200 outline-none appearance-none cursor-pointer;
+    background: var(--apple-gray-100);
+    border: 1px solid transparent;
     color: var(--text-primary);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 20px;
     padding-right: 40px;
   }
 
-  .select-tech:focus {
-    border-color: var(--cyber-400);
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
+  .select-apple:focus {
+    background-color: white;
+    border-color: var(--apple-blue);
+    box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
   }
 
-  .select-tech option {
-    background: var(--tech-800);
+  .select-apple option {
+    background: white;
     color: var(--text-primary);
   }
 
-  /* Gender Selection - 性别选择 */
+  /* Gender Button */
   .gender-btn {
-    @apply flex-1 py-4 rounded-xl font-medium text-lg transition-all duration-300 cursor-pointer;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--glass-border);
+    @apply flex-1 py-4 rounded-xl font-medium text-base transition-all duration-200 cursor-pointer;
+    background: var(--apple-gray-100);
+    border: 2px solid transparent;
     color: var(--text-secondary);
   }
 
   .gender-btn:hover {
-    border-color: var(--text-muted);
+    background: var(--apple-gray-200);
   }
 
   .gender-btn.active {
-    border-color: var(--cyber-400);
-    color: var(--cyber-400);
-    background: rgba(34, 211, 238, 0.1);
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
+    border-color: var(--apple-blue);
+    color: var(--apple-blue);
+    background: rgba(0, 102, 204, 0.05);
   }
 
   /* Text Colors */
-  .text-cyber {
-    color: var(--cyber-400);
+  .text-apple-blue {
+    color: var(--apple-blue);
   }
 
-  .text-cyber-gradient {
-    background: linear-gradient(135deg, var(--cyber-500) 0%, var(--neon-blue) 100%);
+  .text-apple-gradient {
+    background: linear-gradient(135deg, #0066cc 0%, #0071e3 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Pricing Card - 定价卡片 */
+  /* Pricing Card */
   .pricing-card {
-    @apply relative rounded-2xl p-6 transition-all duration-300;
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+    @apply relative rounded-2xl p-6 transition-all duration-300 bg-white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
 
   .pricing-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   }
 
   .pricing-card.featured {
-    border-color: var(--cyber-400);
-    box-shadow: 0 0 40px rgba(34, 211, 238, 0.2);
+    border: 2px solid var(--apple-blue);
   }
 
   .pricing-card.featured::before {
@@ -231,209 +193,186 @@ body {
     top: -1px;
     left: 50%;
     transform: translateX(-50%);
-    width: 60%;
+    width: 40%;
     height: 3px;
-    background: linear-gradient(90deg, transparent, var(--cyber-400), transparent);
+    background: var(--apple-blue);
+    border-radius: 0 0 4px 4px;
   }
 
-  /* Badge - 徽章 */
+  /* Badge */
   .badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
-    background: rgba(34, 211, 238, 0.1);
-    color: var(--cyber-400);
-    border: 1px solid rgba(34, 211, 238, 0.3);
+    background: rgba(0, 102, 204, 0.1);
+    color: var(--apple-blue);
   }
 
-  .badge-pro {
-    background: linear-gradient(135deg, rgba(34, 211, 238, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
-    border-color: var(--cyber-400);
+  .badge-success {
+    background: rgba(52, 199, 89, 0.1);
+    color: var(--success);
   }
 
-  /* Progress Bar - 进度条 */
+  /* Progress Bar */
   .progress-bar {
     @apply relative h-2 rounded-full overflow-hidden;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--apple-gray-200);
   }
 
   .progress-bar-fill {
     @apply absolute left-0 top-0 h-full rounded-full transition-all duration-500;
-    background: linear-gradient(90deg, var(--cyber-500) 0%, var(--neon-blue) 100%);
+    background: var(--apple-blue);
   }
 
-  /* Score Ring - 分数环 */
+  /* Score Ring */
   .score-ring {
     @apply relative inline-flex items-center justify-center;
   }
 
   .score-ring-bg {
-    stroke: rgba(255, 255, 255, 0.1);
+    stroke: var(--apple-gray-200);
   }
 
   .score-ring-fill {
-    stroke: var(--cyber-400);
+    stroke: var(--apple-blue);
     stroke-linecap: round;
     transition: stroke-dashoffset 0.5s ease-out;
   }
 
-  /* Data Grid - 数据网格 */
-  .data-grid {
-    @apply grid gap-4;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  /* Divider */
+  .divider {
+    @apply w-full h-px;
+    background: var(--apple-gray-200);
   }
 
-  .data-item {
-    @apply glass-card p-4 text-center;
+  /* Section */
+  .section-title {
+    @apply text-2xl font-semibold text-apple-gray-600 mb-2;
   }
 
-  .data-item-label {
-    @apply text-xs uppercase tracking-wider mb-1;
-    color: var(--text-muted);
+  .section-subtitle {
+    @apply text-base text-apple-gray-400;
   }
 
-  .data-item-value {
-    @apply text-2xl font-semibold;
-    color: var(--text-primary);
+  /* Keep backward compatibility */
+  .glass-card {
+    @apply apple-card;
   }
 
-  /* Loading Animation - 加载动画 */
-  .loading-scanner {
-    @apply relative overflow-hidden;
+  .tech-card {
+    @apply apple-card;
   }
 
-  .loading-scanner::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--cyber-400), transparent);
-    animation: scan 2s linear infinite;
+  .btn-primary {
+    @apply btn-apple;
   }
 
-  /* Shimmer Effect - 闪烁效果 */
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.05) 50%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 2s linear infinite;
+  .btn-outline {
+    @apply btn-apple-outline;
   }
 
-  /* Glow Text - 发光文字 */
-  .glow-text {
-    text-shadow: 0 0 20px rgba(34, 211, 238, 0.5);
+  .input-tech {
+    @apply input-apple;
   }
 
-  /* Keep backward compatibility for old classes */
+  .select-tech {
+    @apply select-apple;
+  }
+
   .mystic-card {
-    @apply glass-card;
+    @apply apple-card;
   }
 
   .mystic-card-gold {
-    @apply tech-card-cyber;
+    @apply apple-card;
   }
 
   .btn-gold {
-    @apply btn-primary;
+    @apply btn-apple;
   }
 
   .input-mystic {
-    @apply input-tech;
+    @apply input-apple;
   }
 
   .select-mystic {
-    @apply select-tech;
+    @apply select-apple;
   }
 
   .text-gold {
-    color: var(--cyber-400);
+    color: var(--apple-blue);
   }
 
   .text-gold-gradient {
-    @apply text-cyber-gradient;
+    @apply text-apple-gradient;
+  }
+
+  .text-cyber-400 {
+    color: var(--apple-blue);
+  }
+
+  .text-cyber-gradient {
+    @apply text-apple-gradient;
   }
 }
 
-@keyframes scan {
-  0% {
-    transform: translateY(-100%);
-  }
-  100% {
-    transform: translateY(100vh);
-  }
+/* Animations */
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+@keyframes slide-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 0.5;
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
-  }
-  50% {
-    opacity: 1;
-    box-shadow: 0 0 40px rgba(34, 211, 238, 0.6);
-  }
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0.5; }
 }
 
-@keyframes data-flow {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 1;
-  }
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out;
 }
 
-.animate-data-flow {
-  animation: data-flow 2s ease-in-out infinite;
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-in-out infinite;
 }
 
-/* Recharts Styling */
+/* Recharts Styling for Light Theme */
 .recharts-cartesian-grid line {
-  stroke: rgba(100, 100, 100, 0.2) !important;
+  stroke: var(--apple-gray-200) !important;
 }
 
 .recharts-text {
   fill: var(--text-secondary) !important;
-  font-family: 'JetBrains Mono', monospace !important;
+  font-family: 'SF Mono', Menlo, Monaco, monospace !important;
 }
 
-/* Scrollbar */
+/* Scrollbar - Minimal */
 ::-webkit-scrollbar {
   width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--tech-950);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--tech-600);
+  background: var(--apple-gray-300);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: var(--apple-gray-400);
 }
 
 /* Selection */
 ::selection {
-  background: rgba(34, 211, 238, 0.3);
+  background: rgba(0, 102, 204, 0.2);
   color: var(--text-primary);
 }

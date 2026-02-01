@@ -62,24 +62,22 @@ export default function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-sm border-b border-gray-800">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-apple-gray-200 shadow-apple">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
-            {/* Logo with Tab Switcher + 大师测算 */}
+            {/* Logo with Tab Switcher + 专家分析 */}
             <div className="flex items-center gap-1 sm:gap-2 md:gap-4 overflow-x-auto">
               {showModeSelector ? (
                 // 水平标签切换器
-                <div className="flex items-center bg-gray-900/50 rounded-lg p-0.5 sm:p-1 flex-shrink-0">
+                <div className="flex items-center bg-apple-gray-100 rounded-lg p-0.5 sm:p-1 flex-shrink-0">
                   {(Object.keys(CURVE_MODE_LABELS) as CurveMode[]).map((mode) => (
                     <button
                       key={mode}
                       onClick={() => handleModeChange(mode)}
                       className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                         curveMode === mode
-                          ? mode === 'wealth'
-                            ? 'bg-gradient-to-r from-cyber-400/30 to-amber-500/30 text-cyber-400 shadow-sm'
-                            : 'bg-purple-500/20 text-purple-300 shadow-sm'
-                          : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
+                          ? 'bg-white text-apple-blue shadow-sm'
+                          : 'text-apple-gray-500 hover:text-apple-gray-600'
                       }`}
                     >
                       {CURVE_MODE_LABELS[mode]}
@@ -88,20 +86,20 @@ export default function Header({
                 </div>
               ) : (
                 <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-                  <span className="font-serif text-base md:text-lg text-white">人生曲线</span>
+                  <span className="font-medium text-base md:text-lg text-apple-gray-600">人生曲线</span>
                 </Link>
               )}
 
-              {/* 大师测算链接 - 紧挨着模式切换器 */}
+              {/* 专家分析链接 */}
               <Link
                 href="/masters"
                 className={`px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all border flex-shrink-0 whitespace-nowrap ${
                   pathname === '/masters'
-                    ? 'bg-cyber-400/20 text-cyber-400 border-cyber-400/50'
-                    : 'text-text-secondary hover:text-cyber-400 border-gray-700 hover:border-cyber-400/50'
+                    ? 'bg-apple-blue/10 text-apple-blue border-apple-blue/30'
+                    : 'text-apple-gray-500 hover:text-apple-blue border-apple-gray-200 hover:border-apple-blue/30'
                 }`}
               >
-                大师测算
+                专家分析
               </Link>
             </div>
 
@@ -114,8 +112,8 @@ export default function Header({
                     href={item.href}
                     className={`text-sm transition-colors ${
                       pathname === item.href
-                        ? 'text-cyber-400'
-                        : 'text-text-secondary hover:text-text-primary'
+                        ? 'text-apple-blue'
+                        : 'text-apple-gray-500 hover:text-apple-gray-600'
                     }`}
                   >
                     {item.label}
@@ -134,7 +132,7 @@ export default function Header({
                 ) : (
                   <button
                     onClick={() => setShowLoginModal(true)}
-                    className="px-4 py-2 text-sm text-cyber-400 border border-cyber-400/50 rounded-lg hover:bg-cyber-400/10 transition-colors"
+                    className="px-4 py-2 text-sm text-apple-blue border border-apple-blue/30 rounded-lg hover:bg-apple-blue/5 transition-colors"
                   >
                     登录
                   </button>
@@ -154,7 +152,7 @@ export default function Header({
                 ) : (
                   <button
                     onClick={() => setShowLoginModal(true)}
-                    className="px-3 py-1.5 text-sm text-cyber-400 border border-cyber-400/50 rounded-lg hover:bg-cyber-400/10 transition-colors"
+                    className="px-3 py-1.5 text-sm text-apple-blue border border-apple-blue/30 rounded-lg hover:bg-apple-blue/5 transition-colors"
                   >
                     登录
                   </button>
@@ -163,7 +161,7 @@ export default function Header({
 
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="p-2 text-text-secondary hover:text-text-primary"
+                className="p-2 text-apple-gray-500 hover:text-apple-gray-600"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {menuOpen ? (
@@ -178,11 +176,11 @@ export default function Header({
 
           {/* Mobile Menu */}
           {menuOpen && (
-            <nav className="md:hidden py-4 border-t border-gray-800">
+            <nav className="md:hidden py-4 border-t border-apple-gray-200">
               {/* Mode Selector for Mobile */}
               {showModeSelector && (
-                <div className="pb-4 mb-4 border-b border-gray-800">
-                  <p className="text-xs text-text-secondary mb-2">切换模式</p>
+                <div className="pb-4 mb-4 border-b border-apple-gray-200">
+                  <p className="text-xs text-apple-gray-400 mb-2">切换模式</p>
                   <div className="flex gap-2">
                     {(Object.keys(CURVE_MODE_LABELS) as CurveMode[]).map((mode) => (
                       <button
@@ -193,8 +191,8 @@ export default function Header({
                         }}
                         className={`flex-1 py-2 px-3 rounded-lg text-sm transition-colors ${
                           curveMode === mode
-                            ? 'bg-cyber-400/20 text-cyber-400 border border-cyber-400/50'
-                            : 'bg-white/5 text-text-secondary border border-gray-700'
+                            ? 'bg-apple-blue/10 text-apple-blue border border-apple-blue/30'
+                            : 'bg-apple-gray-100 text-apple-gray-500 border border-apple-gray-200'
                         }`}
                       >
                         {CURVE_MODE_LABELS[mode]}
@@ -210,8 +208,8 @@ export default function Header({
                   onClick={() => setMenuOpen(false)}
                   className={`block py-2 text-sm ${
                     pathname === item.href
-                      ? 'text-cyber-400'
-                      : 'text-text-secondary'
+                      ? 'text-apple-blue'
+                      : 'text-apple-gray-500'
                   }`}
                 >
                   {item.label}

@@ -9,100 +9,93 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Tech dark background
-        tech: {
-          950: '#030712',  // 最深背景
-          900: '#0a0f1a',  // 深色背景
-          800: '#111827',  // 卡片背景
-          700: '#1e293b',  // 悬停背景
-          600: '#334155',  // 边框色
+        // Apple-style light backgrounds
+        apple: {
+          white: '#ffffff',
+          gray: {
+            50: '#fafafa',
+            100: '#f5f5f7',
+            200: '#e8e8ed',
+            300: '#d2d2d7',
+            400: '#86868b',
+            500: '#6e6e73',
+            600: '#1d1d1f',
+          },
+          blue: {
+            light: '#0071e3',
+            DEFAULT: '#0066cc',
+            dark: '#004c99',
+          },
         },
-        // 科技蓝 - 主色调
-        cyber: {
-          300: '#67e8f9',  // 亮青色
-          400: '#22d3ee',  // 主青色
-          500: '#06b6d4',  // 深青色
-          600: '#0891b2',  // 更深
+        // Primary accent
+        primary: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
         },
-        // 科技蓝 - 辅助色
-        neon: {
-          blue: '#3b82f6',   // 蓝色
-          purple: '#8b5cf6', // 紫色（保留一点点）
-          green: '#10b981',  // 成功绿
-          red: '#ef4444',    // 错误红
-        },
-        // K线颜色
+        // Success/Error
+        success: '#34c759',
+        warning: '#ff9500',
+        error: '#ff3b30',
+        // K-Line colors
         kline: {
-          up: '#22d3ee',    // 青色涨
-          down: '#f43f5e',  // 玫红跌
-          current: '#3b82f6', // 蓝色当前
+          up: '#34c759',
+          down: '#ff3b30',
+          current: '#007aff',
         },
-        // 玻璃效果
-        glass: {
-          white: 'rgba(255, 255, 255, 0.05)',
-          border: 'rgba(255, 255, 255, 0.1)',
-          hover: 'rgba(255, 255, 255, 0.08)',
-        },
-        // 文字色
+        // Text colors for light theme
         text: {
-          primary: '#f1f5f9',
-          secondary: '#94a3b8',
-          muted: '#64748b',
-          accent: '#22d3ee',
-        }
+          primary: '#1d1d1f',
+          secondary: '#86868b',
+          muted: '#6e6e73',
+          accent: '#0066cc',
+        },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Roboto Mono', 'monospace'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        mono: ['SF Mono', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       backgroundImage: {
-        'tech-gradient': 'linear-gradient(180deg, #030712 0%, #0a0f1a 50%, #111827 100%)',
-        'cyber-gradient': 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
-        'glass-gradient': 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-        'card-gradient': 'linear-gradient(180deg, rgba(17, 24, 39, 0.8) 0%, rgba(10, 15, 26, 0.9) 100%)',
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'apple-gradient': 'linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%)',
+        'card-gradient': 'linear-gradient(180deg, #ffffff 0%, #fafafa 100%)',
       },
       boxShadow: {
-        'cyber-glow': '0 0 20px rgba(34, 211, 238, 0.3)',
-        'cyber-glow-lg': '0 0 40px rgba(34, 211, 238, 0.4)',
-        'glass': '0 8px 32px rgba(0, 0, 0, 0.4)',
-        'glass-lg': '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        'apple': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+        'apple-lg': '0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03)',
+        'apple-xl': '0 20px 40px -10px rgba(0, 0, 0, 0.1)',
+        'card': '0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 24px rgba(0, 0, 0, 0.06)',
+        'card-hover': '0 4px 12px rgba(0, 0, 0, 0.08), 0 8px 32px rgba(0, 0, 0, 0.1)',
       },
       animation: {
-        'spin-slow': 'spin 8s linear infinite',
-        'float': 'float 6s ease-in-out infinite',
-        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
-        'scan': 'scan 3s linear infinite',
-        'data-flow': 'data-flow 2s ease-in-out infinite',
-        'shimmer': 'shimmer 2s linear infinite',
+        'spin-slow': 'spin 3s linear infinite',
+        'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
+        'fade-in': 'fade-in 0.5s ease-out',
+        'slide-up': 'slide-up 0.5s ease-out',
       },
       keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
+        'pulse-soft': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.6' },
         },
-        'pulse-glow': {
-          '0%, 100%': { opacity: '0.5' },
-          '50%': { opacity: '1' },
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
         },
-        scan: {
-          '0%': { transform: 'translateY(-100%)' },
-          '100%': { transform: 'translateY(100%)' },
-        },
-        'data-flow': {
-          '0%, 100%': { opacity: '0.3', transform: 'translateX(0)' },
-          '50%': { opacity: '1', transform: 'translateX(10px)' },
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
+        'slide-up': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
       borderRadius: {
         '2xl': '1rem',
         '3xl': '1.5rem',
-      },
-      backdropBlur: {
-        xs: '2px',
+        '4xl': '2rem',
       },
     },
   },
