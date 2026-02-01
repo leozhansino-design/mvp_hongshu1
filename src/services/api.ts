@@ -51,8 +51,16 @@ function repairJSON(jsonStr: string): string {
   return repaired;
 }
 
-// 验证并修复chartPoints中的score/reason不匹配问题
-function validateAndFixChartPoints<T extends {age: number; score: number; reason: string}>(chartPoints: T[]): T[] {
+// 验证并修复chartPoints中的score/reason不匹配问题，并约束分数范围
+function validateAndFixChartPoints<T extends {age: number; score: number; reason: string}>(
+  chartPoints: T[],
+  summaryScore?: number
+): T[] {
+  // 计算分数约束范围（基于summaryScore）
+  const baseScore = summaryScore || 70;
+  const maxAllowedScore = Math.min(95, baseScore + 20);
+  const minAllowedScore = Math.max(30, baseScore - 20);
+
   // 根据分数生成合适的描述
   const getAppropriateReason = (score: number, originalReason: string): string => {
     // 定义不同分数范围的关键词
@@ -80,10 +88,24 @@ function validateAndFixChartPoints<T extends {age: number; score: number; reason
     return originalReason;
   };
 
-  return chartPoints.map(point => ({
-    ...point,
-    reason: getAppropriateReason(point.score, point.reason)
-  }));
+  return chartPoints.map(point => {
+    // 约束分数在合理范围内
+    let adjustedScore = point.score;
+    if (adjustedScore > maxAllowedScore) {
+      console.warn(`修正chartPoint分数: ${adjustedScore} -> ${maxAllowedScore} (summaryScore=${baseScore})`);
+      adjustedScore = maxAllowedScore;
+    }
+    if (adjustedScore < minAllowedScore) {
+      console.warn(`修正chartPoint分数: ${adjustedScore} -> ${minAllowedScore} (summaryScore=${baseScore})`);
+      adjustedScore = minAllowedScore;
+    }
+
+    return {
+      ...point,
+      score: adjustedScore,
+      reason: getAppropriateReason(adjustedScore, point.reason)
+    };
+  });
 }
 
 // 尝试多种方式解析JSON
@@ -247,14 +269,17 @@ export async function generateFreeResult(
     throw new Error('返回数据格式不正确');
   }
 
-  // 验证并修复chartPoints中的score/reason不匹配问题
-  const validatedChartPoints = validateAndFixChartPoints(aiResult.chartPoints);
-
   // 确保分数字段有有效值
   const ensureScoreFree = (score: number | undefined): number => {
     if (typeof score === 'number' && score >= 30 && score <= 100) return score;
     return 70; // 默认值
   };
+
+  // 获取summaryScore用于约束chartPoints
+  const summaryScore = ensureScoreFree(aiResult.summaryScore);
+
+  // 验证并修复chartPoints中的score/reason不匹配问题，并约束分数范围
+  const validatedChartPoints = validateAndFixChartPoints(aiResult.chartPoints, summaryScore);
 
   // 使用预计算的八字，不依赖AI返回
   const result: FreeVersionResult = {
@@ -262,7 +287,7 @@ export async function generateFreeResult(
     baziChart: baziResult.chart,
     chartPoints: validatedChartPoints,
     // 确保所有分数字段有有效值
-    summaryScore: ensureScoreFree(aiResult.summaryScore),
+    summaryScore: summaryScore,
     personalityScore: ensureScoreFree(aiResult.personalityScore),
     careerScore: ensureScoreFree(aiResult.careerScore),
     wealthScore: ensureScoreFree(aiResult.wealthScore),
@@ -359,9 +384,6 @@ export async function generatePaidResult(
     throw new Error('返回数据格式不正确');
   }
 
-  // 验证并修复chartPoints中的score/reason不匹配问题
-  const validatedChartPoints = validateAndFixChartPoints(aiResult.chartPoints);
-
   // 确保分数字段有有效值（如果AI没返回，使用existingFreeResult的值或默认值70）
   const ensureScore = (score: number | undefined, fallback: number | undefined): number => {
     if (typeof score === 'number' && score >= 30 && score <= 100) return score;
@@ -369,13 +391,19 @@ export async function generatePaidResult(
     return 70; // 默认值
   };
 
+  // 获取summaryScore用于约束chartPoints
+  const summaryScore = ensureScore(aiResult.summaryScore, existingFreeResult?.summaryScore);
+
+  // 验证并修复chartPoints中的score/reason不匹配问题，并约束分数范围
+  const validatedChartPoints = validateAndFixChartPoints(aiResult.chartPoints, summaryScore);
+
   // 使用预计算的八字，不依赖AI返回
   const result: PaidVersionResult = {
     ...aiResult as PaidVersionResult,
     baziChart: baziResult.chart,
     chartPoints: validatedChartPoints,
     // 确保所有分数字段有有效值
-    summaryScore: ensureScore(aiResult.summaryScore, existingFreeResult?.summaryScore),
+    summaryScore: summaryScore,
     personalityScore: ensureScore(aiResult.personalityScore, existingFreeResult?.personalityScore),
     careerScore: ensureScore(aiResult.careerScore, existingFreeResult?.careerScore),
     wealthScore: ensureScore(aiResult.wealthScore, existingFreeResult?.wealthScore),
