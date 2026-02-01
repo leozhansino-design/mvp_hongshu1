@@ -52,7 +52,7 @@ function repairJSON(jsonStr: string): string {
 }
 
 // 验证并修复chartPoints中的score/reason不匹配问题
-function validateAndFixChartPoints(chartPoints: Array<{age: number; score: number; reason: string; [key: string]: unknown}>): Array<{age: number; score: number; reason: string; [key: string]: unknown}> {
+function validateAndFixChartPoints<T extends {age: number; score: number; reason: string}>(chartPoints: T[]): T[] {
   // 根据分数生成合适的描述
   const getAppropriateReason = (score: number, originalReason: string): string => {
     // 定义不同分数范围的关键词
