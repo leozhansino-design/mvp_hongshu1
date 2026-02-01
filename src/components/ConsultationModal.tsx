@@ -2,10 +2,19 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Master, formatPrice, formatFollowUps, getFocusHint } from '@/types/master';
+import { Master, formatPrice, formatFollowUps } from '@/types/master';
 import { getAuthToken } from '@/services/auth';
 import QRCode from 'qrcode';
 import { calculateBazi, calculateDaYun, BaziResult, DaYunItem } from '@/lib/bazi';
+
+// 解读侧重选项
+const FOCUS_OPTIONS = [
+  { value: 'career', label: '事业财运', description: '事业发展、财运走势、贵人运势' },
+  { value: 'relationship', label: '感情婚姻', description: '姻缘桃花、婚姻状况、感情发展' },
+  { value: 'health', label: '健康运势', description: '身体健康、疾病预防、养生建议' },
+] as const;
+
+type FocusType = typeof FOCUS_OPTIONS[number]['value'];
 
 interface ConsultationModalProps {
   isOpen: boolean;
@@ -48,6 +57,7 @@ export default function ConsultationModal({
   const [name, setName] = useState('');
   const [wechatId, setWechatId] = useState('');
   const [question, setQuestion] = useState('');
+  const [selectedFocusAreas, setSelectedFocusAreas] = useState<FocusType[]>([]);
 
   // Payment state
   const [payMethod, setPayMethod] = useState<PayMethod>('wechat');
@@ -75,11 +85,14 @@ export default function ConsultationModal({
     return calculateDaYun(birthYear, birthMonth, birthDay, shiChen as number, 0, gender, false);
   }, [birthYear, birthMonth, birthDay, shiChen, gender]);
 
-  // Calculate focus hint based on age and gender
-  const focusHint = useMemo(() => {
-    if (!birthYear) return null;
-    return getFocusHint(birthYear, gender);
-  }, [birthYear, gender]);
+  // Toggle focus area selection
+  const toggleFocusArea = (area: FocusType) => {
+    setSelectedFocusAreas(prev =>
+      prev.includes(area)
+        ? prev.filter(a => a !== area)
+        : [...prev, area]
+    );
+  };
 
   // Reset state when modal opens
   useEffect(() => {
@@ -90,6 +103,7 @@ export default function ConsultationModal({
       setConsultationId('');
       setPaymentError('');
       setVerifying(false);
+      setSelectedFocusAreas([]);
     }
   }, [isOpen]);
 
@@ -160,6 +174,11 @@ export default function ConsultationModal({
       return;
     }
 
+    if (selectedFocusAreas.length === 0) {
+      setError('请至少选择一个解读侧重');
+      return;
+    }
+
     if (!question.trim() || question.trim().length < 10) {
       setError('问题描述至少10个字');
       return;
@@ -196,6 +215,7 @@ export default function ConsultationModal({
           wechatId: wechatId.trim(),
           question: question.trim(),
           payMethod,
+          focusAreas: selectedFocusAreas,
           // Include bazi data for master reference
           baziData: baziResult ? {
             eightChar: baziResult.eightChar,
@@ -402,16 +422,55 @@ export default function ConsultationModal({
               </div>
             )}
 
-            {/* Focus Hint Display */}
-            {focusHint && (
-              <div className="mb-4 p-3 bg-gold-400/10 rounded-lg border border-gold-400/30">
-                <div className="flex items-center gap-2">
-                  <span className="text-gold-400 text-sm font-medium">{focusHint.label}</span>
-                  <span className="text-xs text-gold-400/70">解读侧重</span>
-                </div>
-                <div className="text-xs text-gray-400 mt-1">{focusHint.description}</div>
+            {/* Focus Areas Selection */}
+            <div className="mb-4">
+              <label className="block text-xs text-text-secondary mb-2">
+                解读侧重 <span className="text-red-400">*</span>
+                <span className="text-gray-500 ml-1">(可多选)</span>
+              </label>
+              <div className="space-y-2">
+                {FOCUS_OPTIONS.map((option) => {
+                  const isSelected = selectedFocusAreas.includes(option.value);
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => toggleFocusArea(option.value)}
+                      className={`w-full p-3 rounded-lg border text-left transition-all ${
+                        isSelected
+                          ? 'bg-gold-400/15 border-gold-400 shadow-[0_0_10px_rgba(255,215,0,0.1)]'
+                          : 'border-gray-700 hover:border-gray-600 bg-gray-800/30'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className={`text-sm font-medium ${isSelected ? 'text-gold-400' : 'text-white'}`}>
+                            {option.label}
+                          </span>
+                          {isSelected && (
+                            <span className="ml-2 text-xs text-gold-400/70 bg-gold-400/20 px-1.5 py-0.5 rounded">
+                              已选
+                            </span>
+                          )}
+                        </div>
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                          isSelected
+                            ? 'bg-gold-400 border-gold-400'
+                            : 'border-gray-600'
+                        }`}>
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">{option.description}</p>
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
 
             {/* Gender */}
             <div className="mb-4">

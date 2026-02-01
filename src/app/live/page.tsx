@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import html2canvas from 'html2canvas';
 import { BirthForm, AnalysisLoader, BaziChartDisplay, LifeCurveChart, WealthChart, WealthAnalysis, FiveElementsDiagram } from '@/components';
 import { generateFreeResult, generateWealthCurve, generateStreamerScript } from '@/services/api';
-import { BirthInfo, CurveMode, CURVE_MODE_LABELS, FreeVersionResult, WealthCurveData, PHASE_LABELS, PhaseType, StreamerScriptResult } from '@/types';
+import { BirthInfo, CurveMode, CURVE_MODE_LABELS, FreeVersionResult, WealthCurveData, PHASE_LABELS, PhaseType, StreamerScriptResult, TYPE_LABELS } from '@/types';
 import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
 import { getFocusHint, FocusHint } from '@/types/master';
 import { DaYunItem, calculateDaYun, calculateBazi, BaziResult } from '@/lib/bazi';
@@ -478,31 +478,45 @@ function LivePageContent() {
                 {/* 日主分析 */}
                 {freeResult?.dayMaster && !isWealthMode && (
                   <div className="mystic-card p-4">
-                    <h3 className="text-gold-400 font-serif text-lg mb-3">日主分析</h3>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="px-3 py-1 rounded-lg bg-gradient-to-r from-purple-500/30 to-gold-400/30 text-gold-400 font-serif">
+                    <h3 className="font-serif text-xl text-gold-400 mb-4">日主分析</h3>
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500/30 to-gold-400/30 text-gold-400 font-serif text-xl">
                         {freeResult.dayMaster.stem}{freeResult.dayMaster.element}
                       </span>
-                      <span className="px-2 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs">
+                      <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-sm">
                         {freeResult.dayMaster.strength}
                       </span>
                     </div>
-                    <p className="text-text-primary text-sm leading-relaxed">{freeResult.dayMaster.description}</p>
+                    <p className="text-text-primary leading-relaxed">{freeResult.dayMaster.description}</p>
+                    {freeResult.usefulGod && (
+                      <div className="mt-4 p-3 rounded-lg bg-mystic-800/50">
+                        <span className="text-gold-400 text-sm">用神喜忌：</span>
+                        <p className="text-text-secondary text-sm mt-1">{freeResult.usefulGod}</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* 高光年份 */}
                 {freeResult?.highlights && freeResult.highlights.length > 0 && !isWealthMode && (
                   <div className="mystic-card p-4">
-                    <h3 className="text-gold-400 font-serif text-lg mb-3">✦ 高光之年</h3>
-                    <div className="space-y-3">
+                    <h3 className="font-serif text-xl text-gold-400 mb-4">✦ 高光之年</h3>
+                    <div className="space-y-4">
                       {freeResult.highlights.slice(0, 3).map((h, i) => (
-                        <div key={i} className="p-3 rounded-lg bg-gradient-to-r from-gold-400/10 to-transparent border-l-2 border-gold-400">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-gold-400 font-mono">{h.age}岁</span>
-                            <span className="text-text-secondary text-xs">({h.year}年)</span>
+                        <div key={i} className="p-4 rounded-lg bg-gradient-to-r from-gold-400/10 to-transparent border-l-2 border-gold-400">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-gold-400 font-mono text-lg">{h.age}岁</span>
+                            <span className="text-text-secondary">({h.year}年)</span>
+                            {h.type && (
+                              <span className="px-2 py-0.5 text-xs rounded-full bg-gold-400/20 text-gold-400">
+                                {TYPE_LABELS[h.type] || h.type}
+                              </span>
+                            )}
                           </div>
-                          <p className="text-sm text-text-primary">{h.title}</p>
+                          <p className="font-serif text-lg text-text-primary mb-1">{h.title}</p>
+                          {h.description && (
+                            <p className="text-text-secondary text-sm">{h.description}</p>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -512,17 +526,27 @@ function LivePageContent() {
                 {/* 警示年份 */}
                 {freeResult?.warnings && freeResult.warnings.length > 0 && !isWealthMode && (
                   <div className="mystic-card p-4">
-                    <h3 className="text-red-400 font-serif text-lg mb-3">◆ 谨慎之年</h3>
-                    <div className="space-y-3">
+                    <h3 className="font-serif text-xl text-kline-down mb-4">◆ 谨慎之年</h3>
+                    <div className="space-y-4">
                       {freeResult.warnings.slice(0, 2).map((w, i) => (
-                        <div key={i} className="p-3 rounded-lg bg-red-500/5 border-l-2 border-red-400">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-red-400 font-mono">{w.age}岁</span>
-                            <span className="text-text-secondary text-xs">({w.year}年)</span>
+                        <div key={i} className="p-4 rounded-lg bg-kline-down/5 border-l-2 border-kline-down">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-kline-down font-mono text-lg">{w.age}岁</span>
+                            <span className="text-text-secondary">({w.year}年)</span>
+                            {w.type && (
+                              <span className="px-2 py-0.5 text-xs rounded-full bg-kline-down/20 text-kline-down">
+                                {TYPE_LABELS[w.type] || w.type}
+                              </span>
+                            )}
                           </div>
-                          <p className="text-sm text-text-primary">{w.title}</p>
+                          <p className="font-serif text-lg text-text-primary mb-1">{w.title}</p>
+                          {w.description && (
+                            <p className="text-text-secondary text-sm mb-2">{w.description}</p>
+                          )}
                           {w.advice && (
-                            <p className="text-xs text-text-secondary mt-1">化解：{w.advice}</p>
+                            <p className="text-accent-blue text-sm">
+                              <span className="text-gold-400">化解之道：</span>{w.advice}
+                            </p>
                           )}
                         </div>
                       ))}
@@ -533,29 +557,38 @@ function LivePageContent() {
                 {/* 开运指南 */}
                 {freeResult?.luckyInfo && !isWealthMode && (
                   <div className="mystic-card p-4">
-                    <h3 className="text-gold-400 font-serif text-lg mb-3">开运指南</h3>
-                    <div className="grid grid-cols-4 gap-2">
-                      <div className="p-2 rounded-lg bg-gray-800/50 text-center">
-                        <p className="text-lg mb-1">🧭</p>
-                        <p className="text-xs text-gray-400">方位</p>
-                        <p className="text-purple-300 text-xs">{freeResult.luckyInfo.direction}</p>
+                    <h3 className="font-serif text-xl text-gold-400 mb-4">开运指南</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
+                        <p className="text-2xl mb-2">🧭</p>
+                        <p className="text-xs text-text-secondary mb-1">吉利方位</p>
+                        <p className="text-purple-300 text-sm">{freeResult.luckyInfo.direction}</p>
                       </div>
-                      <div className="p-2 rounded-lg bg-gray-800/50 text-center">
-                        <p className="text-lg mb-1">🎨</p>
-                        <p className="text-xs text-gray-400">颜色</p>
-                        <p className="text-purple-300 text-xs">{freeResult.luckyInfo.color}</p>
+                      <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
+                        <p className="text-2xl mb-2">🎨</p>
+                        <p className="text-xs text-text-secondary mb-1">幸运颜色</p>
+                        <p className="text-purple-300 text-sm">{freeResult.luckyInfo.color}</p>
                       </div>
-                      <div className="p-2 rounded-lg bg-gray-800/50 text-center">
-                        <p className="text-lg mb-1">🔢</p>
-                        <p className="text-xs text-gray-400">数字</p>
-                        <p className="text-purple-300 text-xs">{freeResult.luckyInfo.number}</p>
+                      <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
+                        <p className="text-2xl mb-2">🔢</p>
+                        <p className="text-xs text-text-secondary mb-1">幸运数字</p>
+                        <p className="text-purple-300 text-sm">{freeResult.luckyInfo.number}</p>
                       </div>
-                      <div className="p-2 rounded-lg bg-gray-800/50 text-center">
-                        <p className="text-lg mb-1">💼</p>
-                        <p className="text-xs text-gray-400">行业</p>
-                        <p className="text-purple-300 text-xs">{freeResult.luckyInfo.industry}</p>
+                      <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
+                        <p className="text-2xl mb-2">💼</p>
+                        <p className="text-xs text-text-secondary mb-1">适合行业</p>
+                        <p className="text-purple-300 text-sm">{freeResult.luckyInfo.industry}</p>
                       </div>
                     </div>
+                    {freeResult.luckyExplanation && (
+                      <div className="mt-6 p-4 rounded-lg bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30">
+                        <h4 className="text-gold-400 text-sm mb-3 flex items-center gap-2">
+                          <span>✨</span>
+                          <span>开运详解</span>
+                        </h4>
+                        <p className="text-text-primary text-sm leading-relaxed">{freeResult.luckyExplanation}</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
