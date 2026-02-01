@@ -118,12 +118,22 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
      - 先扬后抑型：早运好晚运差，晚年分数下降
      - 起伏波折型：大运忽好忽坏，曲线有明显波动
    - **关键**：每个年龄点的分数必须有命理依据，对照上方大运表判断该阶段运势
-4. **【数据一致性校验 - 极其重要】**：
-   - reason描述必须与score分数一致，禁止出现矛盾！
-   - 高分词汇（仅用于score>=75）：巅峰、高光、大旺、得位、大吉、鼎盛
-   - 中分词汇（用于score 50-74）：平稳、渐升、小成、转机、调整
-   - 低分词汇（仅用于score<50）：低迷、受克、不利、坎坷、破败、冲克
-   - **禁止**：score=40却写"人生巅峰"，score=85却写"运势低迷"
+4. **【数据一致性校验 - 最重要规则！！！】**：
+   - ⚠️ reason描述必须与score分数严格对应！这是最重要的规则！
+   - 生成每个chartPoint时，必须先确定score，再根据score选择对应的词汇
+   - 【分数-词汇对照表】严格遵守：
+     - score>=80：可用"巅峰、高光、大旺、得位、大吉、鼎盛"
+     - score 65-79：可用"平稳、渐升、小成、转机、蓄势"
+     - score 50-64：可用"平淡、调整、起伏、考验"
+     - score<50：必须用"低迷、受克、不利、坎坷、困顿、受阻"
+   - ❌ 绝对禁止的错误示例：
+     - score=30 写"人生巅峰"（错！30分应写"运势低迷"）
+     - score=40 写"得位"（错！40分应写"受阻"）
+     - score=85 写"低迷"（错！85分应写"高光"）
+   - ✅ 正确示例：
+     - score=85 → reason="财星得位，运势高光"
+     - score=55 → reason="平淡守成，蓄势待发"
+     - score=35 → reason="运势低迷，需韬光养晦"
 5. reason限10字内
 6. **highlights和warnings各选1-2个**最关键的即可
 7. 内容简洁，点到为止，避免过度详细
@@ -243,12 +253,22 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
      - 起伏波折型：大运忽好忽坏，曲线有明显波动
    - 每个年龄段的分数必须有命理依据，对照上方大运表判断该阶段运势
    - 在每个10年大运内，允许有1-3分的小波动，但要保持该运整体吉凶基调
-3. **【数据一致性校验 - 极其重要】**：
-   - reason描述必须与score分数严格对应，禁止出现矛盾！
-   - 高分词汇（仅用于score>=75）：巅峰、高光、大旺、得位、大吉、鼎盛、飞黄腾达
-   - 中分词汇（用于score 50-74）：平稳、渐升、小成、转机、调整、蓄势
-   - 低分词汇（仅用于score<50）：低迷、受克、不利、坎坷、破败、冲克、困顿
-   - **禁止**：score=40却写"人生巅峰"，score=85却写"运势低迷"这种自相矛盾！
+3. **【数据一致性校验 - 最重要规则！！！】**：
+   - ⚠️ reason描述必须与score分数严格对应！这是最重要的规则！
+   - 生成每个chartPoint时，必须先确定score，再根据score选择对应的词汇
+   - 【分数-词汇对照表】严格遵守：
+     - score>=80：可用"巅峰、高光、大旺、得位、大吉、鼎盛"
+     - score 65-79：可用"平稳、渐升、小成、转机、蓄势"
+     - score 50-64：可用"平淡、调整、起伏、考验"
+     - score<50：必须用"低迷、受克、不利、坎坷、困顿、受阻"
+   - ❌ 绝对禁止的错误示例：
+     - score=30 写"人生巅峰"（错！30分应写"运势低迷"）
+     - score=40 写"得位"（错！40分应写"受阻"）
+     - score=85 写"低迷"（错！85分应写"高光"）
+   - ✅ 正确示例：
+     - score=85 → reason="财星得位，运势高光"
+     - score=55 → reason="平淡守成，蓄势待发"
+     - score=35 → reason="运势低迷，需韬光养晦"
 4. daYunList使用上面提供的大运，添加详细description（80字）
 4. highlights选8-12个关键年份，warnings选5-8个需要注意的年份
 5. tenGods每项需详解40字，说明该十神在命局中的作用和影响
@@ -454,112 +474,153 @@ export const STREAMER_SCRIPT_PROMPT = (
   daYunList: DaYunForPrompt[],
   currentAge: number,
   focusType: string // career | relationship | future | health
-) => `你是一位精通八字命理的直播解说大师，擅长用通俗易懂又专业的语言解读命盘。
-现在需要为直播间主播生成解说稿，帮助主播为观众解读八字。
+) => {
+  // 提取日主信息用于个性化分析
+  const dayMaster = bazi.dayPillar[0]; // 日主天干
+  const dayBranch = bazi.dayPillar[1]; // 日支
+  const yearStem = bazi.yearPillar[0]; // 年干
+  const monthStem = bazi.monthPillar[0]; // 月干
+  const hourStem = bazi.hourPillar[0]; // 时干
+
+  // 当前所在大运
+  const currentDaYun = daYunList.find(d => currentAge >= d.startAge && currentAge <= d.endAge);
+  const currentDaYunGanZhi = currentDaYun?.ganZhi || '未知';
+
+  return `你是一位精通八字命理的直播解说大师。现在需要为直播间主播生成解说稿。
+
+【⚠️ 最重要规则 - 必须个性化分析，禁止套话！】
+1. **所有分析必须基于下面具体的八字组合**，不能用通用模板！
+2. **禁止使用以下套话**（这些是无效的通用描述）：
+   - ❌ "感情上有点挑剔"
+   - ❌ "对感情要求比较高"
+   - ❌ "事业心比较强"
+   - ❌ "性格比较直接"
+   - ❌ "财运还不错"
+   - ❌ "需要注意身体"
+3. **必须这样分析**（引用具体八字信息）：
+   - ✅ "你日主${dayMaster}，日支坐${dayBranch}，这种组合说明..."
+   - ✅ "你月柱${bazi.monthPillar}透出${monthStem}，代表..."
+   - ✅ "你时柱${bazi.hourPillar}，说明晚年..."
+   - ✅ "当前走${currentDaYunGanZhi}大运，${currentDaYunGanZhi[0]}${currentDaYunGanZhi[1]}的组合..."
+4. **每个人的八字组合都是独特的**，分析结论也必须独特！
 
 【命主信息】
 性别: ${gender === 'male' ? '乾造（男）' : '坤造（女）'}
 出生年: ${year}年 | 当前虚岁: ${currentAge}岁
 重点关注: ${focusType === 'career' ? '事业财运' : focusType === 'relationship' ? '感情婚姻' : focusType === 'future' ? '前程发展' : '健康养生'}
 
-【八字四柱】（已排好）
-年柱: ${bazi.yearPillar} | 月柱: ${bazi.monthPillar} | 日柱: ${bazi.dayPillar} | 时柱: ${bazi.hourPillar}
+【八字四柱】（⚠️ 分析必须引用这些具体字！）
+年柱: ${bazi.yearPillar} (年干${yearStem}) | 月柱: ${bazi.monthPillar} (月干${monthStem}) | 日柱: ${bazi.dayPillar} (日主${dayMaster}) | 时柱: ${bazi.hourPillar} (时干${hourStem})
 生肖: ${bazi.zodiac} | 农历: ${bazi.lunarDate}
 
-【大运】
-${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
+【大运】（当前${currentAge}岁，正走${currentDaYunGanZhi}大运）
+${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}${currentAge >= d.startAge && currentAge <= d.endAge ? ' ← 当前' : ''}`).join(' | ')}
 
-请生成JSON格式的主播解说稿（所有分析必须基于上面的八字推算，要有理有据！）：
+【日主特性速查】
+甲木：直率、仁慈、固执、理想主义
+乙木：柔韧、圆滑、依赖、适应力强
+丙火：热情、慷慨、急躁、有领导力
+丁火：温和、细腻、敏感、有艺术天赋
+戊土：稳重、守信、固执、包容力强
+己土：温顺、务实、保守、细心
+庚金：刚毅、果断、冷酷、有魄力
+辛金：精致、敏感、多疑、有品味
+壬水：智慧、善变、多情、有谋略
+癸水：聪明、阴柔、敏感、有洞察力
+
+请生成JSON格式的主播解说稿（⚠️所有内容必须引用具体八字字符！）：
 {
-  "openingLine": "开场白（80字，根据八字特点切入，如'从你的八字来看，你是X命，五行XX偏弱/过旺...'）",
-  "emotionalHook": "共情切入点（60字，根据性别和年龄段切入用户关心的话题）",
+  "openingLine": "开场白（80字，⚠️必须提到日主${dayMaster}和日支${dayBranch}的具体特点，如'你是${dayMaster}日生人，${dayMaster}代表XX，日支坐${dayBranch}，这种组合...'）",
+  "emotionalHook": "共情切入点（60字，根据${gender === 'male' ? '男性' : '女性'}${currentAge}岁的具体情况切入）",
   "keyPoints": [
-    "日主：X命，特点描述",
-    "五行：缺X/X过旺/相对平衡",
-    "当前：XX岁，XX大运",
-    "重点：${focusType === 'career' ? '事业财运' : focusType === 'relationship' ? '感情婚姻' : focusType === 'future' ? '前程发展' : '健康养生'}"
+    "日主：${dayMaster}命，${dayMaster}的特点是...",
+    "月令：${bazi.monthPillar}，月干${monthStem}透出代表...",
+    "当前：${currentAge}岁，走${currentDaYunGanZhi}大运",
+    "格局：根据四柱组合分析格局特点"
   ],
   "healthAnalysis": {
     "title": "健康运势",
-    "mainPoint": "核心健康提示（必须基于五行生克，如'你五行缺水，肾脏要注意'）",
-    "baziReason": "八字依据（如'日主X命，五行缺X'）",
+    "mainPoint": "核心健康提示（⚠️必须基于日主${dayMaster}的五行属性和五行缺失分析）",
+    "baziReason": "八字依据（⚠️必须写明：日主${dayMaster}属X行，命局中X行偏旺/偏弱）",
     "details": [
-      "基于日主五行的健康分析（如'X主X脏，天生有X倾向'）",
-      "基于五行缺失的健康提醒（必须具体到器官）",
-      "可能出现的症状提醒",
-      "年龄相关的健康风险"
+      "日主${dayMaster}属X行，X行主X脏，需注意...",
+      "从八字看五行X偏弱/过旺，影响...",
+      "${currentAge}岁走${currentDaYunGanZhi}运，${currentDaYunGanZhi[0]}X与命局...",
+      "具体症状倾向和预防建议"
     ],
-    "advice": "养生建议（基于五行调理）"
+    "advice": "养生建议（⚠️必须基于五行调理，说明该补什么、忌什么）"
   },
   "careerAnalysis": {
     "title": "事业前程",
-    "mainPoint": "事业核心特点（如'你是XX型的人，XX是核心竞争力'）",
-    "baziReason": "八字依据（如'X命日主，官星/财星/食伤特点'）",
+    "mainPoint": "事业核心特点（⚠️必须基于日主${dayMaster}的特性和官星/财星配置分析）",
+    "baziReason": "八字依据（⚠️必须写明具体的十神配置，如'${dayMaster}日主见${monthStem}为X神'）",
     "details": [
-      "适合的行业（基于五行喜忌）",
-      "工作风格分析（基于日主特点）",
-      "合作运势（与什么五行的人合作好）",
-      "当前大运对事业的影响",
-      "事业高光期预测"
+      "${dayMaster}日主的事业特点是...",
+      "你的官星/财星在X柱，说明...",
+      "适合与X行旺的人合作（具体说明原因）",
+      "当前${currentDaYunGanZhi}大运对事业的具体影响",
+      "事业高峰期预测（⚠️必须对照大运表说明是哪步运）"
     ],
-    "advice": "事业发展建议（包含警惕点）"
+    "advice": "事业发展建议"
   },
   "relationshipAnalysis": {
     "title": "感情婚姻",
-    "mainPoint": "感情核心特点（如'你对感情XX，但要注意XX'）",
-    "baziReason": "八字依据（如'X命日主，日支X为婚姻宫'）",
+    "mainPoint": "感情核心特点（⚠️必须基于日支${dayBranch}婚姻宫和配偶星分析，禁止说'挑剔'这种套话）",
+    "baziReason": "八字依据（⚠️必须写明：日支${dayBranch}为婚姻宫，${gender === 'male' ? '正财偏财' : '正官七杀'}为配偶星，在命局中的具体位置）",
     "details": [
-      "感情特质分析（基于日主五行）",
-      "感情弱点提醒",
-      "理想伴侣类型（基于五行生克）",
-      "基于五行缺失的感情提醒",
-      "性别相关的感情特点"
+      "日支${dayBranch}坐婚姻宫，${dayBranch}的特点是...",
+      "${dayMaster}日主与${dayBranch}日支的关系是...（生克关系具体说明）",
+      "你的${gender === 'male' ? '财星' : '官星'}在X柱透出/藏支，代表配偶类型...",
+      "命局中${gender === 'male' ? '财星' : '官星'}旺/弱/被X克/得X生，感情状态...",
+      "${gender === 'male' ? '男命' : '女命'}${currentAge}岁的感情阶段特点"
     ],
-    "advice": "感情经营建议"
+    "advice": "感情经营建议（⚠️必须基于命局特点给出针对性建议）"
   },
   "futureAnalysis": {
     "title": "前程发展",
-    "mainPoint": "前程核心判断",
-    "baziReason": "八字依据",
+    "mainPoint": "前程核心判断（⚠️必须基于大运走势分析）",
+    "baziReason": "八字依据（⚠️必须对照大运表说明接下来几步运的特点）",
     "details": [
-      "当前人生阶段分析",
-      "未来大运预测",
-      "运势阶段判断（上升期/巅峰期/平稳期等）",
-      "五行调理建议"
+      "当前${currentDaYunGanZhi}大运（${currentDaYun?.startAge}-${currentDaYun?.endAge}岁）特点...",
+      "下一步${daYunList.find(d => d.startAge > currentAge)?.ganZhi || ''}大运分析...",
+      "人生运势阶段判断（基于大运吉凶判断当前处于上升期/巅峰期/调整期）",
+      "未来5-10年的关键节点"
     ],
     "advice": "发展建议"
   },
   "talkingPoints": [
-    "可以延伸的话题1",
-    "可以延伸的话题2",
-    "可以延伸的话题3"
+    "可以延伸讨论${dayMaster}日主的性格深度",
+    "可以展开${bazi.monthPillar}月柱的影响",
+    "可以分析${currentDaYunGanZhi}大运的机遇与挑战"
   ],
   "suggestedPhrases": [
-    "金句话术1（必须基于八字特点，如'你五行缺X，所以X方面要注意...'）",
-    "金句话术2（如'你X命，XX是你的优势...'）",
-    "金句话术3（如'你当前X大运，XX年是关键...'）"
+    "你是${dayMaster}日生人，${dayMaster}命的特点是...所以你会...",
+    "你日支坐${dayBranch}，${dayBranch}在婚姻宫代表...",
+    "你现在走${currentDaYunGanZhi}大运，这步运的特点是..."
   ],
   "goldenQuotes": [
-    "命格金句1（根据命格特点给出安慰/鼓励/点醒的话，如'你是X命，天生有X的福气，不用太焦虑'）",
-    "命格金句2（如'虽然目前运势低迷，但X年后大运转好，守得云开见月明'）",
-    "命格金句3（如'你命中带X，注定不是平凡之人，只是时机未到'）",
-    "命格金句4（如'你五行X旺，说明X方面是你的天赋，要好好利用'）"
+    "命格金句1（⚠️必须基于具体八字组合，如'${dayMaster}坐${dayBranch}，这种组合的人，天生有X的福气'）",
+    "命格金句2（⚠️基于当前大运，如'你现在走${currentDaYunGanZhi}运，${currentDaYunGanZhi[0]}X代表...'）",
+    "命格金句3（⚠️基于五行特点，如'你五行X旺，说明X方面是强项'）",
+    "命格金句4（⚠️给出具体的时间节点，如'XX岁那步运，会是转折点'）"
   ],
-  "backgroundKnowledge": "四柱背景知识（简述四柱含义和日主特点，50字）"
+  "backgroundKnowledge": "介绍${dayMaster}日主的基本特性和${bazi.monthPillar}月柱的含义（50字）"
 }
 
-【重要规则】
-1. 所有分析必须基于上面给出的八字四柱和大运！
-2. 健康分析必须结合五行生克（木→肝胆、火→心脏、土→脾胃、金→肺部、水→肾脏）
-3. 五行缺失/过旺必须体现在分析中，给出具体的影响
-4. baziReason字段必须写明具体的八字依据，如"日主甲木，五行缺水"
-5. 金句话术要有说服力，让观众觉得主播很专业
-6. 根据性别和年龄调整重点：
-   - 男性成年人：侧重事业财运
-   - 女性成年人：侧重感情婚姻
-   - 小孩（<18岁）：侧重前程发展
-   - 老人（>=60岁）：侧重健康养生
-7. 不要生成通用的模板内容，必须针对这个具体的八字分析！`;
+【质量检查清单 - 生成后自检】
+□ openingLine是否提到了"${dayMaster}日"和"${dayBranch}支"？
+□ 健康分析是否基于日主${dayMaster}的五行属性？
+□ 感情分析是否提到日支${dayBranch}婚姻宫？
+□ 事业分析是否提到具体的十神（官星/财星等）？
+□ 是否有引用当前大运${currentDaYunGanZhi}？
+□ 是否有禁止使用的套话（"挑剔"、"要求高"、"还不错"等）？
+
+【绝对禁止 - 发现即重写】
+1. 禁止使用"有点挑剔"、"要求较高"、"比较直接"等通用描述
+2. 禁止不引用任何八字字符的空泛分析
+3. 禁止所有人的分析都类似的模板化内容
+4. 禁止baziReason字段写"日主X命"这种不完整的依据`;
+};
 
 export const STREAMER_LOADING_MESSAGES = [
   '解析命盘格局...',

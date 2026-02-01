@@ -138,7 +138,17 @@ export default function LifeCurveChart({ data, currentAge = 0, birthYear, daYunL
 
         // 生成该大运阶段的通用描述 - 使用正确的大运
         const displayDaYun = correctDaYun || currentPoint.daYun;
-        const daYunDescription = `${displayDaYun}大运期间，${currentPoint.reason.slice(0, 15)}`;
+
+        // 根据实际分数生成匹配的描述，避免分数与描述不符
+        const getScoreDescription = (s: number): string => {
+          if (s >= 80) return '运势高涨，大吉之年';
+          if (s >= 70) return '运势上升，渐入佳境';
+          if (s >= 60) return '运势平稳，稳中有进';
+          if (s >= 50) return '运势平淡，宜守不宜攻';
+          if (s >= 40) return '运势低迷，需谨慎行事';
+          return '运势受阻，宜韬光养晦';
+        };
+        const daYunDescription = `${displayDaYun}大运期间，${getScoreDescription(score)}`;
 
         result.push({
           age,

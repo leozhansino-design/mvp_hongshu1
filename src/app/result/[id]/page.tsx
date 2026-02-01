@@ -172,46 +172,46 @@ function WealthFunHighlights({
   const typeComment = getTypeComment();
 
   return (
-    <div className="mystic-card mb-6">
-      <h3 className="font-serif text-xl text-gold-400 mb-4">财富高光时刻</h3>
+    <div className="apple-card mb-6">
+      <h3 className="font-medium text-xl text-apple-blue mb-4">财富高光时刻</h3>
 
       <div className="space-y-4">
         {stories.map((story, index) => (
           <div
             key={index}
-            className={`p-4 rounded-lg border ${
+            className={`p-4 rounded-xl border backdrop-blur-sm ${
               story.type === 'peak'
-                ? 'bg-gold-400/5 border-gold-400/30'
+                ? 'bg-amber-50 border-amber-200'
                 : story.type === 'growth'
-                  ? 'bg-green-500/5 border-green-500/30'
-                  : 'bg-red-500/5 border-red-500/30'
+                  ? 'bg-green-50 border-green-200'
+                  : 'bg-red-50 border-red-200'
             }`}
           >
             <div className="flex items-center gap-2 mb-2">
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+              <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${
                 story.type === 'peak'
-                  ? 'bg-gold-400/20 text-gold-400'
+                  ? 'bg-amber-100 text-amber-700'
                   : story.type === 'growth'
-                    ? 'bg-green-500/20 text-green-400'
-                    : 'bg-red-500/20 text-red-400'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
               }`}>
                 {story.type === 'peak' ? '财富巅峰' : story.type === 'growth' ? '暴富之年' : '破财预警'}
               </span>
-              <span className="text-text-secondary text-xs">{story.year}年</span>
+              <span className="text-apple-gray-400 text-xs">{story.year}年</span>
             </div>
-            <p className="text-sm text-text-primary leading-relaxed">{story.content}</p>
+            <p className="text-sm text-apple-gray-600 leading-relaxed">{story.content}</p>
           </div>
         ))}
       </div>
 
       {/* 财富类型总结 */}
-      <div className="mt-4 p-4 rounded-lg bg-purple-500/5 border border-purple-500/30">
+      <div className="mt-4 p-4 rounded-xl bg-purple-50 border border-purple-200 backdrop-blur-sm">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-sm font-medium text-purple-400">你的财富类型</span>
-          <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">{wealthType}</span>
+          <span className="text-sm font-medium text-purple-700">你的财富类型</span>
+          <span className="px-2 py-0.5 rounded-lg bg-purple-100 text-purple-700 text-xs">{wealthType}</span>
         </div>
-        <p className="text-sm text-text-primary mb-2">{typeComment.summary}</p>
-        <p className="text-xs text-text-secondary">{typeComment.suggestion}</p>
+        <p className="text-sm text-apple-gray-600 mb-2">{typeComment.summary}</p>
+        <p className="text-xs text-apple-gray-400">{typeComment.suggestion}</p>
       </div>
     </div>
   );
@@ -226,7 +226,7 @@ function ScoreRing({ score, label, size = 'md' }: { score?: number; label: strin
   const strokeWidth = size === 'sm' ? 4 : 5;
   const circumference = 2 * Math.PI * radius;
   const progress = (validScore / 100) * circumference;
-  const color = validScore >= 75 ? '#22c55e' : validScore >= 50 ? '#D4AF37' : '#ef4444';
+  const color = validScore >= 75 ? '#34c759' : validScore >= 50 ? '#0066cc' : '#ff3b30';
 
   return (
     <div className="flex flex-col items-center">
@@ -236,7 +236,7 @@ function ScoreRing({ score, label, size = 'md' }: { score?: number; label: strin
             cx="50%"
             cy="50%"
             r={radius}
-            stroke="#1a1a1a"
+            stroke="#e8e8ed"
             strokeWidth={strokeWidth}
             fill="none"
           />
@@ -259,7 +259,7 @@ function ScoreRing({ score, label, size = 'md' }: { score?: number; label: strin
           </span>
         </div>
       </div>
-      {label && <span className="text-xs text-text-secondary mt-1">{label}</span>}
+      {label && <span className="text-xs text-apple-gray-400 mt-1">{label}</span>}
     </div>
   );
 }
@@ -267,15 +267,15 @@ function ScoreRing({ score, label, size = 'md' }: { score?: number; label: strin
 // 分析卡片组件
 function AnalysisCard({ title, content, score, icon }: { title: string; content: string; score?: number; icon: string }) {
   return (
-    <div className="p-4 rounded-lg bg-black/30 border border-gray-700">
+    <div className="p-4 rounded-xl bg-apple-gray-50 border border-apple-gray-200">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-xl">{icon}</span>
-          <h3 className="font-serif text-gold-400">{title}</h3>
+          <h3 className="font-medium text-apple-blue">{title}</h3>
         </div>
         <ScoreRing score={score} label="" size="sm" />
       </div>
-      <p className="text-text-primary text-sm leading-relaxed">{content}</p>
+      <p className="text-apple-gray-600 text-sm leading-relaxed">{content}</p>
     </div>
   );
 }
@@ -497,10 +497,10 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-white to-apple-gray-100">
         <Header />
         <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
-          <div className="text-gold-400 animate-pulse">加载中...</div>
+          <div className="text-apple-blue animate-pulse">加载中...</div>
         </div>
       </div>
     );
@@ -508,7 +508,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
   if (upgrading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-white to-apple-gray-100">
         <Header />
         <UnlockLoader onComplete={handleUnlockComplete} />
       </div>
@@ -526,15 +526,15 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   // 财富曲线模式但没有数据时的处理
   if (isWealthMode && !wealthResult) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
+      <div className="min-h-screen bg-gradient-to-b from-white to-apple-gray-100">
         <Header showModeSelector curveMode={curveMode} onModeChange={handleModeChange} />
         <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
-          <div className="mystic-card text-center py-12">
-            <p className="text-gold-400 text-xl mb-4">💰 财富曲线数据加载中...</p>
-            <p className="text-text-secondary mb-6">如果长时间无法加载，请返回首页重新生成</p>
+          <div className="apple-card text-center py-12">
+            <p className="text-apple-blue text-xl mb-4">财富曲线数据加载中...</p>
+            <p className="text-apple-gray-400 mb-6">如果长时间无法加载，请返回首页重新生成</p>
             <button
               onClick={() => router.push('/?mode=wealth')}
-              className="btn-gold"
+              className="btn-apple"
             >
               重新生成财富曲线
             </button>
@@ -547,15 +547,15 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   // 人生曲线模式但没有数据时的处理
   if (!isWealthMode && !data) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-white to-apple-gray-100">
         <Header showModeSelector curveMode={curveMode} onModeChange={handleModeChange} />
         <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
-          <div className="mystic-card text-center py-12">
-            <p className="text-gold-400 text-xl mb-4">✦ 人生曲线数据加载中...</p>
-            <p className="text-text-secondary mb-6">如果长时间无法加载，请返回首页重新生成</p>
+          <div className="apple-card text-center py-12">
+            <p className="text-apple-blue text-xl mb-4">人生曲线数据加载中...</p>
+            <p className="text-apple-gray-400 mb-6">如果长时间无法加载，请返回首页重新生成</p>
             <button
               onClick={() => router.push('/')}
-              className="btn-gold"
+              className="btn-apple"
             >
               重新生成人生曲线
             </button>
@@ -568,30 +568,30 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   // 财富曲线模式的渲染
   if (isWealthMode && wealthResult) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
+      <div className="min-h-screen bg-gradient-to-b from-white to-apple-gray-100">
         <Header showModeSelector curveMode={curveMode} onModeChange={handleModeChange} />
         <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
           {/* 顶部信息 */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="font-serif text-2xl md:text-3xl text-gold-gradient">
+              <h1 className="font-medium text-2xl md:text-3xl text-apple-gray-600">
                 {birthInfo.name ? `${birthInfo.name}的财富曲线` : '财富曲线报告'}
               </h1>
-              <p className="text-text-secondary text-sm mt-1">
+              <p className="text-apple-gray-400 text-sm mt-1">
                 {birthInfo.gender === 'male' ? '乾造' : '坤造'} ·
                 {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日
               </p>
             </div>
-            <button onClick={handleShare} disabled={shareLoading} className="btn-outline text-sm border-gold-400/50 text-gold-400 hover:bg-gold-400/10">
+            <button onClick={handleShare} disabled={shareLoading} className="px-4 py-2 bg-apple-blue text-white rounded-xl hover:bg-apple-blue-dark transition-colors text-sm">
               {shareLoading ? '生成中...' : '分享'}
             </button>
           </div>
 
           {/* 财富曲线图 */}
-          <div className="mystic-card-gold mb-6">
-            <h2 className="font-serif text-xl text-gold-400 mb-4 flex items-center gap-2">
+          <div className="apple-card mb-6">
+            <h2 className="font-medium text-xl text-apple-blue mb-4 flex items-center gap-2">
               <span>财富曲线</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-gold-400/20 text-gold-400/80 font-normal">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-normal">
                 {wealthResult.wealthType}
               </span>
             </h2>
@@ -612,49 +612,49 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
           {/* 财富详细分析 - 仅付费版显示 */}
           {isPaid && (
-            <div className="mystic-card mb-6">
+            <div className="apple-card mb-6">
               <WealthAnalysis analysis={wealthResult.analysis} isPaid={isPaid} />
             </div>
           )}
 
           {/* 升级提示 - 详细财富走势 */}
           {!isPaid && (
-            <div className="mystic-card-gold">
+            <div className="apple-card border-apple-blue/20">
               <div className="text-center mb-6">
-                <h2 className="font-serif text-xl text-gold-400 mb-2">解锁完整财富报告</h2>
-                <p className="text-text-secondary text-sm">查看详细财运分析和增运秘诀</p>
+                <h2 className="font-medium text-xl text-apple-blue mb-2">解锁完整财富报告</h2>
+                <p className="text-apple-gray-400 text-sm">查看详细财运分析和增运秘诀</p>
               </div>
 
               {/* 价值点 */}
               <div className="space-y-3 mb-6">
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
-                  <span className="text-gold-400 text-sm mt-0.5">▸</span>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-apple-gray-50 border border-apple-gray-200">
+                  <span className="text-apple-blue text-sm mt-0.5">▸</span>
                   <div>
-                    <p className="text-sm text-text-primary">精准定位每年财运走势</p>
-                    <p className="text-xs text-text-secondary">知道哪年该冲、哪年该稳，不再盲目投资</p>
+                    <p className="text-sm text-apple-gray-600">精准定位每年财运走势</p>
+                    <p className="text-xs text-apple-gray-400">知道哪年该冲、哪年该稳，不再盲目投资</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
-                  <span className="text-gold-400 text-sm mt-0.5">▸</span>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-apple-gray-50 border border-apple-gray-200">
+                  <span className="text-apple-blue text-sm mt-0.5">▸</span>
                   <div>
-                    <p className="text-sm text-text-primary">提前预警破财年份</p>
-                    <p className="text-xs text-text-secondary">避开财运低谷，减少不必要的损失</p>
+                    <p className="text-sm text-apple-gray-600">提前预警破财年份</p>
+                    <p className="text-xs text-apple-gray-400">避开财运低谷，减少不必要的损失</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-black/20">
-                  <span className="text-gold-400 text-sm mt-0.5">▸</span>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-apple-gray-50 border border-apple-gray-200">
+                  <span className="text-apple-blue text-sm mt-0.5">▸</span>
                   <div>
-                    <p className="text-sm text-text-primary">专属增运方案</p>
-                    <p className="text-xs text-text-secondary">根据你的命盘定制财运提升策略</p>
+                    <p className="text-sm text-apple-gray-600">专属增运方案</p>
+                    <p className="text-xs text-apple-gray-400">根据你的命盘定制财运提升策略</p>
                   </div>
                 </div>
               </div>
 
               <div className="text-center">
-                <button onClick={handleUpgrade} className="btn-gold px-10 py-3 text-lg">
+                <button onClick={handleUpgrade} className="btn-apple px-10 py-3 text-lg">
                   200积分 解锁完整版
                 </button>
-                <p className="text-xs text-text-secondary mt-3">
+                <p className="text-xs text-apple-gray-400 mt-3">
                   一次购买，永久查看 · 支持多次生成
                 </p>
               </div>
@@ -772,40 +772,40 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-white to-apple-gray-100">
       <Header showModeSelector curveMode={curveMode} onModeChange={handleModeChange} />
       <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
         {/* 顶部信息 */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="font-serif text-2xl md:text-3xl text-gold-400">
+            <h1 className="font-medium text-2xl md:text-3xl text-apple-gray-600">
               {birthInfo.name ? `${birthInfo.name}的命盘` : '命盘报告'}
             </h1>
-            <p className="text-text-secondary text-sm mt-1">
+            <p className="text-apple-gray-400 text-sm mt-1">
               {birthInfo.gender === 'male' ? '乾造' : '坤造'} ·
               {birthInfo.calendarType === 'lunar' ? '农历' : '公历'} {birthInfo.year}年{birthInfo.month}月{birthInfo.day}日
               {birthInfo.hour !== undefined ? ` ${String(birthInfo.hour).padStart(2, '0')}:${String(birthInfo.minute || 0).padStart(2, '0')}` : ''}
             </p>
           </div>
-          <button onClick={handleShare} disabled={shareLoading} className="btn-outline text-sm">
+          <button onClick={handleShare} disabled={shareLoading} className="px-4 py-2 bg-apple-blue text-white rounded-xl hover:bg-apple-blue-dark transition-colors text-sm">
             {shareLoading ? '生成中...' : '分享'}
           </button>
         </div>
 
         {/* 人生高光时刻 - 最优先显示 */}
         {data?.highlightMoment && (
-          <div className="mystic-card-gold mb-6">
+          <div className="apple-card mb-6 border-amber-200 bg-gradient-to-br from-amber-50 to-white">
             <div className="flex items-start gap-4">
               <div className="text-5xl">🌟</div>
               <div className="flex-1">
-                <h2 className="font-serif text-xl text-gold-400 mb-2">人生高光时刻</h2>
+                <h2 className="font-medium text-xl text-apple-blue mb-2">人生高光时刻</h2>
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="px-3 py-1 rounded-full bg-gold-400/20 text-gold-400 text-sm font-mono">
+                  <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-mono">
                     {data.highlightMoment.age}岁
                   </span>
-                  <span className="text-text-secondary text-sm">· {data.highlightMoment.title}</span>
+                  <span className="text-apple-gray-400 text-sm">· {data.highlightMoment.title}</span>
                 </div>
-                <p className="text-text-primary leading-relaxed text-base">{data.highlightMoment.description}</p>
+                <p className="text-apple-gray-600 leading-relaxed text-base">{data.highlightMoment.description}</p>
               </div>
             </div>
           </div>
@@ -837,14 +837,14 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
         {/* 八字排盘 */}
         {data?.baziChart && (
-          <div className="mystic-card mb-6">
-            <h2 className="font-serif text-xl text-gold-400 mb-4">四柱八字</h2>
+          <div className="apple-card mb-6">
+            <h2 className="font-medium text-xl text-apple-blue mb-4">四柱八字</h2>
             <BaziChartDisplay chart={data.baziChart} showDetails={true} pillarsDetail={baziResult?.pillarsDetail} />
 
             {/* 大运流年折叠按钮 */}
             <button
               onClick={() => setShowDaYun(!showDaYun)}
-              className="mt-4 w-full py-2 text-sm text-white border border-gray-700 rounded hover:bg-white/10 transition-colors"
+              className="mt-4 w-full py-2 text-sm text-apple-blue border border-apple-gray-200 rounded-xl hover:bg-apple-gray-50 transition-colors"
             >
               {showDaYun ? '收起' : '查看'}大运流年
             </button>
@@ -868,7 +868,7 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
               const daYunList = daYunResult.daYunList.filter(d => d.startAge <= 100);
 
               return (
-                <div className="mt-4 pt-4 border-t border-gray-700">
+                <div className="mt-4 pt-4 border-t border-apple-gray-200">
                   <DetailedDaYunTable
                     daYunList={daYunList}
                     currentAge={currentAge}
@@ -888,15 +888,15 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
         {/* 命理总评 */}
         {data && (
-          <div className="mystic-card mb-6">
+          <div className="apple-card mb-6">
             <div className="flex items-start justify-between mb-4">
-              <h2 className="font-serif text-xl text-gold-400">命理总评</h2>
+              <h2 className="font-medium text-xl text-apple-blue">命理总评</h2>
               <ScoreRing score={data.summaryScore} label="综合" />
             </div>
-            <p className="text-text-primary leading-relaxed">{data.summary}</p>
+            <p className="text-apple-gray-600 leading-relaxed">{data.summary}</p>
 
             {currentPhase && (
-              <div className="mt-4 p-3 rounded-lg bg-mystic-800/50 flex items-center gap-3">
+              <div className="mt-4 p-3 rounded-xl bg-apple-gray-50 border border-apple-gray-200 flex items-center gap-3">
                 <span className="text-2xl">
                   {currentPhase === 'rising' && '📈'}
                   {currentPhase === 'peak' && '⭐'}
@@ -905,8 +905,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
                   {currentPhase === 'valley' && '🌙'}
                 </span>
                 <div>
-                  <span className="text-text-secondary text-sm">当前运势阶段：</span>
-                  <span className="text-gold-400 font-serif ml-2">{PHASE_LABELS[currentPhase]}</span>
+                  <span className="text-apple-gray-400 text-sm">当前运势阶段：</span>
+                  <span className="text-apple-blue font-medium ml-2">{PHASE_LABELS[currentPhase]}</span>
                 </div>
               </div>
             )}
@@ -915,21 +915,21 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
         {/* 日主分析 */}
         {data?.dayMaster && (
-          <div className="mystic-card mb-6">
-            <h2 className="font-serif text-xl text-gold-400 mb-4">日主分析</h2>
+          <div className="apple-card mb-6">
+            <h2 className="font-medium text-xl text-apple-blue mb-4">日主分析</h2>
             <div className="flex items-center gap-3 mb-4">
-              <span className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500/30 to-gold-400/30 text-gold-400 font-serif text-xl">
+              <span className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-100 to-amber-100 text-purple-700 font-medium text-xl">
                 {data.dayMaster.stem}{data.dayMaster.element}
               </span>
-              <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-sm">
+              <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-sm">
                 {data.dayMaster.strength}
               </span>
             </div>
-            <p className="text-text-primary leading-relaxed">{data.dayMaster.description}</p>
+            <p className="text-apple-gray-600 leading-relaxed">{data.dayMaster.description}</p>
             {data.usefulGod && (
-              <div className="mt-4 p-3 rounded-lg bg-mystic-800/50">
-                <span className="text-gold-400 text-sm">用神喜忌：</span>
-                <p className="text-text-secondary text-sm mt-1">{data.usefulGod}</p>
+              <div className="mt-4 p-3 rounded-xl bg-apple-gray-50 border border-apple-gray-200">
+                <span className="text-apple-blue text-sm">用神喜忌：</span>
+                <p className="text-apple-gray-400 text-sm mt-1">{data.usefulGod}</p>
               </div>
             )}
           </div>
@@ -937,8 +937,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
         {/* 五行分布 */}
         {data?.fiveElements && (
-          <div className="mystic-card mb-6">
-            <h2 className="font-serif text-xl text-gold-400 mb-4">五行生克</h2>
+          <div className="apple-card mb-6">
+            <h2 className="font-medium text-xl text-apple-blue mb-4">五行生克</h2>
             <FiveElementsDiagram
               wood={data.fiveElements.wood}
               fire={data.fiveElements.fire}
@@ -947,12 +947,12 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
               water={data.fiveElements.water}
             />
             {data.elementAnalysis && (
-              <div className="mt-6 p-4 rounded-lg bg-black/30 border border-gray-700">
-                <h3 className="text-gold-400 text-sm mb-2 flex items-center gap-2">
+              <div className="mt-6 p-4 rounded-xl bg-apple-gray-50 border border-apple-gray-200">
+                <h3 className="text-apple-blue text-sm mb-2 flex items-center gap-2">
                   <span>⚖️</span>
                   <span>五行相克分析</span>
                 </h3>
-                <p className="text-text-primary text-sm leading-relaxed">{data.elementAnalysis}</p>
+                <p className="text-apple-gray-600 text-sm leading-relaxed">{data.elementAnalysis}</p>
               </div>
             )}
           </div>
@@ -960,8 +960,8 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
         {/* 八维分析 */}
         {data && (
-          <div className="mystic-card mb-6">
-            <h2 className="font-serif text-xl text-gold-400 mb-4">八维详批</h2>
+          <div className="apple-card mb-6">
+            <h2 className="font-medium text-xl text-apple-blue mb-4">八维详批</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {data.personality && <AnalysisCard title="性格命格" content={data.personality} score={data.personalityScore} icon="🎭" />}
               {data.career && <AnalysisCard title="事业前程" content={data.career} score={data.careerScore} icon="💼" />}
@@ -976,37 +976,37 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
         {/* 开运指南 */}
         {data?.luckyInfo && (
-          <div className="mystic-card mb-6">
-            <h2 className="font-serif text-xl text-gold-400 mb-4">开运指南</h2>
+          <div className="apple-card mb-6">
+            <h2 className="font-medium text-xl text-apple-blue mb-4">开运指南</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
+              <div className="p-4 rounded-xl bg-apple-gray-50 border border-apple-gray-200 text-center">
                 <p className="text-2xl mb-2">🧭</p>
-                <p className="text-xs text-text-secondary mb-1">吉利方位</p>
-                <p className="text-purple-300 text-sm">{data.luckyInfo.direction}</p>
+                <p className="text-xs text-apple-gray-400 mb-1">吉利方位</p>
+                <p className="text-apple-blue text-sm">{data.luckyInfo.direction}</p>
               </div>
-              <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
+              <div className="p-4 rounded-xl bg-apple-gray-50 border border-apple-gray-200 text-center">
                 <p className="text-2xl mb-2">🎨</p>
-                <p className="text-xs text-text-secondary mb-1">幸运颜色</p>
-                <p className="text-purple-300 text-sm">{data.luckyInfo.color}</p>
+                <p className="text-xs text-apple-gray-400 mb-1">幸运颜色</p>
+                <p className="text-apple-blue text-sm">{data.luckyInfo.color}</p>
               </div>
-              <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
+              <div className="p-4 rounded-xl bg-apple-gray-50 border border-apple-gray-200 text-center">
                 <p className="text-2xl mb-2">🔢</p>
-                <p className="text-xs text-text-secondary mb-1">幸运数字</p>
-                <p className="text-purple-300 text-sm">{data.luckyInfo.number}</p>
+                <p className="text-xs text-apple-gray-400 mb-1">幸运数字</p>
+                <p className="text-apple-blue text-sm">{data.luckyInfo.number}</p>
               </div>
-              <div className="p-4 rounded-lg bg-mystic-900/50 text-center">
+              <div className="p-4 rounded-xl bg-apple-gray-50 border border-apple-gray-200 text-center">
                 <p className="text-2xl mb-2">💼</p>
-                <p className="text-xs text-text-secondary mb-1">适合行业</p>
-                <p className="text-purple-300 text-sm">{data.luckyInfo.industry}</p>
+                <p className="text-xs text-apple-gray-400 mb-1">适合行业</p>
+                <p className="text-apple-blue text-sm">{data.luckyInfo.industry}</p>
               </div>
             </div>
             {data.luckyExplanation && (
-              <div className="mt-6 p-4 rounded-lg bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30">
-                <h3 className="text-gold-400 text-sm mb-3 flex items-center gap-2">
+              <div className="mt-6 p-4 rounded-xl bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200">
+                <h3 className="text-apple-blue text-sm mb-3 flex items-center gap-2">
                   <span>✨</span>
                   <span>开运详解</span>
                 </h3>
-                <p className="text-text-primary text-sm leading-relaxed">{data.luckyExplanation}</p>
+                <p className="text-apple-gray-600 text-sm leading-relaxed">{data.luckyExplanation}</p>
               </div>
             )}
           </div>
@@ -1014,22 +1014,22 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
         {/* 高光年份 */}
         {data?.highlights && data.highlights.length > 0 && (
-          <div className="mystic-card mb-6">
-            <h2 className="font-serif text-xl text-gold-400 mb-4">✦ 高光之年</h2>
+          <div className="apple-card mb-6">
+            <h2 className="font-medium text-xl text-apple-blue mb-4">✦ 高光之年</h2>
             <div className="space-y-4">
               {data.highlights.map((h, i) => (
-                <div key={i} className="p-4 rounded-lg bg-gradient-to-r from-gold-400/10 to-transparent border-l-2 border-gold-400">
+                <div key={i} className="p-4 rounded-xl bg-gradient-to-r from-amber-50 to-white border-l-2 border-amber-400">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-gold-400 font-mono text-lg">{h.age}岁</span>
-                    <span className="text-text-secondary">({h.year}年)</span>
+                    <span className="text-amber-600 font-mono text-lg">{h.age}岁</span>
+                    <span className="text-apple-gray-400">({h.year}年)</span>
                     {h.type && (
-                      <span className="px-2 py-0.5 text-xs rounded-full bg-gold-400/20 text-gold-400">
+                      <span className="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700">
                         {TYPE_LABELS[h.type] || h.type}
                       </span>
                     )}
                   </div>
-                  <p className="font-serif text-lg text-text-primary mb-1">{h.title}</p>
-                  <p className="text-text-secondary text-sm">{h.description}</p>
+                  <p className="font-medium text-lg text-apple-gray-600 mb-1">{h.title}</p>
+                  <p className="text-apple-gray-400 text-sm">{h.description}</p>
                 </div>
               ))}
             </div>
@@ -1038,24 +1038,24 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
         {/* 警示年份 */}
         {data?.warnings && data.warnings.length > 0 && (
-          <div className="mystic-card mb-6">
-            <h2 className="font-serif text-xl text-kline-down mb-4">◆ 谨慎之年</h2>
+          <div className="apple-card mb-6">
+            <h2 className="font-medium text-xl text-red-500 mb-4">◆ 谨慎之年</h2>
             <div className="space-y-4">
               {data.warnings.map((w, i) => (
-                <div key={i} className="p-4 rounded-lg bg-kline-down/5 border-l-2 border-kline-down">
+                <div key={i} className="p-4 rounded-xl bg-gradient-to-r from-red-50 to-white border-l-2 border-red-400">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-kline-down font-mono text-lg">{w.age}岁</span>
-                    <span className="text-text-secondary">({w.year}年)</span>
+                    <span className="text-red-500 font-mono text-lg">{w.age}岁</span>
+                    <span className="text-apple-gray-400">({w.year}年)</span>
                     {w.type && (
-                      <span className="px-2 py-0.5 text-xs rounded-full bg-kline-down/20 text-kline-down">
+                      <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-600">
                         {TYPE_LABELS[w.type] || w.type}
                       </span>
                     )}
                   </div>
-                  <p className="font-serif text-lg text-text-primary mb-1">{w.title}</p>
-                  <p className="text-text-secondary text-sm mb-2">{w.description}</p>
-                  <p className="text-accent-blue text-sm">
-                    <span className="text-gold-400">化解之道：</span>{w.advice}
+                  <p className="font-medium text-lg text-apple-gray-600 mb-1">{w.title}</p>
+                  <p className="text-apple-gray-400 text-sm mb-2">{w.description}</p>
+                  <p className="text-apple-blue text-sm">
+                    <span className="text-amber-600">化解之道：</span>{w.advice}
                   </p>
                 </div>
               ))}
@@ -1065,24 +1065,24 @@ export default function ResultPage({ params }: { params: Promise<PageParams> }) 
 
         {/* 升级提示 */}
         {!isPaid && (
-          <div className="mystic-card-gold text-center">
-            <h2 className="font-serif text-xl text-gold-400 mb-2">欲知天机全貌？</h2>
-            <p className="text-text-secondary mb-6">解锁完整命数 · 200积分</p>
+          <div className="apple-card text-center border-apple-blue/20">
+            <h2 className="font-medium text-xl text-apple-blue mb-2">欲知天机全貌？</h2>
+            <p className="text-apple-gray-400 mb-6">解锁完整命数 · 200积分</p>
             <ul className="text-left mb-6 space-y-2 max-w-xs mx-auto">
-              <li className="flex items-center gap-2 text-text-primary">
-                <span className="text-gold-400">✦</span> 百年逐年运势详图
+              <li className="flex items-center gap-2 text-apple-gray-600">
+                <span className="text-apple-blue">✦</span> 百年逐年运势详图
               </li>
-              <li className="flex items-center gap-2 text-text-primary">
-                <span className="text-gold-400">✦</span> 十神深度解析
+              <li className="flex items-center gap-2 text-apple-gray-600">
+                <span className="text-apple-blue">✦</span> 十神深度解析
               </li>
-              <li className="flex items-center gap-2 text-text-primary">
-                <span className="text-gold-400">✦</span> 大运流年详批
+              <li className="flex items-center gap-2 text-apple-gray-600">
+                <span className="text-apple-blue">✦</span> 大运流年详批
               </li>
-              <li className="flex items-center gap-2 text-text-primary">
-                <span className="text-gold-400">✦</span> 今明两年运势预测
+              <li className="flex items-center gap-2 text-apple-gray-600">
+                <span className="text-apple-blue">✦</span> 今明两年运势预测
               </li>
             </ul>
-            <button onClick={handleUpgrade} className="btn-gold px-8 py-3">
+            <button onClick={handleUpgrade} className="btn-apple px-8 py-3">
               200积分 解锁完整版
             </button>
           </div>

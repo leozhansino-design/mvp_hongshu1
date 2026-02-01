@@ -51,6 +51,41 @@ function repairJSON(jsonStr: string): string {
   return repaired;
 }
 
+// 验证并修复chartPoints中的score/reason不匹配问题
+function validateAndFixChartPoints(chartPoints: Array<{age: number; score: number; reason: string; [key: string]: unknown}>): Array<{age: number; score: number; reason: string; [key: string]: unknown}> {
+  // 根据分数生成合适的描述
+  const getAppropriateReason = (score: number, originalReason: string): string => {
+    // 定义不同分数范围的关键词
+    const highScoreWords = ['巅峰', '高光', '大旺', '得位', '大吉', '鼎盛', '飞黄腾达'];
+    const lowScoreWords = ['低迷', '受克', '不利', '坎坷', '破败', '冲克', '困顿', '受阻'];
+
+    // 检查是否存在不匹配
+    const hasHighWord = highScoreWords.some(word => originalReason.includes(word));
+    const hasLowWord = lowScoreWords.some(word => originalReason.includes(word));
+
+    // 分数低但包含高分词汇 - 需要修复
+    if (score < 50 && hasHighWord) {
+      console.warn(`修复score/reason不匹配: score=${score}, reason="${originalReason}"`);
+      if (score < 40) return '运势低迷，需韬光养晦';
+      return '运势受阻，宜静待时机';
+    }
+
+    // 分数高但包含低分词汇 - 需要修复
+    if (score >= 75 && hasLowWord) {
+      console.warn(`修复score/reason不匹配: score=${score}, reason="${originalReason}"`);
+      if (score >= 85) return '运势高涨，大吉之年';
+      return '运势上升，渐入佳境';
+    }
+
+    return originalReason;
+  };
+
+  return chartPoints.map(point => ({
+    ...point,
+    reason: getAppropriateReason(point.score, point.reason)
+  }));
+}
+
 // 尝试多种方式解析JSON
 function parseJSONWithRepair(content: string): unknown {
   // 第一次尝试：直接解析
@@ -212,6 +247,9 @@ export async function generateFreeResult(
     throw new Error('返回数据格式不正确');
   }
 
+  // 验证并修复chartPoints中的score/reason不匹配问题
+  const validatedChartPoints = validateAndFixChartPoints(aiResult.chartPoints);
+
   // 确保分数字段有有效值
   const ensureScoreFree = (score: number | undefined): number => {
     if (typeof score === 'number' && score >= 30 && score <= 100) return score;
@@ -222,6 +260,7 @@ export async function generateFreeResult(
   const result: FreeVersionResult = {
     ...aiResult as FreeVersionResult,
     baziChart: baziResult.chart,
+    chartPoints: validatedChartPoints,
     // 确保所有分数字段有有效值
     summaryScore: ensureScoreFree(aiResult.summaryScore),
     personalityScore: ensureScoreFree(aiResult.personalityScore),
@@ -320,6 +359,9 @@ export async function generatePaidResult(
     throw new Error('返回数据格式不正确');
   }
 
+  // 验证并修复chartPoints中的score/reason不匹配问题
+  const validatedChartPoints = validateAndFixChartPoints(aiResult.chartPoints);
+
   // 确保分数字段有有效值（如果AI没返回，使用existingFreeResult的值或默认值70）
   const ensureScore = (score: number | undefined, fallback: number | undefined): number => {
     if (typeof score === 'number' && score >= 30 && score <= 100) return score;
@@ -331,6 +373,7 @@ export async function generatePaidResult(
   const result: PaidVersionResult = {
     ...aiResult as PaidVersionResult,
     baziChart: baziResult.chart,
+    chartPoints: validatedChartPoints,
     // 确保所有分数字段有有效值
     summaryScore: ensureScore(aiResult.summaryScore, existingFreeResult?.summaryScore),
     personalityScore: ensureScore(aiResult.personalityScore, existingFreeResult?.personalityScore),

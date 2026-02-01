@@ -7,12 +7,20 @@ interface AnalysisLoaderProps {
   messages?: string[];
 }
 
-// 简洁的加载消息
+// AI大数据相关的加载消息
 const LOADING_MESSAGES = [
-  { id: 'init', name: '收集信息', icon: '1' },
-  { id: 'analyze', name: '分析数据', icon: '2' },
-  { id: 'calculate', name: '计算趋势', icon: '3' },
-  { id: 'generate', name: '生成报告', icon: '4' },
+  { id: 'init', name: 'AI 正在解析命盘信息', icon: '1' },
+  { id: 'analyze', name: '大数据匹配相似命格', icon: '2' },
+  { id: 'calculate', name: '神经网络计算运势趋势', icon: '3' },
+  { id: 'generate', name: 'GPT-4 生成专属分析', icon: '4' },
+];
+
+// AI提示文字
+const AI_HINTS = [
+  '基于千万级命理数据训练',
+  '融合传统命理与现代AI',
+  '深度学习模型精准分析',
+  '多维度交叉验证结果',
 ];
 
 export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderProps) {
@@ -22,6 +30,15 @@ export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderP
   const [progress, setProgress] = useState(0);
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
   const [queuePosition, setQueuePosition] = useState(() => Math.floor(Math.random() * 2) + 1);
+  const [currentHintIndex, setCurrentHintIndex] = useState(0);
+
+  // 循环显示AI提示
+  useEffect(() => {
+    const hintTimer = setInterval(() => {
+      setCurrentHintIndex((prev) => (prev + 1) % AI_HINTS.length);
+    }, 3000);
+    return () => clearInterval(hintTimer);
+  }, []);
 
   // 模拟排队进度
   useEffect(() => {
@@ -120,6 +137,10 @@ export default function AnalysisLoader({ onComplete, messages }: AnalysisLoaderP
         </p>
         <p className="text-sm text-apple-gray-400">
           {estimatedTime}
+        </p>
+        {/* AI提示信息 */}
+        <p className="text-xs text-apple-blue/70 mt-2 transition-opacity duration-500">
+          {AI_HINTS[currentHintIndex]}
         </p>
       </div>
 
