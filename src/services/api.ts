@@ -212,10 +212,25 @@ export async function generateFreeResult(
     throw new Error('返回数据格式不正确');
   }
 
+  // 确保分数字段有有效值
+  const ensureScoreFree = (score: number | undefined): number => {
+    if (typeof score === 'number' && score >= 30 && score <= 100) return score;
+    return 70; // 默认值
+  };
+
   // 使用预计算的八字，不依赖AI返回
   const result: FreeVersionResult = {
     ...aiResult as FreeVersionResult,
     baziChart: baziResult.chart,
+    // 确保所有分数字段有有效值
+    summaryScore: ensureScoreFree(aiResult.summaryScore),
+    personalityScore: ensureScoreFree(aiResult.personalityScore),
+    careerScore: ensureScoreFree(aiResult.careerScore),
+    wealthScore: ensureScoreFree(aiResult.wealthScore),
+    marriageScore: ensureScoreFree(aiResult.marriageScore),
+    healthScore: ensureScoreFree(aiResult.healthScore),
+    fengShuiScore: ensureScoreFree(aiResult.fengShuiScore),
+    familyScore: ensureScoreFree(aiResult.familyScore),
   };
 
   return result;
@@ -305,10 +320,26 @@ export async function generatePaidResult(
     throw new Error('返回数据格式不正确');
   }
 
+  // 确保分数字段有有效值（如果AI没返回，使用existingFreeResult的值或默认值70）
+  const ensureScore = (score: number | undefined, fallback: number | undefined): number => {
+    if (typeof score === 'number' && score >= 30 && score <= 100) return score;
+    if (typeof fallback === 'number' && fallback >= 30 && fallback <= 100) return fallback;
+    return 70; // 默认值
+  };
+
   // 使用预计算的八字，不依赖AI返回
   const result: PaidVersionResult = {
     ...aiResult as PaidVersionResult,
     baziChart: baziResult.chart,
+    // 确保所有分数字段有有效值
+    summaryScore: ensureScore(aiResult.summaryScore, existingFreeResult?.summaryScore),
+    personalityScore: ensureScore(aiResult.personalityScore, existingFreeResult?.personalityScore),
+    careerScore: ensureScore(aiResult.careerScore, existingFreeResult?.careerScore),
+    wealthScore: ensureScore(aiResult.wealthScore, existingFreeResult?.wealthScore),
+    marriageScore: ensureScore(aiResult.marriageScore, existingFreeResult?.marriageScore),
+    healthScore: ensureScore(aiResult.healthScore, existingFreeResult?.healthScore),
+    fengShuiScore: ensureScore(aiResult.fengShuiScore, existingFreeResult?.fengShuiScore),
+    familyScore: ensureScore(aiResult.familyScore, existingFreeResult?.familyScore),
   };
 
   return result;

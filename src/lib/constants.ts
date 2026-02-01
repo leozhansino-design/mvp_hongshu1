@@ -248,8 +248,9 @@ ${daYunList.map(d => `${d.startAge}-${d.endAge}岁: ${d.ganZhi}`).join(' | ')}
 7. futureYears需列出从今年开始的连续5年运势详解
 8. keyYears需选出3-5个最关键的年份进行深度解析
 9. improveAdvice需针对各个维度给出切实可行的改运建议
-10. **重要**：所有评分必须根据实际命局分析得出，不要照抄示例中的75、80等数值
-11. **内容充实**：所有文字描述必须达到或超过规定字数，内容要详实、专业、有针对性、实用性强`;
+10. **【必须返回所有评分字段】**：summaryScore、personalityScore、careerScore、wealthScore、marriageScore、healthScore、fengShuiScore、familyScore 每个都必须是30-95之间的整数，不能省略！
+11. **重要**：所有评分必须根据实际命局分析得出，不要照抄示例中的75、80等数值
+12. **内容充实**：所有文字描述必须达到或超过规定字数，内容要详实、专业、有针对性、实用性强`;
 };
 
 export const LOADING_MESSAGES = [
