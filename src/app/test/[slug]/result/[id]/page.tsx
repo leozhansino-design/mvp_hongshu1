@@ -25,12 +25,14 @@ interface EnneagramReportData {
   mainType: number;
   mainTypeName: string;
   mainTypeEnglishName: string;
+  mainTypeDescription?: string;
   wingType: number;
   wingTypeName: string;
   wingCombinationName: string;
   scores: number[];
   scorePercentages: number[];
   reportLevel: 'basic' | 'full';
+  report?: unknown;
 }
 
 export default function EnneagramResultPage() {
@@ -45,17 +47,31 @@ export default function EnneagramResultPage() {
 
   useEffect(() => {
     const fetchResult = async () => {
+      // 首先尝试从本地存储获取
+      const localResult = localStorage.getItem(`test_result_${id}`);
+      if (localResult) {
+        try {
+          const parsed = JSON.parse(localResult);
+          setReport(parsed);
+          setLoading(false);
+          return;
+        } catch (e) {
+          console.log('解析本地结果失败', e);
+        }
+      }
+
+      // 如果本地没有，尝试从API获取
       try {
         const response = await fetch(`/api/test/result/${id}`);
         const data = await response.json();
 
-        if (data.success) {
+        if (data.success && data.result) {
           setReport(data.result);
         } else {
-          setError(data.error || '获取报告失败');
+          setError(data.error || '报告不存在，请重新测试');
         }
       } catch (err) {
-        setError('网络错误，请重试');
+        setError('报告不存在，请重新测试');
       } finally {
         setLoading(false);
       }

@@ -35,13 +35,13 @@ const TEST_PRODUCTS: Record<string, {
     color: '#F5F0FF',
     questionCount: 144,
     duration: '15-20分钟',
-    priceBasic: 100,
+    priceBasic: 198,
     priceFull: 1990,
     category: 'personality',
     isActive: true,
-    features: ['144 道题目', '约 15-20 分钟', '9 种人格类型', '专业分析报告'],
-    basicIncludes: ['核心人格类型', '侧翼类型分析', '雷达图得分', '200字简要分析'],
-    fullIncludes: ['全部基础版内容', '2000字深度分析', '核心恐惧与渴望', '成长方向建议', '人际关系指南', '职业发展建议', '与其他类型相处之道'],
+    features: ['144 道专业题目', '约 15-20 分钟', '9 种人格类型', '专业分析报告'],
+    basicIncludes: ['核心人格类型', '侧翼类型分析', '雷达图得分展示', '200字简要分析'],
+    fullIncludes: ['全部基础版内容', '2000字深度分析', '核心恐惧与渴望解读', '成长方向建议', '人际关系指南', '职业发展建议', '与其他类型相处之道'],
   },
   'life-curve': {
     slug: 'life-curve',
@@ -52,7 +52,7 @@ const TEST_PRODUCTS: Record<string, {
     color: '#FFF5F5',
     questionCount: null,
     duration: '3分钟',
-    priceBasic: 100,
+    priceBasic: 198,
     priceFull: 1990,
     category: 'fun',
     isActive: true,
@@ -69,7 +69,7 @@ const TEST_PRODUCTS: Record<string, {
     color: '#FFFFF0',
     questionCount: null,
     duration: '3分钟',
-    priceBasic: 100,
+    priceBasic: 198,
     priceFull: 1990,
     category: 'fun',
     isActive: true,
@@ -84,10 +84,11 @@ export default function TestIntroPage() {
   const router = useRouter();
   const slug = params.slug as string;
 
-  const [showRedeemModal, setShowRedeemModal] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState<'basic' | 'full' | null>(null);
   const [redeemCode, setRedeemCode] = useState('');
   const [redeemError, setRedeemError] = useState('');
   const [isRedeeming, setIsRedeeming] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
 
   const test = TEST_PRODUCTS[slug];
 
@@ -130,7 +131,8 @@ export default function TestIntroPage() {
         if (slug === 'enneagram') {
           router.push(`/test/${slug}/questions?code=${redeemCode}`);
         } else {
-          router.push(`/test/${slug}/start?code=${redeemCode}`);
+          const mode = slug === 'life-curve' ? 'life' : 'wealth';
+          router.push(`/curve?mode=${mode}&code=${redeemCode}`);
         }
       } else {
         setRedeemError(data.error || '卡密无效或已被使用');
@@ -142,57 +144,98 @@ export default function TestIntroPage() {
     }
   };
 
-  // 开始测试（付费）
-  const handleStartTest = (level: 'basic' | 'full') => {
-    if (slug === 'enneagram') {
-      router.push(`/test/${slug}/questions?level=${level}`);
-    } else {
-      // 人生曲线和财富曲线跳转到原来的页面
-      const mode = slug === 'life-curve' ? 'life' : 'wealth';
-      router.push(`/curve?mode=${mode}&level=${level}`);
+  // 直接购买
+  const handleDirectPurchase = async () => {
+    if (!selectedLevel) return;
+
+    setIsPaying(true);
+
+    // TODO: 实际接入微信/支付宝支付
+    // 目前模拟支付成功后跳转
+    try {
+      const response = await fetch('/api/test/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          testSlug: slug,
+          level: selectedLevel,
+          paymentMethod: 'direct'
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success || data.orderId) {
+        // 支付成功，跳转到测试页面
+        if (slug === 'enneagram') {
+          router.push(`/test/${slug}/questions?level=${selectedLevel}&orderId=${data.orderId}`);
+        } else {
+          const mode = slug === 'life-curve' ? 'life' : 'wealth';
+          router.push(`/curve?mode=${mode}&level=${selectedLevel}&orderId=${data.orderId}`);
+        }
+      } else {
+        alert(data.error || '支付失败，请重试');
+      }
+    } catch (error) {
+      alert('网络错误，请重试');
+    } finally {
+      setIsPaying(false);
     }
   };
 
   const formatPrice = (priceCents: number) => {
     const yuan = priceCents / 100;
-    return yuan % 1 === 0 ? yuan.toString() : yuan.toFixed(1);
+    return yuan.toFixed(2);
+  };
+
+  const getSelectedPrice = () => {
+    if (!selectedLevel) return 0;
+    return selectedLevel === 'basic' ? test.priceBasic : test.priceFull;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen flex flex-col bg-white">
       <Header curveMode="life" showModeSelector={false} />
 
-      <main className="max-w-2xl mx-auto px-4 py-8 md:py-12">
-        {/* 返回按钮 */}
-        <Link href="/" className="inline-flex items-center text-gray-500 hover:text-gray-700 mb-8">
-          <svg className="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <main className="flex-1 max-w-2xl mx-auto px-4 py-8 md:py-12 w-full">
+        {/* 返回首页按钮 */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors mb-8"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          返回
+          返回首页
         </Link>
 
-        {/* 测试介绍卡片 */}
+        {/* 测试介绍 */}
         <div className="text-center mb-8">
-          <span className="text-6xl">{test.icon}</span>
-          <h1 className="text-3xl font-bold text-gray-900 mt-4">{test.name}</h1>
+          <div
+            className="w-20 h-20 rounded-2xl flex items-center justify-center text-5xl mx-auto mb-4"
+            style={{ backgroundColor: test.color }}
+          >
+            {test.icon}
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900">{test.name}</h1>
           {test.englishName && (
             <p className="text-gray-400 text-sm mt-1">{test.englishName}</p>
           )}
-          <p className="text-gray-600 mt-4 max-w-lg mx-auto">
+          <p className="text-gray-600 mt-4 max-w-lg mx-auto leading-relaxed">
             {test.description}
           </p>
         </div>
 
         {/* 特性列表 */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
+        <div className="bg-gray-50 rounded-2xl p-6 mb-8">
           <div className="grid grid-cols-2 gap-4">
             {test.features.map((feature, index) => (
               <div key={index} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-                  {index === 0 && <span className="text-blue-500">📝</span>}
-                  {index === 1 && <span className="text-blue-500">⏱</span>}
-                  {index === 2 && <span className="text-blue-500">📊</span>}
-                  {index === 3 && <span className="text-blue-500">📄</span>}
+                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                  {index === 0 && <span>📝</span>}
+                  {index === 1 && <span>⏱️</span>}
+                  {index === 2 && <span>📊</span>}
+                  {index === 3 && <span>📄</span>}
                 </div>
                 <span className="text-gray-700 text-sm">{feature}</span>
               </div>
@@ -200,27 +243,40 @@ export default function TestIntroPage() {
           </div>
         </div>
 
-        {/* 价格选项 */}
-        <div className="space-y-4 mb-6">
+        {/* 版本选择 */}
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">选择版本</h2>
+        <div className="space-y-4 mb-8">
           {/* 基础版 */}
           <div
-            className="bg-white rounded-2xl border border-gray-200 p-5 cursor-pointer hover:border-blue-300 transition-all"
-            onClick={() => handleStartTest('basic')}
+            className={`rounded-2xl border-2 p-5 cursor-pointer transition-all ${
+              selectedLevel === 'basic'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}
+            onClick={() => setSelectedLevel('basic')}
           >
             <div className="flex items-center justify-between mb-3">
-              <div>
-                <h3 className="font-semibold text-gray-900">基础版</h3>
-                <p className="text-sm text-gray-500">快速了解测试结果</p>
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  selectedLevel === 'basic' ? 'border-blue-500' : 'border-gray-300'
+                }`}>
+                  {selectedLevel === 'basic' && (
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">基础版</h3>
+                  <p className="text-sm text-gray-500">快速了解测试结果</p>
+                </div>
               </div>
               <div className="text-right">
-                <span className="text-2xl font-bold text-blue-500">{formatPrice(test.priceBasic)}</span>
-                <span className="text-gray-500 text-sm">元</span>
+                <span className="text-2xl font-bold text-gray-900">¥{formatPrice(test.priceBasic)}</span>
               </div>
             </div>
-            <ul className="text-sm text-gray-600 space-y-1">
+            <ul className="text-sm text-gray-600 space-y-1 ml-8">
               {test.basicIncludes.map((item, index) => (
                 <li key={index} className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   {item}
@@ -231,8 +287,12 @@ export default function TestIntroPage() {
 
           {/* 完整版 */}
           <div
-            className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border-2 border-blue-200 p-5 cursor-pointer hover:border-blue-400 transition-all relative"
-            onClick={() => handleStartTest('full')}
+            className={`rounded-2xl border-2 p-5 cursor-pointer transition-all relative ${
+              selectedLevel === 'full'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}
+            onClick={() => setSelectedLevel('full')}
           >
             <div className="absolute -top-3 left-4">
               <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-3 py-1 rounded-full font-medium">
@@ -240,19 +300,27 @@ export default function TestIntroPage() {
               </span>
             </div>
             <div className="flex items-center justify-between mb-3">
-              <div>
-                <h3 className="font-semibold text-gray-900">完整版</h3>
-                <p className="text-sm text-gray-500">深度分析 + 成长建议</p>
+              <div className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  selectedLevel === 'full' ? 'border-blue-500' : 'border-gray-300'
+                }`}>
+                  {selectedLevel === 'full' && (
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">完整版</h3>
+                  <p className="text-sm text-gray-500">深度分析 + 成长建议</p>
+                </div>
               </div>
               <div className="text-right">
-                <span className="text-2xl font-bold text-blue-500">{formatPrice(test.priceFull)}</span>
-                <span className="text-gray-500 text-sm">元</span>
+                <span className="text-2xl font-bold text-gray-900">¥{formatPrice(test.priceFull)}</span>
               </div>
             </div>
-            <ul className="text-sm text-gray-600 space-y-1">
+            <ul className="text-sm text-gray-600 space-y-1 ml-8">
               {test.fullIncludes.map((item, index) => (
                 <li key={index} className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   {item}
@@ -262,15 +330,68 @@ export default function TestIntroPage() {
           </div>
         </div>
 
-        {/* 卡密入口 */}
-        <div className="text-center">
-          <button
-            onClick={() => setShowRedeemModal(true)}
-            className="text-gray-500 text-sm hover:text-blue-500 transition-colors"
-          >
-            💳 已有卡密？点击输入
-          </button>
-        </div>
+        {/* 支付区域 - 选择版本后显示 */}
+        {selectedLevel && (
+          <div className="bg-gray-50 rounded-2xl p-6 mb-6">
+            <h3 className="font-semibold text-gray-900 mb-4">
+              已选择：{selectedLevel === 'basic' ? '基础版' : '完整版'} - ¥{formatPrice(getSelectedPrice())}
+            </h3>
+
+            {/* 卡密输入 */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-600 mb-2">输入卡密（如有）</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={redeemCode}
+                  onChange={(e) => {
+                    setRedeemCode(e.target.value.toUpperCase());
+                    setRedeemError('');
+                  }}
+                  placeholder="输入卡密兑换"
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 text-center tracking-widest bg-white"
+                  maxLength={16}
+                />
+                <button
+                  onClick={handleRedeem}
+                  disabled={isRedeeming || !redeemCode.trim()}
+                  className="px-6 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isRedeeming ? '验证中...' : '兑换'}
+                </button>
+              </div>
+              {redeemError && (
+                <p className="text-red-500 text-sm mt-2">{redeemError}</p>
+              )}
+            </div>
+
+            {/* 分割线 */}
+            <div className="flex items-center gap-4 my-4">
+              <div className="flex-1 h-px bg-gray-200"></div>
+              <span className="text-sm text-gray-400">或</span>
+              <div className="flex-1 h-px bg-gray-200"></div>
+            </div>
+
+            {/* 直接购买按钮 */}
+            <button
+              onClick={handleDirectPurchase}
+              disabled={isPaying}
+              className="w-full py-4 bg-blue-500 text-white rounded-xl font-semibold text-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+            >
+              {isPaying ? '处理中...' : `立即购买 ¥${formatPrice(getSelectedPrice())}`}
+            </button>
+            <p className="text-center text-gray-400 text-xs mt-3">
+              支持微信支付、支付宝
+            </p>
+          </div>
+        )}
+
+        {/* 未选择版本时的提示 */}
+        {!selectedLevel && (
+          <div className="text-center py-8">
+            <p className="text-gray-400">请选择一个版本开始测试</p>
+          </div>
+        )}
 
         {/* 免责声明 */}
         <p className="text-center text-gray-400 text-xs mt-8">
@@ -279,45 +400,6 @@ export default function TestIntroPage() {
       </main>
 
       <Footer />
-
-      {/* 卡密输入弹窗 */}
-      {showRedeemModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">输入卡密</h3>
-            <input
-              type="text"
-              value={redeemCode}
-              onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
-              placeholder="请输入卡密"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 mb-3 text-center text-lg tracking-widest"
-              maxLength={16}
-            />
-            {redeemError && (
-              <p className="text-red-500 text-sm mb-3">{redeemError}</p>
-            )}
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowRedeemModal(false);
-                  setRedeemCode('');
-                  setRedeemError('');
-                }}
-                className="flex-1 py-3 border border-gray-200 rounded-xl text-gray-600 font-medium hover:bg-gray-50 transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleRedeem}
-                disabled={isRedeeming}
-                className="flex-1 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
-              >
-                {isRedeeming ? '验证中...' : '确认'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

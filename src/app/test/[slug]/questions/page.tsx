@@ -12,11 +12,13 @@ function QuestionsContent() {
 
   const level = searchParams.get('level') || 'basic';
   const redeemCode = searchParams.get('code');
+  const orderId = searchParams.get('orderId');
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<(boolean | null)[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showExitWarning, setShowExitWarning] = useState(false);
 
   // 初始化答案数组和从localStorage恢复
   useEffect(() => {
@@ -48,6 +50,19 @@ function QuestionsContent() {
     }
   }, [answers, currentQuestion, slug, level]);
 
+  // 浏览器返回/关闭警告
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (answers.some(a => a !== null)) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [answers]);
+
   // 处理答案选择
   const handleAnswer = useCallback((answer: boolean) => {
     if (isAnimating) return;
@@ -65,6 +80,14 @@ function QuestionsContent() {
       setIsAnimating(false);
     }, 300);
   }, [currentQuestion, answers, isAnimating]);
+
+  // 确认退出
+  const handleConfirmExit = () => {
+    // 清除本地存储
+    localStorage.removeItem(`enneagram_answers_${level}`);
+    localStorage.removeItem(`enneagram_current_${level}`);
+    router.push('/');
+  };
 
   // 提交测试
   const handleSubmit = async () => {
@@ -95,15 +118,21 @@ function QuestionsContent() {
           answers: boolAnswers,
           level,
           redeemCode,
+          orderId,
         }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        // 清除本地存储
+        // 清除答题存储
         localStorage.removeItem(`enneagram_answers_${level}`);
         localStorage.removeItem(`enneagram_current_${level}`);
+
+        // 保存结果到本地存储（用于结果页显示）
+        if (data.result) {
+          localStorage.setItem(`test_result_${data.resultId}`, JSON.stringify(data.result));
+        }
 
         // 跳转到结果页
         router.push(`/test/${slug}/result/${data.resultId}`);
@@ -132,10 +161,26 @@ function QuestionsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex flex-col">
-      {/* 进度条 */}
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* 顶部导航 */}
       <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 z-10">
         <div className="max-w-lg mx-auto">
+          {/* 返回按钮和标题 */}
+          <div className="flex items-center justify-between mb-3">
+            <button
+              onClick={() => setShowExitWarning(true)}
+              className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              退出
+            </button>
+            <span className="text-gray-900 font-medium">九型人格测试</span>
+            <div className="w-12"></div>
+          </div>
+
+          {/* 进度条 */}
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-500">答题进度</span>
             <span className="text-sm text-gray-900 font-medium">
@@ -236,6 +281,45 @@ function QuestionsContent() {
           )}
         </div>
       </div>
+
+      {/* 退出警告弹窗 */}
+      {showExitWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">确定要退出吗？</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                退出后您的答题进度将被清除，
+                {redeemCode ? (
+                  <span className="text-red-500 font-medium">卡密将作废</span>
+                ) : (
+                  <span className="text-red-500 font-medium">已支付的订单将无法恢复</span>
+                )}
+                ，需要重新购买或输入新的卡密才能再次测试。
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowExitWarning(false)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              >
+                继续答题
+              </button>
+              <button
+                onClick={handleConfirmExit}
+                className="flex-1 py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
+              >
+                确认退出
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
