@@ -1,75 +1,115 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { v4 as uuidv4 } from 'uuid';
-import { BirthForm, AnalysisLoader, UsageStatusBar, Footer } from '@/components';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
-import { generateFreeResult, generatePaidResult, generateWealthCurve } from '@/services/api';
-import {
-  saveResult,
-} from '@/services/storage';
-import { trackPageView, trackButtonClick } from '@/services/analytics';
-import { consumeUsage, UsageStatus, checkResultCache, saveResultCache } from '@/lib/device';
-import { BirthInfo, StoredResult, CurveMode, FreeVersionResult, PaidVersionResult, WealthCurveData } from '@/types';
-import { WEALTH_LOADING_MESSAGES } from '@/lib/constants';
-import { useAuth } from '@/contexts/AuthContext';
+import { Footer } from '@/components';
+import TestCard, { TestProduct } from '@/components/TestCard';
+
+// 测试产品分类
+const TEST_CATEGORIES = ['全部', '性格', '职业', '情感', '趣味'];
+
+// 分类映射
+const CATEGORY_MAP: Record<string, string> = {
+  '全部': 'all',
+  '性格': 'personality',
+  '职业': 'career',
+  '情感': 'love',
+  '趣味': 'fun',
+};
+
+// 测试产品数据
+const TEST_PRODUCTS: TestProduct[] = [
+  {
+    slug: 'life-curve',
+    icon: '🔮',
+    name: '人生曲线',
+    subtitle: '探索您的人生发展趋势',
+    color: '#FFF5F5',
+    questionCount: null,
+    duration: '3分钟',
+    priceBasic: 100,
+    priceFull: 1990,
+    category: 'fun',
+    isActive: true,
+    isNew: false,
+  },
+  {
+    slug: 'wealth-curve',
+    icon: '💰',
+    name: '财富曲线',
+    subtitle: '预测您的财富发展走势',
+    color: '#FFFFF0',
+    questionCount: null,
+    duration: '3分钟',
+    priceBasic: 100,
+    priceFull: 1990,
+    category: 'fun',
+    isActive: true,
+    isNew: false,
+  },
+  {
+    slug: 'enneagram',
+    icon: '🧠',
+    name: '九型人格',
+    subtitle: '探索你的核心人格类型',
+    color: '#F5F0FF',
+    questionCount: 144,
+    duration: '15-20分钟',
+    priceBasic: 100,
+    priceFull: 1990,
+    category: 'personality',
+    isActive: true,
+    isNew: true,
+  },
+  {
+    slug: 'mbti',
+    icon: '🎯',
+    name: 'MBTI',
+    subtitle: '16型人格·职业性格匹配',
+    color: '#F0F5FF',
+    questionCount: 93,
+    duration: '10-15分钟',
+    priceBasic: 100,
+    priceFull: 1990,
+    category: 'career',
+    isActive: false,
+    isNew: false,
+  },
+  {
+    slug: 'disc',
+    icon: '📊',
+    name: 'DISC',
+    subtitle: '职场沟通与领导力风格',
+    color: '#F0FFF5',
+    questionCount: 40,
+    duration: '8-10分钟',
+    priceBasic: 100,
+    priceFull: 1990,
+    category: 'career',
+    isActive: false,
+    isNew: false,
+  },
+  {
+    slug: 'love-language',
+    icon: '❤️',
+    name: '爱情语言',
+    subtitle: '发现你表达爱的方式',
+    color: '#FFF0F5',
+    questionCount: 30,
+    duration: '5-8分钟',
+    priceBasic: 100,
+    priceFull: 1990,
+    category: 'love',
+    isActive: false,
+    isNew: false,
+  },
+];
 
 const FALLBACK_GENERATED_COUNT = 41512;
 
-// 简洁标题
-const PAGE_TITLES: Record<CurveMode, string> = {
-  life: '人生曲线',
-  wealth: '财富曲线',
-};
-
-const PAGE_SUBTITLES: Record<CurveMode, string> = {
-  life: '探索您的人生发展趋势',
-  wealth: '了解您的财富增长轨迹',
-};
-
-function HomePageContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { user, isLoggedIn, setShowLoginModal, setLoginRedirectMessage } = useAuth();
-  const [remainingUsage, setRemainingUsage] = useState(3);
-  const [points, setPoints] = useState(0);
-  const [detailedPrice, setDetailedPrice] = useState(200);
+export default function HomePage() {
+  const [activeCategory, setActiveCategory] = useState('全部');
   const [totalGenerated, setTotalGenerated] = useState(FALLBACK_GENERATED_COUNT);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [curveMode, setCurveMode] = useState<CurveMode>('life');
-  const [usageRefreshKey, setUsageRefreshKey] = useState(0);
-  const [pendingSubmission, setPendingSubmission] = useState<{ birthInfo: BirthInfo; isPaid: boolean } | null>(null);
-
-  useEffect(() => {
-    const modeParam = searchParams.get('mode');
-    if (modeParam === 'wealth') {
-      setCurveMode('wealth');
-    } else if (modeParam === 'life') {
-      setCurveMode('life');
-    }
-  }, [searchParams]);
-
-  const refreshUsageStatus = useCallback(async (mode: CurveMode) => {
-    try {
-      if (isLoggedIn && user) {
-        const freeLimit = 1;
-        if (mode === 'wealth') {
-          setRemainingUsage(Math.max(0, freeLimit - user.freeUsedWealth));
-        } else {
-          setRemainingUsage(Math.max(0, freeLimit - user.freeUsed));
-        }
-        setPoints(user.points);
-      } else {
-        setRemainingUsage(1);
-        setPoints(0);
-      }
-      setUsageRefreshKey(prev => prev + 1);
-    } catch (err) {
-      console.error('Failed to refresh usage status:', err);
-    }
-  }, [isLoggedIn, user]);
 
   useEffect(() => {
     const fetchTotalGenerated = async () => {
@@ -84,281 +124,65 @@ function HomePageContent() {
       }
     };
     fetchTotalGenerated();
-    refreshUsageStatus(curveMode);
-  }, [curveMode, refreshUsageStatus]);
+  }, []);
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        refreshUsageStatus(curveMode);
-      }
-    };
-    const handleFocus = () => {
-      refreshUsageStatus(curveMode);
-    };
-    const handlePageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) {
-        refreshUsageStatus(curveMode);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('pageshow', handlePageShow);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('pageshow', handlePageShow);
-    };
-  }, [curveMode, refreshUsageStatus]);
-
-  useEffect(() => {
-    trackPageView('home', curveMode);
-  }, [curveMode]);
-
-  useEffect(() => {
-    if (isLoggedIn && pendingSubmission) {
-      const { birthInfo, isPaid } = pendingSubmission;
-      setPendingSubmission(null);
-      setTimeout(() => {
-        handleSubmitInternal(birthInfo, isPaid);
-      }, 100);
-    }
-  }, [isLoggedIn, pendingSubmission]);
-
-  const handleSubmitInternal = useCallback(async (birthInfo: BirthInfo, isPaid: boolean = false) => {
-    setIsLoading(true);
-    setError(null);
-    trackButtonClick('form_submit', 'home', { curveMode, isPaid });
-
-    try {
-      const resultId = uuidv4();
-      const action = isPaid ? 'detailed' : 'free_overview';
-      const consumeResult = await consumeUsage(
-        action,
-        birthInfo as unknown as Record<string, unknown>,
-        resultId,
-        curveMode
-      );
-
-      if (!consumeResult.success) {
-        setError(consumeResult.error || '使用次数/积分不足');
-        setIsLoading(false);
-        return;
-      }
-
-      const cacheParams = {
-        name: birthInfo.name,
-        year: birthInfo.year,
-        month: birthInfo.month,
-        day: birthInfo.day,
-        hour: birthInfo.hour,
-        gender: birthInfo.gender,
-        isLunar: birthInfo.calendarType === 'lunar',
-        curveMode,
-        isPaid,
-      };
-      const cacheResult = await checkResultCache(cacheParams);
-
-      if (curveMode === 'wealth') {
-        let wealthResult: WealthCurveData;
-        if (cacheResult.found && cacheResult.resultData) {
-          wealthResult = cacheResult.resultData as WealthCurveData;
-        } else {
-          wealthResult = await generateWealthCurve(birthInfo, isPaid);
-          await saveResultCache({
-            cacheKey: cacheResult.cacheKey,
-            curveMode,
-            isPaid,
-            resultData: wealthResult,
-            birthInfo,
-          });
-        }
-
-        const storedResult: StoredResult = {
-          id: resultId,
-          birthInfo,
-          isPaid,
-          createdAt: Date.now(),
-          wealthResult,
-          curveMode: 'wealth',
-        };
-
-        saveResult(storedResult);
-        fetch('/api/stats', { method: 'POST' }).catch(console.error);
-        router.push(`/result/${resultId}?mode=wealth`);
-      } else {
-        let storedResult: StoredResult;
-
-        if (isPaid) {
-          let paidResult: PaidVersionResult;
-          if (cacheResult.found && cacheResult.resultData) {
-            paidResult = cacheResult.resultData as PaidVersionResult;
-          } else {
-            paidResult = await generatePaidResult(birthInfo);
-            await saveResultCache({
-              cacheKey: cacheResult.cacheKey,
-              curveMode,
-              isPaid,
-              resultData: paidResult,
-              birthInfo,
-            });
-          }
-          storedResult = {
-            id: resultId,
-            birthInfo,
-            freeResult: paidResult,
-            paidResult,
-            isPaid: true,
-            createdAt: Date.now(),
-          };
-        } else {
-          let freeResult: FreeVersionResult;
-          if (cacheResult.found && cacheResult.resultData) {
-            freeResult = cacheResult.resultData as FreeVersionResult;
-          } else {
-            freeResult = await generateFreeResult(birthInfo);
-            await saveResultCache({
-              cacheKey: cacheResult.cacheKey,
-              curveMode,
-              isPaid,
-              resultData: freeResult,
-              birthInfo,
-            });
-          }
-          storedResult = {
-            id: resultId,
-            birthInfo,
-            freeResult,
-            isPaid: false,
-            createdAt: Date.now(),
-          };
-        }
-
-        saveResult(storedResult);
-        fetch('/api/stats', { method: 'POST' }).catch(console.error);
-        router.push(`/result/${resultId}`);
-      }
-
-      refreshUsageStatus(curveMode);
-    } catch (err) {
-      console.error('生成失败:', err);
-      setError(err instanceof Error ? err.message : '分析失败，请稍后再试');
-      setIsLoading(false);
-      refreshUsageStatus(curveMode);
-    }
-  }, [router, curveMode, refreshUsageStatus]);
-
-  const handleSubmit = useCallback((birthInfo: BirthInfo, isPaid: boolean = false) => {
-    if (!isLoggedIn) {
-      setPendingSubmission({ birthInfo, isPaid });
-      setLoginRedirectMessage(isPaid ? '请先登录后使用完整版' : '请先登录后使用');
-      setShowLoginModal(true);
-      return;
-    }
-    handleSubmitInternal(birthInfo, isPaid);
-  }, [isLoggedIn, handleSubmitInternal, setLoginRedirectMessage, setShowLoginModal]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Header curveMode={curveMode} showModeSelector={false} />
-        <div className="flex flex-col items-center justify-center px-4 py-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
-          <AnalysisLoader
-            messages={curveMode === 'wealth' ? WEALTH_LOADING_MESSAGES : undefined}
-          />
-        </div>
-      </div>
-    );
-  }
+  // 过滤测试产品
+  const filteredProducts = TEST_PRODUCTS.filter(product => {
+    if (activeCategory === '全部') return true;
+    return product.category === CATEGORY_MAP[activeCategory];
+  });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-apple-gray-100">
-      <Header
-        curveMode={curveMode}
-        onModeChange={setCurveMode}
-        showModeSelector={true}
-      />
-      <div className="flex flex-col items-center justify-center px-4 py-12 md:py-16" style={{ minHeight: 'calc(100vh - 56px)' }}>
-        {/* Header Section */}
-        <div className="text-center mb-8 md:mb-10">
-          <h1 className="text-4xl md:text-5xl font-semibold text-apple-gray-600 mb-3">
-            {PAGE_TITLES[curveMode]}
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+      <Header curveMode="life" showModeSelector={false} />
+
+      <main className="max-w-4xl mx-auto px-4 py-12 md:py-16">
+        {/* 标题区域 */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            探索你自己
           </h1>
-          <p className="text-apple-gray-400 text-lg">
-            {PAGE_SUBTITLES[curveMode]}
+          <p className="text-gray-500 text-lg">
+            专业心理测评 · 发现真实的你
           </p>
         </div>
 
-        {/* Main Form Card */}
-        <div className="apple-card w-full max-w-md">
-          <div className="flex items-center gap-3 mb-6 pb-5 border-b border-apple-gray-200">
-            <div className="w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center">
-              <svg className="w-5 h-5 text-apple-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-apple-gray-600 font-medium text-lg">个人信息</h2>
-              <p className="text-apple-gray-400 text-sm">请填写您的基本信息</p>
-            </div>
+        {/* 分类Tab */}
+        <div className="flex justify-center gap-2 mb-10 flex-wrap">
+          {TEST_CATEGORIES.map(category => (
+            <button
+              key={category}
+              onClick={() => setActiveCategory(category)}
+              className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                activeCategory === category
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+
+        {/* 测试卡片网格 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProducts.map(product => (
+            <TestCard key={product.slug} test={product} />
+          ))}
+        </div>
+
+        {/* 底部信任背书 */}
+        <div className="mt-12 flex justify-center">
+          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-100 shadow-sm">
+            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <span className="text-sm text-gray-500">
+              已为 <span className="text-blue-500 font-semibold">{totalGenerated.toLocaleString()}</span> 人生成分析报告
+            </span>
           </div>
-
-          <BirthForm
-            onSubmit={handleSubmit}
-            disabled={isLoading}
-            remainingUsage={remainingUsage}
-            points={points}
-            detailedPrice={detailedPrice}
-          />
-
-          {error && (
-            <div className="mt-4 p-4 rounded-xl bg-error/5 border border-error/20">
-              <p className="text-error text-sm text-center">{error}</p>
-            </div>
-          )}
         </div>
+      </main>
 
-        {/* Usage Status */}
-        <div className="w-full max-w-md">
-          <UsageStatusBar
-            curveMode={curveMode}
-            refreshKey={usageRefreshKey}
-            onStatusChange={(status: UsageStatus) => {
-              if (curveMode === 'wealth') {
-                setRemainingUsage(status.freeRemainingWealth);
-              } else {
-                setRemainingUsage(status.freeRemainingLife);
-              }
-              setPoints(status.points);
-              setDetailedPrice(status.detailedPrice);
-            }}
-          />
-        </div>
-
-        {/* Stats Badge */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-2 rounded-full bg-apple-gray-100">
-          <div className="w-2 h-2 rounded-full bg-success"></div>
-          <span className="text-sm text-apple-gray-500">
-            已为 <span className="text-apple-blue font-medium">{totalGenerated.toLocaleString()}</span> 人生成分析报告
-          </span>
-        </div>
-      </div>
       <Footer />
     </div>
-  );
-}
-
-export default function HomePage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-apple-blue border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-apple-gray-500">加载中...</span>
-        </div>
-      </div>
-    }>
-      <HomePageContent />
-    </Suspense>
   );
 }

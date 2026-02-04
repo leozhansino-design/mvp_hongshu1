@@ -12,6 +12,7 @@ interface BirthFormProps {
   remainingUsage: number;
   points?: number;
   detailedPrice?: number;
+  hideUsageInfo?: boolean;
 }
 
 // 时间段定义
@@ -30,7 +31,7 @@ const TIME_OPTIONS = [
   { value: 21, label: '21:00-23:00' },
 ];
 
-export default function BirthForm({ onSubmit, disabled, remainingUsage, points = 0, detailedPrice = 200 }: BirthFormProps) {
+export default function BirthForm({ onSubmit, disabled, remainingUsage, points = 0, detailedPrice = 200, hideUsageInfo = false }: BirthFormProps) {
   const { isLoggedIn, setShowLoginModal, setLoginRedirectMessage } = useAuth();
   const [name, setName] = useState<string>('');
   const [nameError, setNameError] = useState<string>('');
