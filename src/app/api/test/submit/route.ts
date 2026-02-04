@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
         mainType: result.mainType,
         mainTypeName: result.mainTypeName,
         mainTypeEnglishName: result.mainTypeEnglishName,
-        mainTypeDescription: result.mainTypeDescription,
         wingType: result.wingType,
         wingTypeName: result.wingTypeName,
         wingCombinationName: result.wingCombinationName,
