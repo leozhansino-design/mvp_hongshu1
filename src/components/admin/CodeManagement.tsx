@@ -36,7 +36,6 @@ export default function CodeManagement() {
   // 生成表单
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [generateTestSlug, setGenerateTestSlug] = useState('enneagram');
-  const [generateLevel, setGenerateLevel] = useState('basic');
   const [generateCount, setGenerateCount] = useState(10);
   const [generateBatchName, setGenerateBatchName] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -86,7 +85,7 @@ export default function CodeManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           testSlug: generateTestSlug,
-          reportLevel: generateLevel,
+          reportLevel: 'basic', // 卡密只支持基础版
           count: generateCount,
           batchName: generateBatchName || `批次-${new Date().toLocaleDateString('zh-CN')}`,
         }),
@@ -351,16 +350,11 @@ export default function CodeManagement() {
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">报告级别</label>
-                  <select
-                    value={generateLevel}
-                    onChange={(e) => setGenerateLevel(e.target.value)}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white"
-                  >
-                    <option value="basic">基础版 (1元)</option>
-                    <option value="full">完整版 (19.9元)</option>
-                  </select>
+                <div className="bg-gray-700/50 rounded-lg p-3">
+                  <p className="text-gray-400 text-sm">
+                    卡密仅支持 <span className="text-blue-400 font-medium">基础版</span>
+                  </p>
+                  <p className="text-gray-500 text-xs mt-1">完整版请引导用户直接在线购买</p>
                 </div>
                 <div>
                   <label className="block text-gray-400 text-sm mb-2">生成数量</label>
