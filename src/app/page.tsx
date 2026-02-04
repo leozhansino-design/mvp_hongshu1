@@ -24,62 +24,63 @@ const TEST_PRODUCTS: TestProduct[] = [
     icon: '🔮',
     name: '人生曲线',
     subtitle: '探索您的人生发展趋势',
-    color: '#FFF5F5',
+    description: '基于出生日期和姓名，结合东方命理学与现代心理学，生成您的人生曲线图，帮助您了解不同人生阶段的起伏规律，更好地规划未来。',
+    color: '#FFF0F0',
     questionCount: null,
     duration: '3分钟',
     priceBasic: 100,
     priceFull: 1990,
     category: 'fun',
     isActive: true,
-    isNew: false,
   },
   {
     slug: 'wealth-curve',
     icon: '💰',
     name: '财富曲线',
     subtitle: '预测您的财富发展走势',
-    color: '#FFFFF0',
+    description: '分析您的财运走势，洞察财富积累的关键时期，了解自己的理财特质和潜在机遇，为财务规划提供参考。',
+    color: '#FFFBF0',
     questionCount: null,
     duration: '3分钟',
     priceBasic: 100,
     priceFull: 1990,
     category: 'fun',
     isActive: true,
-    isNew: false,
   },
   {
     slug: 'enneagram',
     icon: '🧠',
     name: '九型人格',
-    subtitle: '探索你的核心人格类型',
-    color: '#F5F0FF',
+    subtitle: '深度解析您的核心人格类型',
+    description: '九型人格是一套精准的人格分析系统，通过144道专业测试题，深入分析您的核心动机、行为模式和成长方向，帮助您更好地认识自己，改善人际关系。',
+    color: '#F0F0FF',
     questionCount: 144,
     duration: '15-20分钟',
     priceBasic: 100,
     priceFull: 1990,
     category: 'personality',
     isActive: true,
-    isNew: true,
   },
   {
     slug: 'mbti',
     icon: '🎯',
     name: 'MBTI',
-    subtitle: '16型人格·职业性格匹配',
-    color: '#F0F5FF',
+    subtitle: '16型人格与职业性格匹配',
+    description: '全球最流行的性格测评工具，帮助您了解自己的性格类型、优势劣势，找到最适合的职业方向和工作环境。',
+    color: '#F0F8FF',
     questionCount: 93,
     duration: '10-15分钟',
     priceBasic: 100,
     priceFull: 1990,
     category: 'career',
     isActive: false,
-    isNew: false,
   },
   {
     slug: 'disc',
     icon: '📊',
     name: 'DISC',
     subtitle: '职场沟通与领导力风格',
+    description: '了解您的行为风格和沟通偏好，提升职场沟通效率，发现您的领导力特质，帮助您在团队中发挥更大价值。',
     color: '#F0FFF5',
     questionCount: 40,
     duration: '8-10分钟',
@@ -87,21 +88,20 @@ const TEST_PRODUCTS: TestProduct[] = [
     priceFull: 1990,
     category: 'career',
     isActive: false,
-    isNew: false,
   },
   {
     slug: 'love-language',
     icon: '❤️',
     name: '爱情语言',
-    subtitle: '发现你表达爱的方式',
-    color: '#FFF0F5',
+    subtitle: '发现您表达和感受爱的方式',
+    description: '每个人表达爱和感受爱的方式不同，了解您的爱情语言，帮助您与伴侣建立更深层的情感连接，让爱更好地被表达和接收。',
+    color: '#FFF0F8',
     questionCount: 30,
     duration: '5-8分钟',
     priceBasic: 100,
     priceFull: 1990,
     category: 'love',
     isActive: false,
-    isNew: false,
   },
 ];
 
@@ -133,10 +133,10 @@ export default function HomePage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen flex flex-col bg-white">
       <Header curveMode="life" showModeSelector={false} />
 
-      <main className="max-w-4xl mx-auto px-4 py-12 md:py-16">
+      <main className="flex-1 max-w-5xl mx-auto px-4 py-12 md:py-16 w-full">
         {/* 标题区域 */}
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
@@ -156,7 +156,7 @@ export default function HomePage() {
               className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
                 activeCategory === category
                   ? 'bg-gray-900 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               {category}
@@ -173,10 +173,10 @@ export default function HomePage() {
 
         {/* 底部信任背书 */}
         <div className="mt-12 flex justify-center">
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-50 border border-gray-200">
             <div className="w-2 h-2 rounded-full bg-green-500"></div>
-            <span className="text-sm text-gray-500">
-              已为 <span className="text-blue-500 font-semibold">{totalGenerated.toLocaleString()}</span> 人生成分析报告
+            <span className="text-sm text-gray-600">
+              已为 <span className="text-gray-900 font-semibold">{totalGenerated.toLocaleString()}</span> 人生成分析报告
             </span>
           </div>
         </div>

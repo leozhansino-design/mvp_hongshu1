@@ -7,6 +7,7 @@ export interface TestProduct {
   icon: string;
   name: string;
   subtitle: string;
+  description: string;  // 详细介绍
   color: string;
   questionCount: number | null;
   duration: string;
@@ -14,7 +15,6 @@ export interface TestProduct {
   priceFull: number;   // 完整版价格（分）
   category: string;
   isActive: boolean;
-  isNew: boolean;
 }
 
 interface TestCardProps {
@@ -22,53 +22,49 @@ interface TestCardProps {
 }
 
 export default function TestCard({ test }: TestCardProps) {
-  // 格式化价格显示
-  const formatPrice = (priceCents: number) => {
-    const yuan = priceCents / 100;
-    return yuan % 1 === 0 ? yuan.toString() : yuan.toFixed(1);
-  };
-
   return (
     <Link href={test.isActive ? `/test/${test.slug}` : '#'}>
       <div
         className={`
-          relative rounded-2xl border border-gray-100 p-6
+          relative rounded-2xl p-6 h-full
           transition-all duration-300
           ${test.isActive
-            ? 'hover:shadow-lg hover:-translate-y-1 cursor-pointer'
-            : 'opacity-50 cursor-not-allowed'}
+            ? 'hover:shadow-lg hover:-translate-y-1 cursor-pointer bg-white border border-gray-200'
+            : 'opacity-60 cursor-not-allowed bg-gray-50 border border-gray-100'}
         `}
-        style={{ backgroundColor: test.color }}
       >
-        {/* 新品标签 */}
-        {test.isNew && (
-          <span className="absolute top-4 right-4 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-            NEW
-          </span>
-        )}
-
         {/* 图标 */}
-        <span className="text-4xl">{test.icon}</span>
+        <div
+          className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl mb-4"
+          style={{ backgroundColor: test.color }}
+        >
+          {test.icon}
+        </div>
 
         {/* 标题 */}
-        <h3 className="text-lg font-semibold mt-4 text-gray-900">
+        <h3 className="text-xl font-bold text-gray-900 mb-2">
           {test.name}
         </h3>
 
         {/* 副标题 */}
-        <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+        <p className="text-sm font-medium text-gray-700 mb-3">
           {test.subtitle}
         </p>
 
+        {/* 详细介绍 */}
+        <p className="text-sm text-gray-500 leading-relaxed mb-4">
+          {test.description}
+        </p>
+
         {/* 底部信息 */}
-        <div className="flex items-center justify-between mt-6 text-xs text-gray-400">
+        <div className="flex items-center justify-between text-sm text-gray-400 pt-4 border-t border-gray-100">
           <span>
             {test.questionCount ? `${test.questionCount}题 · ` : ''}
             {test.duration}
           </span>
-          <span className={test.isActive ? 'text-blue-500 font-medium' : ''}>
-            {test.isActive ? `${formatPrice(test.priceBasic)}元起` : '敬请期待'}
-          </span>
+          {!test.isActive && (
+            <span className="text-gray-400">敬请期待</span>
+          )}
         </div>
       </div>
     </Link>

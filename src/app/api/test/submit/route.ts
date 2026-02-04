@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { calculateEnneagram, generateEnneagramReport } from '@/lib/enneagram';
-import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { testSlug, answers, level, redeemCode } = body;
+    const { testSlug, answers, level, redeemCode, orderId } = body;
 
     // 验证参数
     if (!testSlug || !answers || !Array.isArray(answers)) {
@@ -16,51 +15,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 获取设备ID
-    const deviceId = request.headers.get('x-device-id') || 'unknown';
-
-    const supabase = getSupabaseAdmin();
-
-    // 如果有卡密，验证并使用
-    if (redeemCode) {
-      const { data: codeData, error: codeError } = await supabase
-        .from('redemption_codes')
-        .select('*')
-        .eq('code', redeemCode)
-        .eq('is_used', false)
-        .single();
-
-      if (codeError || !codeData) {
-        return NextResponse.json(
-          { success: false, error: '卡密无效或已被使用' },
-          { status: 400 }
-        );
-      }
-
-      // 验证卡密是否匹配测试
-      if (codeData.test_slug && codeData.test_slug !== testSlug) {
-        return NextResponse.json(
-          { success: false, error: '此卡密不适用于该测试' },
-          { status: 400 }
-        );
-      }
-
-      // 标记卡密已使用
-      await supabase
-        .from('redemption_codes')
-        .update({
-          is_used: true,
-          used_by_device: deviceId,
-          used_at: new Date().toISOString(),
-        })
-        .eq('code', redeemCode);
-    }
-
     // 计算结果
-    let resultType = '';
-    let resultSubtype = '';
-    let scores = {};
-    let reportData = {};
+    let resultData: Record<string, unknown> = {};
 
     if (testSlug === 'enneagram') {
       // 九型人格测试
@@ -74,13 +30,8 @@ export async function POST(request: NextRequest) {
       const result = calculateEnneagram(answers);
       const report = generateEnneagramReport(result);
 
-      resultType = `type${result.mainType}`;
-      resultSubtype = `${result.mainType}w${result.wingType}`;
-      scores = {
-        scores: result.scores,
-        scorePercentages: result.scorePercentages,
-      };
-      reportData = {
+      resultData = {
+        testSlug,
         mainType: result.mainType,
         mainTypeName: result.mainTypeName,
         mainTypeEnglishName: result.mainTypeEnglishName,
@@ -90,43 +41,66 @@ export async function POST(request: NextRequest) {
         scores: result.scores,
         scorePercentages: result.scorePercentages,
         reportLevel: level || 'basic',
+        report,
+        redeemCode,
+        orderId,
+        createdAt: new Date().toISOString(),
       };
     }
 
     // 生成结果ID
     const resultId = uuidv4();
 
-    // 保存测试结果
-    const { error: insertError } = await supabase
-      .from('test_results')
-      .insert({
-        id: resultId,
-        device_id: deviceId,
-        test_slug: testSlug,
-        answers,
-        scores,
-        result_type: resultType,
-        result_subtype: resultSubtype,
-        report_level: level || 'basic',
-        report_data: reportData,
-      });
+    // 尝试保存到数据库（如果可用），失败也不影响返回结果
+    try {
+      const { getSupabaseAdmin } = await import('@/lib/supabase');
+      const supabase = getSupabaseAdmin();
 
-    if (insertError) {
-      console.error('保存测试结果失败:', insertError);
-      return NextResponse.json(
-        { success: false, error: '保存结果失败' },
-        { status: 500 }
-      );
+      // 获取设备ID
+      const deviceId = request.headers.get('x-device-id') || 'unknown';
+
+      // 如果有卡密，标记已使用
+      if (redeemCode) {
+        await supabase
+          .from('redemption_codes')
+          .update({
+            is_used: true,
+            used_by_device: deviceId,
+            used_at: new Date().toISOString(),
+          })
+          .eq('code', redeemCode)
+          .eq('is_used', false);
+      }
+
+      // 保存测试结果
+      await supabase
+        .from('test_results')
+        .insert({
+          id: resultId,
+          device_id: deviceId,
+          test_slug: testSlug,
+          answers,
+          scores: { scores: resultData.scores, scorePercentages: resultData.scorePercentages },
+          result_type: `type${resultData.mainType}`,
+          result_subtype: `${resultData.mainType}w${resultData.wingType}`,
+          report_level: level || 'basic',
+          report_data: resultData,
+        });
+    } catch (dbError) {
+      // 数据库保存失败不影响返回结果
+      console.log('数据库保存跳过（可能未配置）:', dbError);
     }
 
+    // 返回结果数据，前端可以直接使用
     return NextResponse.json({
       success: true,
       resultId,
+      result: resultData,
     });
   } catch (error) {
     console.error('提交测试失败:', error);
     return NextResponse.json(
-      { success: false, error: '服务器错误' },
+      { success: false, error: '计算结果失败，请重试' },
       { status: 500 }
     );
   }
