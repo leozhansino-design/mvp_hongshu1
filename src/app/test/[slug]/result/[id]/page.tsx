@@ -109,23 +109,30 @@ export default function EnneagramResultPage() {
   };
 
   // 基础版(¥1.98)使用新的10+页专业报告，完整版(¥19.90)添加AI深度分析
+  const renderAIAnalysis = () => {
+    if (report.reportLevel === 'full' && report.report) {
+      return (
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl p-8">
+            <h2 className="text-2xl font-bold mb-4">AI深度分析（完整版专属）</h2>
+            <div className="bg-white/10 rounded-xl p-6">
+              <pre className="leading-relaxed whitespace-pre-wrap">
+                {typeof report.report === 'string' ? report.report : JSON.stringify(report.report, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <EnneagramReport result={enneagramResult} />
 
       {/* 完整版额外内容 - AI深度分析部分 */}
-      {report.reportLevel === 'full' && report.report && (
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl p-8">
-            <h2 className="text-2xl font-bold mb-4">AI深度分析（完整版专属）</h2>
-            <div className="bg-white/10 rounded-xl p-6">
-              <p className="leading-relaxed">
-                {typeof report.report === 'string' ? report.report : JSON.stringify(report.report as Record<string, any>)}
-              </p>
-            </div>
-          </div>
-        </div>
-      ) as React.ReactNode}
+      {renderAIAnalysis()}
 
       {/* 基础版升级引导 */}
       {report.reportLevel === 'basic' && (

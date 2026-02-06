@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { EnneagramResult } from '@/lib/enneagram';
+import type { EnneagramResult } from '@/lib/enneagram';
 import { getEnneagramReportData } from '@/data/enneagramReportData';
+import type { EnneagramTypeData } from '@/data/enneagramReportData';
 import { ChevronLeft, ChevronRight, Download, Share2 } from 'lucide-react';
 
 interface EnneagramReportProps {
@@ -41,7 +42,6 @@ export default function EnneagramReport({ result, userName = '用户' }: Enneagr
     <TypeOverview
       key="overview"
       data={reportData}
-      result={result}
       wingTypeData={wingTypeData}
     />,
 
@@ -199,7 +199,12 @@ export default function EnneagramReport({ result, userName = '用户' }: Enneagr
 // ============ 各页面组件 ============
 
 // 第1页：封面
-function ReportCover({ userName, typeName, subtitle, type }: any) {
+function ReportCover({ userName, typeName, subtitle, type }: {
+  userName: string;
+  typeName: string;
+  subtitle: string;
+  type: number;
+}) {
   const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DFE6E9', '#74B9FF', '#A29BFE', '#FD79A8'];
   const color = colors[type - 1] || colors[0];
 
@@ -239,7 +244,10 @@ function ReportCover({ userName, typeName, subtitle, type }: any) {
 }
 
 // 第2页：人格类型总览
-function TypeOverview({ data, result, wingTypeData }: any) {
+function TypeOverview({ data, wingTypeData }: {
+  data: EnneagramTypeData;
+  wingTypeData: { name: string; description: string } | null;
+}) {
   const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DFE6E9', '#74B9FF', '#A29BFE', '#FD79A8'];
   const color = colors[data.type - 1] || colors[0];
 
@@ -298,7 +306,7 @@ function TypeOverview({ data, result, wingTypeData }: any) {
 }
 
 // 第3页：核心特质与内心世界
-function CoreTraits({ data }: any) {
+function CoreTraits({ data }: { data: EnneagramTypeData }) {
   return (
     <div className="space-y-6">
       <div className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-4">
@@ -351,7 +359,7 @@ function CoreTraits({ data }: any) {
 }
 
 // 第4页：9维雷达图
-function RadarChart({ result }: any) {
+function RadarChart({ result }: { result: EnneagramResult }) {
   const typeColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DFE6E9', '#74B9FF', '#A29BFE', '#FD79A8'];
   const typeNames = ['完美主义者', '给予者', '成就者', '浪漫主义者', '观察者', '忠诚者', '享乐主义者', '挑战者', '和平主义者'];
 
@@ -459,7 +467,7 @@ function RadarChart({ result }: any) {
 }
 
 // 第5页：优势与挑战
-function StrengthsWeaknesses({ data }: any) {
+function StrengthsWeaknesses({ data }: { data: EnneagramTypeData }) {
   return (
     <div className="space-y-6">
       <div className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-4">
@@ -515,7 +523,7 @@ function StrengthsWeaknesses({ data }: any) {
 }
 
 // 第6页：成长路径
-function GrowthPath({ data }: any) {
+function GrowthPath({ data }: { data: EnneagramTypeData }) {
   return (
     <div className="space-y-6">
       <div className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-4">
@@ -579,7 +587,10 @@ function GrowthPath({ data }: any) {
 }
 
 // 第7页：压力与成长方向
-function StressGrowthDirection({ data, result }: any) {
+function StressGrowthDirection({ data, result }: {
+  data: EnneagramTypeData;
+  result: EnneagramResult;
+}) {
   const typeNames = ['', '完美主义者', '给予者', '成就者', '浪漫主义者', '观察者', '忠诚者', '享乐主义者', '挑战者', '和平主义者'];
 
   return (
@@ -647,7 +658,7 @@ function StressGrowthDirection({ data, result }: any) {
 }
 
 // 第8页：人际关系
-function Relationships({ data }: any) {
+function Relationships({ data }: { data: EnneagramTypeData }) {
   return (
     <div className="space-y-6">
       <div className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-4">
@@ -705,7 +716,7 @@ function Relationships({ data }: any) {
 }
 
 // 第9页：沟通风格
-function Communication({ data }: any) {
+function Communication({ data }: { data: EnneagramTypeData }) {
   return (
     <div className="space-y-6">
       <div className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-4">
@@ -766,7 +777,7 @@ function Communication({ data }: any) {
 }
 
 // 第10页：职业发展
-function CareerDevelopment({ data }: any) {
+function CareerDevelopment({ data }: { data: EnneagramTypeData }) {
   return (
     <div className="space-y-6">
       <div className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-4">
@@ -838,7 +849,7 @@ function CareerDevelopment({ data }: any) {
 }
 
 // 第11页：生活建议
-function LifeSuggestions({ data }: any) {
+function LifeSuggestions({ data }: { data: EnneagramTypeData }) {
   return (
     <div className="space-y-6">
       <div className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-4">
@@ -922,7 +933,7 @@ function LifeSuggestions({ data }: any) {
 }
 
 // 第12页：名人与金句
-function FamousQuotes({ data }: any) {
+function FamousQuotes({ data }: { data: EnneagramTypeData }) {
   return (
     <div className="space-y-6">
       <div className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-4">
@@ -957,7 +968,7 @@ function FamousQuotes({ data }: any) {
           {data.quotes.map((quote: string, index: number) => (
             <div key={index} className="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl p-6 shadow-lg">
               <p className="text-lg italic text-center">
-                "{quote}"
+                &ldquo;{quote}&rdquo;
               </p>
             </div>
           ))}
